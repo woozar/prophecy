@@ -1,0 +1,266 @@
+"use client";
+
+import { useEffect, useState, useRef, useCallback, useMemo, memo } from "react";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  angle: number;
+  speed: number;
+  opacity: number;
+  size: number;
+  color: string;
+  wobble: number; // random wobble factor for chaotic movement
+}
+
+// Mystical color palette matching the app theme
+const PARTICLE_COLORS = [
+  "#22d3ee", // cyan-400
+  "#14b8a6", // teal-500
+  "#06b6d4", // cyan-500
+  "#10b981", // emerald-500
+  "#8b5cf6", // violet-500
+  "#a855f7", // purple-500
+  "#6366f1", // indigo-500
+];
+
+interface ParticleBurstConfig {
+  /** Number of particles per burst (default: 8) */
+  particleCount?: number;
+  /** Minimum interval between bursts in ms - desktop (default: 30000) */
+  desktopMinInterval?: number;
+  /** Maximum interval between bursts in ms - desktop (default: 45000) */
+  desktopMaxInterval?: number;
+  /** Minimum interval between bursts in ms - mobile while touching (default: 200) */
+  mobileMinInterval?: number;
+  /** Maximum interval between bursts in ms - mobile while touching (default: 400) */
+  mobileMaxInterval?: number;
+  /** Flight speed in pixels per frame (default: 3) */
+  speed?: number;
+  /** Fade-out duration in ms (default: 1000) */
+  fadeDuration?: number;
+  /** Custom colors array (default: mystical theme colors) */
+  colors?: string[];
+  /** Min particle size in px (default: 2) */
+  minSize?: number;
+  /** Max particle size in px (default: 6) */
+  maxSize?: number;
+}
+
+export const ParticleBurst = memo(function ParticleBurst({
+  particleCount = 8,
+  desktopMinInterval = 30000,
+  desktopMaxInterval = 45000,
+  mobileMinInterval = 200,
+  mobileMaxInterval = 400,
+  speed = 3,
+  fadeDuration = 1000,
+  colors = PARTICLE_COLORS,
+  minSize = 2,
+  maxSize = 6,
+}: ParticleBurstConfig) {
+  const reducedMotion = useReducedMotion();
+  const [particles, setParticles] = useState<Particle[]>([]);
+  const [isTouching, setIsTouching] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const mousePos = useRef({ x: 0, y: 0 });
+  const particleIdRef = useRef(0);
+  const animationFrameRef = useRef<number | null>(null);
+
+  const minInterval = useMemo(
+    () => (isMobile ? mobileMinInterval : desktopMinInterval),
+    [isMobile, mobileMinInterval, desktopMinInterval]
+  );
+
+  const maxInterval = useMemo(
+    () => (isMobile ? mobileMaxInterval : desktopMaxInterval),
+    [isMobile, mobileMaxInterval, desktopMaxInterval]
+  );
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.matchMedia("(pointer: coarse)").matches);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Track mouse/touch position
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      mousePos.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      setIsTouching(true);
+      if (e.touches.length > 0) {
+        mousePos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        mousePos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+    };
+
+    const handleTouchEnd = () => {
+      setIsTouching(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchmove", handleTouchMove);
+    window.addEventListener("touchend", handleTouchEnd);
+    window.addEventListener("touchcancel", handleTouchEnd);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchcancel", handleTouchEnd);
+    };
+  }, []);
+
+  // Create burst of particles
+  const createBurst = useCallback(() => {
+    const { x, y } = mousePos.current;
+
+    // Don't create particles if mouse hasn't moved (still at 0,0)
+    if (x === 0 && y === 0) return;
+
+    const newParticles: Particle[] = [];
+    const angleStep = (Math.PI * 2) / particleCount;
+
+    for (let i = 0; i < particleCount; i++) {
+      // Add some randomness to angle and speed
+      const baseAngle = angleStep * i;
+      const angle = baseAngle + (Math.random() - 0.5) * 0.5;
+      const particleSpeed = speed * (0.7 + Math.random() * 0.6);
+      const size = minSize + Math.random() * (maxSize - minSize);
+      const color = colors[Math.floor(Math.random() * colors.length)];
+
+      newParticles.push({
+        id: particleIdRef.current++,
+        x,
+        y,
+        angle,
+        speed: particleSpeed,
+        opacity: 1,
+        size,
+        color,
+        wobble: Math.random() * Math.PI * 2, // random starting phase
+      });
+    }
+
+    setParticles((prev) => [...prev, ...newParticles]);
+
+    // Schedule removal after fade duration
+    setTimeout(() => {
+      setParticles((prev) =>
+        prev.filter((p) => !newParticles.some((np) => np.id === p.id))
+      );
+    }, fadeDuration + 100);
+  }, [particleCount, speed, fadeDuration, minSize, maxSize, colors]);
+
+  // Set up random interval for bursts
+  // On mobile: only while touching
+  // On desktop: always active
+  useEffect(() => {
+    // Skip if user prefers reduced motion
+    if (reducedMotion) return;
+    // On mobile, only run while touching
+    if (isMobile && !isTouching) return;
+
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const scheduleNextBurst = () => {
+      const randomInterval = minInterval + Math.random() * (maxInterval - minInterval);
+      timeoutId = setTimeout(() => {
+        createBurst();
+        scheduleNextBurst();
+      }, randomInterval);
+    };
+
+    scheduleNextBurst();
+    return () => clearTimeout(timeoutId);
+  }, [createBurst, minInterval, maxInterval, isMobile, isTouching, reducedMotion]);
+
+  // Animate particles
+  useEffect(() => {
+    // Skip if user prefers reduced motion
+    if (reducedMotion) return;
+
+    const fadePerFrame = 1 / (fadeDuration / 16.67); // ~60fps
+
+    const animate = () => {
+      setParticles((prev) =>
+        prev.map((p) => {
+          // Chaotic wobble - angle changes randomly over time
+          const wobbleAmount = Math.sin(p.wobble) * 0.3;
+          const newAngle = p.angle + wobbleAmount;
+
+          return {
+            ...p,
+            x: p.x + Math.cos(newAngle) * p.speed,
+            y: p.y + Math.sin(newAngle) * p.speed,
+            angle: p.angle + (Math.random() - 0.5) * 0.2, // slight random drift
+            opacity: Math.max(0, p.opacity - fadePerFrame),
+            speed: p.speed * 0.97, // Slow down over time
+            wobble: p.wobble + 0.3, // advance wobble phase
+          };
+        })
+      );
+
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [fadeDuration, reducedMotion]);
+
+  // Don't render anything if user prefers reduced motion
+  if (reducedMotion) {
+    return null;
+  }
+
+  return (
+    <div
+      className="pointer-events-none fixed inset-0 z-50 overflow-hidden"
+      aria-hidden="true"
+    >
+      {particles.map((particle) => (
+        <div
+          key={particle.id}
+          className="absolute rounded-full"
+          style={{
+            left: particle.x,
+            top: particle.y,
+            width: particle.size,
+            height: particle.size,
+            backgroundColor: particle.color,
+            opacity: particle.opacity,
+            boxShadow: `
+              0 0 ${particle.size}px ${particle.color},
+              0 0 ${particle.size * 3}px ${particle.color},
+              0 0 ${particle.size * 6}px ${particle.color},
+              0 0 ${particle.size * 10}px ${particle.color}90,
+              0 0 ${particle.size * 16}px ${particle.color}50
+            `,
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      ))}
+    </div>
+  );
+});

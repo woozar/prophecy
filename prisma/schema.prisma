@@ -1,0 +1,89 @@
+// Prisma Schema für Prophezeiung App
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  passwordHash  String?
+  displayName   String?
+  avatarUrl     String?
+  role          String   @default("USER")     // UserRole: USER, ADMIN
+  status        String   @default("PENDING")  // UserStatus: PENDING, APPROVED, REJECTED, SUSPENDED
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  authenticators Authenticator[]
+  prophecies     Prophecy[]
+  ratings        Rating[]
+}
+
+model Authenticator {
+  id                   String   @id @default(cuid())
+  credentialID         String   @unique
+  userId               String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String?
+  credentialBackedUp   Boolean  @default(false)
+  transports           String?
+  name                 String   @default("Mein Passkey")
+  createdAt            DateTime @default(now())
+  lastUsedAt           DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Round {
+  id                  String   @id @default(cuid())
+  title               String
+  submissionDeadline  DateTime
+  ratingDeadline      DateTime
+  fulfillmentDate     DateTime
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  prophecies          Prophecy[]
+}
+
+model Prophecy {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  creatorId   String
+  creator     User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  roundId     String
+  round       Round     @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  fulfilled   Boolean?
+  resolvedAt  DateTime?
+
+  ratings       Rating[]
+  averageRating Float?
+  ratingCount   Int      @default(0)
+}
+
+model Rating {
+  id          String   @id @default(cuid())
+  value       Int
+  prophecyId  String
+  prophecy    Prophecy @relation(fields: [prophecyId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([prophecyId, userId])
+  @@index([prophecyId])
+  @@index([userId])
+}

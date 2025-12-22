@@ -21,7 +21,7 @@ export const GlassProgressBar = memo(function GlassProgressBar({
   thickness = 24,
   length = "100%",
   color = "#22d3ee",
-}: GlassProgressBarProps) {
+}: Readonly<GlassProgressBarProps>) {
   const clampedValue = useMemo(() => Math.max(0, Math.min(100, value)), [value]);
   const isHorizontal = orientation === "horizontal";
 

@@ -14,19 +14,19 @@ interface CardTitleProps {
   children: ReactNode;
 }
 
-const CardTitle = memo(function CardTitle({ children }: CardTitleProps) {
+const CardTitle = memo(function CardTitle({ children }: Readonly<CardTitleProps>) {
   return (
     <h3 className="text-xl font-semibold mb-4 text-highlight">{children}</h3>
   );
 });
 
-export const Card = memo(function Card({
+const CardBase = memo(function Card({
   children,
   padding = "p-6",
   colSpan,
   className = "",
   ...props
-}: CardProps) {
+}: Readonly<CardProps>) {
   const cardClassName = useMemo(() => {
     const classes = ["card-dark", padding];
     if (colSpan === 2) classes.push("md:col-span-2");
@@ -39,8 +39,8 @@ export const Card = memo(function Card({
       {children}
     </div>
   );
-}) as ReturnType<typeof memo<typeof Card>> & {
-  Title: typeof CardTitle;
-};
+});
 
-Card.Title = CardTitle;
+export const Card = Object.assign(CardBase, {
+  Title: CardTitle,
+});

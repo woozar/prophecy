@@ -40,7 +40,7 @@ export const RatingSlider = memo(function RatingSlider({
   max = 10,
   label,
   disabled = false,
-}: RatingSliderProps) {
+}: Readonly<RatingSliderProps>) {
   const reducedMotion = useReducedMotion();
   const [internalValue, setInternalValue] = useState(0);
   const [particles, setParticles] = useState<Particle[]>([]);
@@ -71,32 +71,33 @@ export const RatingSlider = memo(function RatingSlider({
     setParticles((prev) => [...prev, ...newParticles]);
 
     // Animate and remove particles
+    const particleIds = new Set(newParticles.map((np) => np.id));
     const startTime = Date.now();
     const duration = 400;
+
+    const updateParticle = (p: Particle, progress: number): Particle => ({
+      ...p,
+      x: p.x + Math.cos(p.angle) * p.speed,
+      y: p.y + Math.sin(p.angle) * p.speed,
+      opacity: 1 - progress,
+      speed: p.speed * 0.95,
+    });
+
+    const updateParticles = (prev: Particle[], progress: number) =>
+      prev.map((p) => (particleIds.has(p.id) ? updateParticle(p, progress) : p));
+
+    const removeParticles = (prev: Particle[]) =>
+      prev.filter((p) => !particleIds.has(p.id));
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
       const progress = elapsed / duration;
 
       if (progress < 1) {
-        setParticles((prev) =>
-          prev.map((p) =>
-            newParticles.some((np) => np.id === p.id)
-              ? {
-                  ...p,
-                  x: p.x + Math.cos(p.angle) * p.speed,
-                  y: p.y + Math.sin(p.angle) * p.speed,
-                  opacity: 1 - progress,
-                  speed: p.speed * 0.95,
-                }
-              : p
-          )
-        );
+        setParticles((prev) => updateParticles(prev, progress));
         requestAnimationFrame(animate);
       } else {
-        setParticles((prev) =>
-          prev.filter((p) => !newParticles.some((np) => np.id === p.id))
-        );
+        setParticles(removeParticles);
       }
     };
 

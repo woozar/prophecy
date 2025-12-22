@@ -60,7 +60,7 @@ export const ParticleBurst = memo(function ParticleBurst({
   colors = PARTICLE_COLORS,
   minSize = 2,
   maxSize = 6,
-}: ParticleBurstConfig) {
+}: Readonly<ParticleBurstConfig>) {
   const reducedMotion = useReducedMotion();
   const [particles, setParticles] = useState<Particle[]>([]);
   const [isTouching, setIsTouching] = useState(false);
@@ -82,11 +82,11 @@ export const ParticleBurst = memo(function ParticleBurst({
   // Detect mobile device
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.matchMedia("(pointer: coarse)").matches);
+      setIsMobile(globalThis.matchMedia("(pointer: coarse)").matches);
     };
     checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    globalThis.addEventListener("resize", checkMobile);
+    return () => globalThis.removeEventListener("resize", checkMobile);
   }, []);
 
   // Track mouse/touch position
@@ -112,18 +112,18 @@ export const ParticleBurst = memo(function ParticleBurst({
       setIsTouching(false);
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("touchstart", handleTouchStart);
-    window.addEventListener("touchmove", handleTouchMove);
-    window.addEventListener("touchend", handleTouchEnd);
-    window.addEventListener("touchcancel", handleTouchEnd);
+    globalThis.addEventListener("mousemove", handleMouseMove);
+    globalThis.addEventListener("touchstart", handleTouchStart);
+    globalThis.addEventListener("touchmove", handleTouchMove);
+    globalThis.addEventListener("touchend", handleTouchEnd);
+    globalThis.addEventListener("touchcancel", handleTouchEnd);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleTouchEnd);
-      window.removeEventListener("touchcancel", handleTouchEnd);
+      globalThis.removeEventListener("mousemove", handleMouseMove);
+      globalThis.removeEventListener("touchstart", handleTouchStart);
+      globalThis.removeEventListener("touchmove", handleTouchMove);
+      globalThis.removeEventListener("touchend", handleTouchEnd);
+      globalThis.removeEventListener("touchcancel", handleTouchEnd);
     };
   }, []);
 
@@ -161,11 +161,9 @@ export const ParticleBurst = memo(function ParticleBurst({
     setParticles((prev) => [...prev, ...newParticles]);
 
     // Schedule removal after fade duration
-    setTimeout(() => {
-      setParticles((prev) =>
-        prev.filter((p) => !newParticles.some((np) => np.id === p.id))
-      );
-    }, fadeDuration + 100);
+    const particleIds = new Set(newParticles.map((np) => np.id));
+    const removeParticles = (prev: Particle[]) => prev.filter((p) => !particleIds.has(p.id));
+    setTimeout(() => setParticles(removeParticles), fadeDuration + 100);
   }, [particleCount, speed, fadeDuration, minSize, maxSize, colors]);
 
   // Set up random interval for bursts
@@ -198,25 +196,22 @@ export const ParticleBurst = memo(function ParticleBurst({
 
     const fadePerFrame = 1 / (fadeDuration / 16.67); // ~60fps
 
+    const updateParticle = (p: Particle): Particle => {
+      const wobbleAmount = Math.sin(p.wobble) * 0.3;
+      const newAngle = p.angle + wobbleAmount;
+      return {
+        ...p,
+        x: p.x + Math.cos(newAngle) * p.speed,
+        y: p.y + Math.sin(newAngle) * p.speed,
+        angle: p.angle + (Math.random() - 0.5) * 0.2,
+        opacity: Math.max(0, p.opacity - fadePerFrame),
+        speed: p.speed * 0.97,
+        wobble: p.wobble + 0.3,
+      };
+    };
+
     const animate = () => {
-      setParticles((prev) =>
-        prev.map((p) => {
-          // Chaotic wobble - angle changes randomly over time
-          const wobbleAmount = Math.sin(p.wobble) * 0.3;
-          const newAngle = p.angle + wobbleAmount;
-
-          return {
-            ...p,
-            x: p.x + Math.cos(newAngle) * p.speed,
-            y: p.y + Math.sin(newAngle) * p.speed,
-            angle: p.angle + (Math.random() - 0.5) * 0.2, // slight random drift
-            opacity: Math.max(0, p.opacity - fadePerFrame),
-            speed: p.speed * 0.97, // Slow down over time
-            wobble: p.wobble + 0.3, // advance wobble phase
-          };
-        })
-      );
-
+      setParticles((prev) => prev.map(updateParticle));
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 

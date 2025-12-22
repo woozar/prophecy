@@ -36,6 +36,30 @@
   --color-accent: var(--color-teal-500);
 }
 
+/* AI Button flowing border animation */
+@keyframes ai-button-flow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+/* Modal glow animation */
+@keyframes modal-glow-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    filter: blur(20px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(30px);
+  }
+}
+
+@keyframes modal-border-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(6, 182, 212, 0.3) var(--color-dark-950);
@@ -63,8 +87,8 @@
 }
 
 ::selection {
-  background: rgba(6, 182, 212, 0.3);
-  color: #fff;
+  background: rgba(6, 182, 212, 0.5);
+  color: #0a0f1a;
 }
 
 html, body {
@@ -152,6 +176,14 @@ html, body {
   width: 100%;
 }
 
+.link-underline.link-underline-active {
+  color: var(--color-cyan-400);
+}
+
+.link-underline.link-underline-active::after {
+  width: 100%;
+}
+
 /* Ghost Glow Effect */
 .ghost-glow {
   position: relative;
@@ -195,100 +227,6 @@ html, body {
   border-color: rgba(98, 125, 152, 0.5);
 }
 
-/* Primary Button */
-.btn-primary {
-  background: linear-gradient(135deg, var(--color-cyan-500), var(--color-teal-500));
-  color: var(--color-dark-950);
-  font-weight: 600;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-primary::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, var(--color-cyan-400), var(--color-emerald-500));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: scale(1.05);
-  box-shadow: 0 0 25px var(--glow-cyan), 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.btn-primary:hover:not(:disabled)::before {
-  opacity: 1;
-}
-
-.btn-primary:active:not(:disabled) {
-  transform: scale(0.95);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary span {
-  position: relative;
-  z-index: 1;
-}
-
-/* Outline Button */
-.btn-outline {
-  background: transparent;
-  color: var(--color-cyan-400);
-  font-weight: 600;
-  border: 1px solid var(--color-cyan-500);
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-outline::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, var(--color-cyan-500), var(--color-teal-500));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.btn-outline:hover:not(:disabled) {
-  transform: scale(1.05);
-  color: var(--color-dark-950);
-  border-color: transparent;
-  box-shadow: 0 0 20px var(--glow-cyan-subtle);
-}
-
-.btn-outline:hover:not(:disabled)::before {
-  opacity: 1;
-}
-
-.btn-outline:active:not(:disabled) {
-  transform: scale(0.95);
-}
-
-.btn-outline:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-outline span {
-  position: relative;
-  z-index: 1;
-}
-
 /* Highlighted Text */
 .text-highlight {
   color: var(--color-cyan-400);
@@ -314,6 +252,55 @@ html, body {
               0 0 50px var(--glow-cyan-subtle),
               inset 0 1px 0 rgba(6, 182, 212, 0.15);
   transform: translateY(-2px);
+}
+
+/* List Item with Glow Border */
+.list-item-glow {
+  position: relative;
+  background: linear-gradient(135deg, rgba(16, 42, 67, 0.7), rgba(10, 30, 50, 0.9));
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.list-item-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.4), rgba(20, 184, 166, 0.3), rgba(6, 182, 212, 0.2));
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.list-item-glow::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--color-cyan-500), var(--color-teal-500));
+  opacity: 0;
+  filter: blur(12px);
+  z-index: -1;
+  transition: opacity 0.3s ease;
+}
+
+.list-item-glow:hover::before {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.6), rgba(20, 184, 166, 0.5), rgba(6, 182, 212, 0.4));
+}
+
+.list-item-glow:hover::after {
+  opacity: 0.3;
+}
+
+.list-item-glow:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 /* Tooltip Styles */
@@ -544,6 +531,153 @@ html, body {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
+/* Badge running animation - liquid flowing effect with bubbles */
+@keyframes badge-liquid-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes badge-glow-pulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(139, 92, 246, 0.4), 0 0 30px rgba(167, 139, 250, 0.2), inset 0 0 15px rgba(192, 132, 252, 0.15); }
+  50% { box-shadow: 0 0 25px rgba(139, 92, 246, 0.6), 0 0 50px rgba(167, 139, 250, 0.3), inset 0 0 20px rgba(192, 132, 252, 0.25); }
+}
+
+@keyframes bubble-rise-1 {
+  0% { transform: translateY(0) scale(1); opacity: 0.9; }
+  100% { transform: translateY(-24px) scale(0.4); opacity: 0; }
+}
+
+@keyframes bubble-rise-2 {
+  0% { transform: translateY(0) scale(0.9); opacity: 0.85; }
+  100% { transform: translateY(-28px) scale(0.3); opacity: 0; }
+}
+
+@keyframes bubble-rise-3 {
+  0% { transform: translateY(0) scale(0.7); opacity: 0.8; }
+  100% { transform: translateY(-22px) scale(0.2); opacity: 0; }
+}
+
+@keyframes bubble-rise-4 {
+  0% { transform: translateY(0) scale(0.8); opacity: 0.75; }
+  100% { transform: translateY(-26px) scale(0.25); opacity: 0; }
+}
+
+.glow-badge-animated {
+  position: relative;
+  overflow: visible;
+  background: linear-gradient(
+    90deg,
+    rgba(139, 92, 246, 0.2) 0%,
+    rgba(167, 139, 250, 0.45) 20%,
+    rgba(192, 132, 252, 0.35) 40%,
+    rgba(219, 180, 254, 0.4) 50%,
+    rgba(192, 132, 252, 0.35) 60%,
+    rgba(167, 139, 250, 0.45) 80%,
+    rgba(139, 92, 246, 0.2) 100%
+  ) !important;
+  background-size: 200% 100%;
+  animation:
+    badge-liquid-flow 2.5s ease-in-out infinite,
+    badge-glow-pulse 2s ease-in-out infinite;
+  border-color: rgba(167, 139, 250, 0.5) !important;
+}
+
+.glow-badge-animated::before,
+.glow-badge-animated::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(219, 180, 254, 1) 0%, rgba(167, 139, 250, 0.8) 40%, transparent 70%);
+  pointer-events: none;
+}
+
+.glow-badge-animated::before {
+  width: 7px;
+  height: 7px;
+  top: -3px;
+  left: 20%;
+  animation: bubble-rise-1 1.8s ease-out infinite;
+  box-shadow: 0 0 8px rgba(192, 132, 252, 1), 0 0 12px rgba(167, 139, 250, 0.6);
+}
+
+.glow-badge-animated::after {
+  width: 5px;
+  height: 5px;
+  top: -2px;
+  left: 55%;
+  animation: bubble-rise-2 2.2s ease-out infinite 0.6s;
+  box-shadow: 0 0 6px rgba(192, 132, 252, 1), 0 0 10px rgba(167, 139, 250, 0.6);
+}
+
+/* Extra bubbles */
+.glow-badge-animated .bubble-extra {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(219, 180, 254, 1) 0%, rgba(167, 139, 250, 0.7) 50%, transparent 70%);
+  pointer-events: none;
+}
+
+.glow-badge-animated .bubble-extra:nth-child(1) {
+  width: 5px; height: 5px; top: -2px; left: 10%;
+  animation: bubble-rise-3 1.9s ease-out infinite 0.1s;
+  box-shadow: 0 0 6px rgba(192, 132, 252, 1);
+}
+
+.glow-badge-animated .bubble-extra:nth-child(2) {
+  width: 4px; height: 4px; top: -1px; left: 28%;
+  animation: bubble-rise-4 2.1s ease-out infinite 0.5s;
+  box-shadow: 0 0 5px rgba(192, 132, 252, 0.9);
+}
+
+.glow-badge-animated .bubble-extra:nth-child(3) {
+  width: 6px; height: 6px; top: -3px; left: 42%;
+  animation: bubble-rise-1 1.7s ease-out infinite 0.2s;
+  box-shadow: 0 0 7px rgba(192, 132, 252, 1);
+}
+
+.glow-badge-animated .bubble-extra:nth-child(4) {
+  width: 3px; height: 3px; top: -1px; left: 52%;
+  animation: bubble-rise-2 2.3s ease-out infinite 0.8s;
+  box-shadow: 0 0 4px rgba(192, 132, 252, 0.8);
+}
+
+.glow-badge-animated .bubble-extra:nth-child(5) {
+  width: 5px; height: 5px; top: -2px; left: 68%;
+  animation: bubble-rise-3 1.8s ease-out infinite 0.4s;
+  box-shadow: 0 0 6px rgba(192, 132, 252, 1);
+}
+
+.glow-badge-animated .bubble-extra:nth-child(6) {
+  width: 4px; height: 4px; top: -2px; left: 82%;
+  animation: bubble-rise-4 2s ease-out infinite 0.9s;
+  box-shadow: 0 0 5px rgba(192, 132, 252, 0.9);
+}
+
+.glow-badge-animated .bubble-extra:nth-child(7) {
+  width: 3px; height: 3px; top: 0; left: 15%;
+  animation: bubble-rise-1 2.2s ease-out infinite 1.1s;
+  box-shadow: 0 0 4px rgba(192, 132, 252, 0.8);
+}
+
+.glow-badge-animated .bubble-extra:nth-child(8) {
+  width: 5px; height: 5px; top: -1px; left: 35%;
+  animation: bubble-rise-2 1.6s ease-out infinite 0.7s;
+  box-shadow: 0 0 6px rgba(192, 132, 252, 1);
+}
+
+.glow-badge-animated .bubble-extra:nth-child(9) {
+  width: 4px; height: 4px; top: -2px; left: 60%;
+  animation: bubble-rise-3 2.4s ease-out infinite 1.3s;
+  box-shadow: 0 0 5px rgba(192, 132, 252, 0.9);
+}
+
+.glow-badge-animated .bubble-extra:nth-child(10) {
+  width: 6px; height: 6px; top: -3px; left: 88%;
+  animation: bubble-rise-1 1.9s ease-out infinite 0.3s;
+  box-shadow: 0 0 7px rgba(192, 132, 252, 1);
+}
+
 /* Mantine Input Styling */
 .mantine-TextInput-input,
 .mantine-Textarea-input,
@@ -696,6 +830,354 @@ html, body {
               0 0 0 4px rgba(6, 182, 212, 0.4),
               0 2px 8px rgba(0, 0, 0, 0.3);
   transform: scale(1.15);
+}
+
+/* Auth Page Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.6s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.6s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+/* Mantine DateTimePicker Styling */
+.mantine-DateTimePicker-input,
+.mantine-DatePicker-input,
+.mantine-DateInput-input {
+  background: rgba(10, 25, 41, 0.8) !important;
+  border: 1px solid rgba(98, 125, 152, 0.3) !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+}
+
+.mantine-DateTimePicker-input::placeholder,
+.mantine-DatePicker-input::placeholder,
+.mantine-DateInput-input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+.mantine-DateTimePicker-input:hover,
+.mantine-DatePicker-input:hover,
+.mantine-DateInput-input:hover {
+  border-color: rgba(6, 182, 212, 0.5) !important;
+}
+
+.mantine-DateTimePicker-input:focus,
+.mantine-DatePicker-input:focus,
+.mantine-DateInput-input:focus {
+  border-color: var(--color-cyan-500) !important;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.3) !important;
+  outline: none !important;
+}
+
+/* Mantine Popover/Dropdown for DatePicker */
+.mantine-Popover-dropdown {
+  background: rgba(10, 25, 41, 0.98) !important;
+  border: 1px solid rgba(6, 182, 212, 0.3) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.2), 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(16px) !important;
+  --input-bg: rgba(10, 25, 41, 0.8);
+  --input-color: #f0f4f8;
+  --input-bd: rgba(98, 125, 152, 0.3);
+}
+
+.mantine-DateTimePicker-dropdown,
+.mantine-DatePicker-dropdown {
+  background: rgba(10, 25, 41, 0.98) !important;
+  border: 1px solid rgba(6, 182, 212, 0.3) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.2), 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+/* Target all date-related picker wrappers */
+[class*="mantine-DateTimePicker"],
+[class*="mantine-DatePicker"],
+[class*="mantine-Calendar"],
+[class*="mantine-Month"] {
+  --mantine-color-body: rgba(10, 25, 41, 0.98);
+}
+
+/* Popover inner content */
+.mantine-Popover-dropdown > div {
+  background: transparent !important;
+}
+
+/* Calendar container */
+.mantine-DateTimePicker-calendar,
+.mantine-DatePicker-calendar {
+  background: transparent !important;
+}
+
+/* Calendar Header */
+.mantine-DateTimePicker-calendarHeader,
+.mantine-DatePicker-calendarHeader,
+.mantine-MonthPicker-calendarHeader,
+.mantine-YearPicker-calendarHeader,
+.mantine-Calendar-calendarHeader {
+  background: transparent !important;
+}
+
+.mantine-DateTimePicker-calendarHeaderLevel,
+.mantine-DatePicker-calendarHeaderLevel,
+.mantine-MonthPicker-calendarHeaderLevel,
+.mantine-YearPicker-calendarHeaderLevel,
+.mantine-Calendar-calendarHeaderLevel {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+}
+
+.mantine-DateTimePicker-calendarHeaderLevel:hover,
+.mantine-DatePicker-calendarHeaderLevel:hover,
+.mantine-MonthPicker-calendarHeaderLevel:hover,
+.mantine-YearPicker-calendarHeaderLevel:hover,
+.mantine-Calendar-calendarHeaderLevel:hover {
+  background: rgba(6, 182, 212, 0.2) !important;
+}
+
+.mantine-DateTimePicker-calendarHeaderControl,
+.mantine-DatePicker-calendarHeaderControl,
+.mantine-MonthPicker-calendarHeaderControl,
+.mantine-YearPicker-calendarHeaderControl,
+.mantine-Calendar-calendarHeaderControl {
+  color: var(--text-secondary) !important;
+}
+
+.mantine-DateTimePicker-calendarHeaderControl:hover,
+.mantine-DatePicker-calendarHeaderControl:hover,
+.mantine-MonthPicker-calendarHeaderControl:hover,
+.mantine-YearPicker-calendarHeaderControl:hover,
+.mantine-Calendar-calendarHeaderControl:hover {
+  background: rgba(6, 182, 212, 0.2) !important;
+  color: var(--color-cyan-400) !important;
+}
+
+/* Weekday headers */
+.mantine-DateTimePicker-weekday,
+.mantine-DatePicker-weekday,
+.mantine-Month-weekday {
+  color: var(--color-cyan-400) !important;
+  font-weight: 500 !important;
+}
+
+/* Day cells */
+.mantine-DateTimePicker-day,
+.mantine-DatePicker-day,
+.mantine-Month-day {
+  color: var(--text-secondary) !important;
+  border-radius: 6px !important;
+  transition: all 0.15s ease !important;
+}
+
+.mantine-DateTimePicker-day:hover,
+.mantine-DatePicker-day:hover,
+.mantine-Month-day:hover {
+  background: rgba(6, 182, 212, 0.2) !important;
+  color: var(--text-primary) !important;
+}
+
+.mantine-DateTimePicker-day[data-selected],
+.mantine-DatePicker-day[data-selected],
+.mantine-Month-day[data-selected] {
+  background: var(--color-cyan-500) !important;
+  color: var(--color-dark-950) !important;
+  font-weight: 600 !important;
+}
+
+.mantine-DateTimePicker-day[data-today],
+.mantine-DatePicker-day[data-today],
+.mantine-Month-day[data-today] {
+  border: 1px solid var(--color-cyan-400) !important;
+}
+
+.mantine-DateTimePicker-day[data-outside],
+.mantine-DatePicker-day[data-outside],
+.mantine-Month-day[data-outside] {
+  color: var(--text-muted) !important;
+  opacity: 0.5 !important;
+}
+
+/* Month/Year picker controls */
+.mantine-DateTimePicker-monthsListControl,
+.mantine-DatePicker-monthsListControl,
+.mantine-MonthPicker-monthsListControl,
+.mantine-YearPicker-yearsListControl,
+.mantine-MonthsList-monthsListControl,
+.mantine-YearsList-yearsListControl {
+  color: var(--text-secondary) !important;
+  border-radius: 6px !important;
+}
+
+.mantine-DateTimePicker-monthsListControl:hover,
+.mantine-DatePicker-monthsListControl:hover,
+.mantine-MonthPicker-monthsListControl:hover,
+.mantine-YearPicker-yearsListControl:hover,
+.mantine-MonthsList-monthsListControl:hover,
+.mantine-YearsList-yearsListControl:hover {
+  background: rgba(6, 182, 212, 0.2) !important;
+  color: var(--text-primary) !important;
+}
+
+.mantine-DateTimePicker-monthsListControl[data-selected],
+.mantine-DatePicker-monthsListControl[data-selected],
+.mantine-MonthPicker-monthsListControl[data-selected],
+.mantine-YearPicker-yearsListControl[data-selected],
+.mantine-MonthsList-monthsListControl[data-selected],
+.mantine-YearsList-yearsListControl[data-selected] {
+  background: var(--color-cyan-500) !important;
+  color: var(--color-dark-950) !important;
+}
+
+/* Time Input */
+.mantine-TimeInput-input,
+.mantine-DateTimePicker-timeInput input {
+  background: rgba(10, 25, 41, 0.8) !important;
+  border: 1px solid rgba(98, 125, 152, 0.3) !important;
+  color: var(--text-primary) !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+.mantine-TimeInput-input:focus,
+.mantine-DateTimePicker-timeInput input:focus {
+  border-color: var(--color-cyan-500) !important;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.3) !important;
+}
+
+/* Submit button in DateTimePicker */
+.mantine-DateTimePicker-submitButton {
+  background: rgba(6, 182, 212, 0.2) !important;
+  color: var(--color-cyan-400) !important;
+  border: 1px solid rgba(6, 182, 212, 0.3) !important;
+}
+
+.mantine-DateTimePicker-submitButton:hover {
+  background: rgba(6, 182, 212, 0.3) !important;
+}
+
+/* DateTimePicker TimeInput - override input background variable */
+.mantine-Popover-dropdown .mantine-Input-input {
+  background: rgba(10, 25, 41, 0.8) !important;
+  border-color: rgba(98, 125, 152, 0.3) !important;
+}
+
+.mantine-TimePicker-field {
+  width: 2.5rem !important;
+  text-align: center !important;
+}
+
+/* Mantine Notifications Override */
+.mantine-Notification-root {
+  background: linear-gradient(135deg, rgba(16, 42, 67, 0.95), rgba(10, 25, 41, 0.98)) !important;
+  border: 1px solid rgba(98, 125, 152, 0.25) !important;
+  backdrop-filter: blur(16px) !important;
+  border-radius: 12px !important;
+}
+
+.mantine-Notification-icon {
+  background-color: transparent !important;
+}
+
+.mantine-Notification-loader {
+  color: var(--color-cyan-400) !important;
+}
+
+.mantine-Notification-title {
+  font-weight: 600 !important;
+}
+
+.mantine-Notification-description {
+  color: var(--text-secondary) !important;
+}
+
+.mantine-Notification-closeButton {
+  color: var(--text-muted) !important;
+  transition: all 0.2s ease !important;
+}
+
+.mantine-Notification-closeButton:hover {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+  color: var(--color-cyan-400) !important;
 }
 
 /* Reduced Motion - Disable animations when user prefers reduced motion */

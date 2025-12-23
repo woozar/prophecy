@@ -109,7 +109,7 @@ function LoginForm() {
 
       const data = await verifyResponse.json();
       notifications.show(successToast(
-        `Willkommen zurück, ${data.user.displayName || data.user.username}!`
+        `Angemeldet als ${data.user.displayName || data.user.username}`
       ));
 
       // Zur App weiterleiten
@@ -157,7 +157,7 @@ function LoginForm() {
 
       const data = await response.json();
       notifications.show(successToast(
-        `Willkommen zurück, ${data.user.displayName || data.user.username}!`
+        `Angemeldet als ${data.user.displayName || data.user.username}`
       ));
 
       // Zur App weiterleiten
@@ -182,7 +182,7 @@ function LoginForm() {
           <span className="text-highlight">zeiung</span>
         </h1>
         <p className="text-(--text-secondary)">
-          Willkommen zurück
+          Die Sterne haben deine Ankunft vorausgesagt
         </p>
       </div>
 

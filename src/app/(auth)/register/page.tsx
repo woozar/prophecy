@@ -8,6 +8,7 @@ import { startRegistration } from "@simplewebauthn/browser";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { TextInput } from "@/components/TextInput";
+import { PasswordInput } from "@/components/PasswordInput";
 import { GlowBadge } from "@/components/GlowBadge";
 import { successToast, errorToast, infoToast } from "@/lib/toast/toast-styles";
 
@@ -15,28 +16,84 @@ export default function RegisterPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
 
-  const isValid = username.length >= 3;
+  const isUsernameValid = username.length >= 3;
+  const isPasswordValid = password.length >= 8;
+  const doPasswordsMatch = password === passwordConfirm;
+  const isFormValid = isUsernameValid && isPasswordValid && doPasswordsMatch;
 
-  const handleRegister = useCallback(async (e: React.FormEvent) => {
+  const handlePasswordRegister = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid) return;
+    if (!isFormValid) return;
 
     setIsLoading(true);
 
     try {
-      // Prüfen ob WebAuthn unterstützt wird
-      if (!globalThis.PublicKeyCredential) {
+      const response = await fetch("/api/auth/register/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          password,
+          displayName: displayName || username,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
         notifications.show(errorToast(
-          "Browser nicht unterstützt",
-          "Dein Browser unterstützt keine Passkeys. Bitte verwende einen modernen Browser."
+          "Registrierung fehlgeschlagen",
+          data.error || "Fehler bei der Registrierung"
         ));
         setIsLoading(false);
         return;
       }
 
-      // 1. Registration Options vom Server holen
+      notifications.show(successToast(
+        "Registrierung erfolgreich!",
+        "Dein Konto wurde erstellt. Ein Admin muss es noch freigeben."
+      ));
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 1500);
+
+    } catch (err) {
+      console.error("Registration error:", err);
+      notifications.show(errorToast(
+        "Unerwarteter Fehler",
+        "Bitte versuche es erneut."
+      ));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [username, password, displayName, isFormValid, router]);
+
+  const handlePasskeyRegister = useCallback(async () => {
+    if (!isUsernameValid) {
+      notifications.show(errorToast(
+        "Benutzername fehlt",
+        "Bitte gib zuerst einen Benutzernamen ein."
+      ));
+      return;
+    }
+
+    setIsPasskeyLoading(true);
+
+    try {
+      if (!globalThis.PublicKeyCredential) {
+        notifications.show(errorToast(
+          "Browser nicht unterstützt",
+          "Dein Browser unterstützt keine Passkeys."
+        ));
+        setIsPasskeyLoading(false);
+        return;
+      }
+
       const optionsResponse = await fetch("/api/auth/register/options", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -52,13 +109,12 @@ export default function RegisterPage() {
           "Registrierung fehlgeschlagen",
           data.error || "Fehler beim Starten der Registrierung"
         ));
-        setIsLoading(false);
+        setIsPasskeyLoading(false);
         return;
       }
 
       const { options, tempUserId, username: normalizedUsername, displayName: finalDisplayName } = await optionsResponse.json();
 
-      // 2. Passkey erstellen (öffnet Browser-Dialog)
       let credential;
       try {
         credential = await startRegistration({ optionsJSON: options });
@@ -86,11 +142,10 @@ export default function RegisterPage() {
             "Passkey-Erstellung fehlgeschlagen."
           ));
         }
-        setIsLoading(false);
+        setIsPasskeyLoading(false);
         return;
       }
 
-      // 3. Credential an Server senden zur Verifizierung
       const verifyResponse = await fetch("/api/auth/register/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -108,17 +163,15 @@ export default function RegisterPage() {
           "Registrierung fehlgeschlagen",
           data.error || "Fehler bei der Verifizierung"
         ));
-        setIsLoading(false);
+        setIsPasskeyLoading(false);
         return;
       }
 
-      // Erfolg!
       notifications.show(successToast(
         "Registrierung erfolgreich!",
         "Dein Konto wurde erstellt. Ein Admin muss es noch freigeben."
       ));
 
-      // Nach kurzer Verzögerung zur Login-Seite weiterleiten
       setTimeout(() => {
         router.push("/login");
       }, 1500);
@@ -130,9 +183,9 @@ export default function RegisterPage() {
         "Bitte versuche es erneut."
       ));
     } finally {
-      setIsLoading(false);
+      setIsPasskeyLoading(false);
     }
-  }, [username, displayName, isValid, router]);
+  }, [username, displayName, isUsernameValid, router]);
 
   return (
     <Card padding="p-8">
@@ -143,12 +196,12 @@ export default function RegisterPage() {
           <span className="text-highlight">zeiung</span>
         </h1>
         <p className="text-(--text-secondary)">
-          Erstelle ein Konto mit deinem Passkey
+          Dein Schicksal beginnt hier
         </p>
       </div>
 
-      {/* Register Form */}
-      <form onSubmit={handleRegister} className="space-y-4">
+      {/* Password Register Form */}
+      <form onSubmit={handlePasswordRegister} className="space-y-4 mb-6">
         <TextInput
           label="Benutzername"
           placeholder="mindestens 3 Zeichen"
@@ -157,7 +210,7 @@ export default function RegisterPage() {
           onChange={(e) => setUsername(e.currentTarget.value.toLowerCase().replaceAll(/[^a-z0-9_-]/g, ''))}
           error={username.length > 0 && username.length < 3 ? "Mindestens 3 Zeichen" : undefined}
           required
-          disabled={isLoading}
+          disabled={isLoading || isPasskeyLoading}
         />
 
         <TextInput
@@ -166,35 +219,73 @@ export default function RegisterPage() {
           description="Optional - standardmäßig dein Benutzername"
           value={displayName}
           onChange={(e) => setDisplayName(e.currentTarget.value)}
-          disabled={isLoading}
+          disabled={isLoading || isPasskeyLoading}
         />
 
-        <div className="pt-4">
-          <Button
-            type="submit"
-            disabled={isLoading || !isValid}
-            className="w-full"
-          >
-            <span className="flex items-center justify-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z" />
-                <circle cx="16.5" cy="7.5" r=".5" fill="currentColor" />
-              </svg>
-              {isLoading ? "Erstelle Passkey..." : "Mit Passkey registrieren"}
-            </span>
-          </Button>
-        </div>
+        <PasswordInput
+          label="Passwort"
+          placeholder="mindestens 8 Zeichen"
+          value={password}
+          onChange={(e) => setPassword(e.currentTarget.value)}
+          error={password.length > 0 && password.length < 8 ? "Mindestens 8 Zeichen" : undefined}
+          required
+          disabled={isLoading || isPasskeyLoading}
+        />
+
+        <PasswordInput
+          label="Passwort bestätigen"
+          placeholder="Passwort wiederholen"
+          value={passwordConfirm}
+          onChange={(e) => setPasswordConfirm(e.currentTarget.value)}
+          error={passwordConfirm.length > 0 && !doPasswordsMatch ? "Passwörter stimmen nicht überein" : undefined}
+          required
+          disabled={isLoading || isPasskeyLoading}
+        />
+
+        <Button
+          type="submit"
+          disabled={isLoading || isPasskeyLoading || !isFormValid}
+          className="w-full"
+        >
+          {isLoading ? "Registriere..." : "Mit Passwort registrieren"}
+        </Button>
       </form>
+
+      {/* Divider */}
+      <div className="relative mb-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-[rgba(98,125,152,0.3)]"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-3 bg-[rgba(10,25,41,0.95)] text-(--text-muted)">oder</span>
+        </div>
+      </div>
+
+      {/* Passkey Register */}
+      <Button
+        onClick={handlePasskeyRegister}
+        disabled={isPasskeyLoading || isLoading || !isUsernameValid}
+        variant="outline"
+        className="w-full"
+      >
+        <span className="flex items-center justify-center gap-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z" />
+            <circle cx="16.5" cy="7.5" r=".5" fill="currentColor" />
+          </svg>
+          {isPasskeyLoading ? "Erstelle Passkey..." : "Mit Passkey registrieren"}
+        </span>
+      </Button>
 
       {/* Info about passkey */}
       <div className="mt-6 p-3 rounded-lg bg-[rgba(6,182,212,0.1)] border border-[rgba(6,182,212,0.2)]">

@@ -1,8 +1,5 @@
-# syntax=docker/dockerfile:1
-
 # ---- Base ----
 FROM node:22-alpine AS base
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # ---- Dependencies ----
@@ -29,21 +26,26 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV CHECKPOINT_DISABLE=1
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy built assets
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.js ./prisma.config.js
 
 # Set correct permissions for prerender cache
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Copy standalone build
+# Copy standalone build FIRST (includes node_modules with @prisma/client)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Install Prisma CLI with all dependencies AFTER standalone copy
+RUN npm install --no-save prisma@$(node --print 'require("./node_modules/@prisma/client/package.json").version')
 
 # Copy entrypoint script
 COPY --chown=nextjs:nodejs scripts/docker-entrypoint.sh ./docker-entrypoint.sh

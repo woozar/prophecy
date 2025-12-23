@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+set -ex
 
 echo "Running Prisma migrations..."
 npx prisma migrate deploy

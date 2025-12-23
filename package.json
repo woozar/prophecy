@@ -9,11 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "docker:build": "./scripts/docker-build.sh",
-    "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f app"
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@mantine/core": "^8.3.10",

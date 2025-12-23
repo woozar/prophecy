@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback, useMemo, memo } from 'react';
+import { useState, useCallback, useMemo, memo, useEffect } from 'react';
+import { onProphecyRated, type ProphecyRatedEvent } from '@/hooks/useSSE';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal';
@@ -84,6 +85,24 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editTitleError, setEditTitleError] = useState<string | undefined>(undefined);
+
+  // Subscribe to real-time rating updates from other users
+  const handleProphecyRated = useCallback((event: ProphecyRatedEvent) => {
+    if (event.roundId !== round.id) return;
+
+    setProphecies((prev) =>
+      prev.map((p) =>
+        p.id === event.id
+          ? { ...p, averageRating: event.averageRating, ratingCount: event.ratingCount }
+          : p
+      )
+    );
+  }, [round.id]);
+
+  useEffect(() => {
+    const unsubscribe = onProphecyRated(handleProphecyRated);
+    return unsubscribe;
+  }, [handleProphecyRated]);
 
   const now = useMemo(() => new Date(), []);
   const submissionDeadline = useMemo(() => new Date(round.submissionDeadline), [round.submissionDeadline]);
@@ -558,7 +577,7 @@ const ProphecyCard = memo(function ProphecyCard({
       {/* Rating Section */}
       {isRatingOpen && !prophecy.isOwn && (
         <div className="mt-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col md:flex-row md:items-end gap-3 md:gap-4">
             <div className="flex-1">
               <RatingSlider
                 value={localRating}
@@ -569,7 +588,7 @@ const ProphecyCard = memo(function ProphecyCard({
               />
             </div>
             {hasChanged && (
-              <Button onClick={handleSaveRating} className="text-sm px-3 py-1.5">
+              <Button onClick={handleSaveRating} className="text-sm px-3 py-1.5 md:mb-1 w-full md:w-auto">
                 Speichern
               </Button>
             )}

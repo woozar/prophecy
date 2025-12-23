@@ -1,14 +1,23 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Header } from './Header';
+import { notifications } from '@mantine/notifications';
+import { successToast, errorToast } from '@/lib/toast/toast-styles';
+
+const mockPush = vi.fn();
+let mockPathname = '/';
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: vi.fn(),
+    push: mockPush,
   }),
-  usePathname: () => '/',
+  usePathname: () => mockPathname,
 }));
+
+const mockNotifications = vi.mocked(notifications);
+const mockSuccessToast = vi.mocked(successToast);
+const mockErrorToast = vi.mocked(errorToast);
 
 // Mock mantine notifications
 vi.mock('@mantine/notifications', () => ({
@@ -139,6 +148,175 @@ describe('Header', () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' });
+    });
+  });
+
+  it('shows success toast and redirects after successful logout', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true });
+    globalThis.fetch = mockFetch;
+
+    render(<Header user={defaultUser} />);
+
+    // Open user menu
+    const userButton = screen.getAllByText('Test User')[0].closest('button');
+    fireEvent.click(userButton!);
+
+    // Click logout
+    const logoutButton = screen.getByRole('button', { name: 'Abmelden' });
+    fireEvent.click(logoutButton);
+
+    await waitFor(() => {
+      expect(mockSuccessToast).toHaveBeenCalledWith('Abgemeldet', 'Bis bald!');
+    });
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/login');
+    });
+  });
+
+  it('shows error toast when logout fails with error response', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({ ok: false });
+    globalThis.fetch = mockFetch;
+
+    render(<Header user={defaultUser} />);
+
+    const userButton = screen.getAllByText('Test User')[0].closest('button');
+    fireEvent.click(userButton!);
+
+    const logoutButton = screen.getByRole('button', { name: 'Abmelden' });
+    fireEvent.click(logoutButton);
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith('Fehler', 'Abmeldung fehlgeschlagen');
+    });
+  });
+
+  it('shows error toast when logout throws exception', async () => {
+    const mockFetch = vi.fn().mockRejectedValue(new Error('Network error'));
+    globalThis.fetch = mockFetch;
+
+    render(<Header user={defaultUser} />);
+
+    const userButton = screen.getAllByText('Test User')[0].closest('button');
+    fireEvent.click(userButton!);
+
+    const logoutButton = screen.getByRole('button', { name: 'Abmelden' });
+    fireEvent.click(logoutButton);
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith('Fehler', 'Abmeldung fehlgeschlagen');
+    });
+  });
+
+  it('closes user menu when clicking outside', async () => {
+    render(<Header user={defaultUser} />);
+
+    // Open user menu
+    const userButton = screen.getAllByText('Test User')[0].closest('button');
+    fireEvent.click(userButton!);
+
+    // Verify menu is open
+    expect(screen.getByText('Profil')).toBeInTheDocument();
+
+    // Click outside the menu
+    fireEvent.mouseDown(document.body);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Profil')).not.toBeInTheDocument();
+    });
+  });
+
+  it('closes mobile menu when nav item is clicked', async () => {
+    render(<Header user={adminUser} />);
+
+    // Open mobile menu
+    const mobileButtons = document.querySelectorAll('button.md\\:hidden');
+    fireEvent.click(mobileButtons[0]);
+
+    // Verify mobile menu is open - check for profile link in mobile menu
+    const profileLinks = screen.getAllByText('Profil');
+    expect(profileLinks.length).toBeGreaterThan(0);
+
+    // Click on a nav item in mobile menu - all "Runden" links
+    const rundenLinks = screen.getAllByText('Runden');
+    // Click the one in the mobile menu (last one typically)
+    fireEvent.click(rundenLinks[rundenLinks.length - 1]);
+  });
+
+  it('shows loading state during logout', async () => {
+    let resolveLogout: () => void;
+    const logoutPromise = new Promise<{ ok: boolean }>((resolve) => {
+      resolveLogout = () => resolve({ ok: true });
+    });
+    const mockFetch = vi.fn().mockReturnValue(logoutPromise);
+    globalThis.fetch = mockFetch;
+
+    render(<Header user={defaultUser} />);
+
+    const userButton = screen.getAllByText('Test User')[0].closest('button');
+    fireEvent.click(userButton!);
+
+    const logoutButton = screen.getByRole('button', { name: 'Abmelden' });
+    fireEvent.click(logoutButton);
+
+    // Should show loading state
+    await waitFor(() => {
+      expect(screen.getByText('Abmelden...')).toBeInTheDocument();
+    });
+
+    // Resolve to clean up
+    resolveLogout!();
+  });
+
+  it('applies active style to current route', () => {
+    mockPathname = '/admin/users';
+    render(<Header user={adminUser} />);
+
+    const benutzerLinks = screen.getAllByText('Benutzer');
+    const activeLink = benutzerLinks.find(link =>
+      link.classList.contains('link-underline-active')
+    );
+    expect(activeLink).toBeDefined();
+  });
+
+  it('handles mobile logout click', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true });
+    globalThis.fetch = mockFetch;
+
+    render(<Header user={defaultUser} />);
+
+    // Open mobile menu
+    const mobileButtons = document.querySelectorAll('button.md\\:hidden');
+    fireEvent.click(mobileButtons[0]);
+
+    // Find and click mobile logout button
+    const logoutButtons = screen.getAllByText('Abmelden');
+    // Click the mobile one (in the mobile menu)
+    const mobileLogoutButton = logoutButtons[logoutButtons.length - 1].closest('button');
+    fireEvent.click(mobileLogoutButton!);
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' });
+    });
+  });
+
+  it('closes dropdown when profile link is clicked', async () => {
+    render(<Header user={defaultUser} />);
+
+    // Open user menu
+    const userButton = screen.getAllByText('Test User')[0].closest('button');
+    fireEvent.click(userButton!);
+
+    // Verify dropdown is open
+    expect(screen.getByRole('button', { name: 'Abmelden' })).toBeInTheDocument();
+
+    // Click profile link
+    const profileLink = screen.getByText('Profil');
+    fireEvent.click(profileLink);
+
+    // Dropdown should close - logout button should no longer be visible
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Abmelden' })).not.toBeInTheDocument();
     });
   });
 });

@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { UsersManager } from './UsersManager';
 import { MantineProvider } from '@mantine/core';
+import { showSuccessToast, showErrorToast } from '@/lib/toast/toast';
 
 function renderWithMantine(ui: React.ReactElement) {
   return render(<MantineProvider>{ui}</MantineProvider>);
@@ -58,6 +59,9 @@ vi.mock('@/lib/toast/toast', () => ({
   showSuccessToast: vi.fn(),
   showErrorToast: vi.fn(),
 }));
+
+const mockShowSuccessToast = vi.mocked(showSuccessToast);
+const mockShowErrorToast = vi.mocked(showErrorToast);
 
 describe('UsersManager', () => {
   const mockUsersData = [
@@ -284,5 +288,272 @@ describe('UsersManager', () => {
   it('initializes store with provided users', () => {
     render(<UsersManager initialUsers={mockUsersData} />);
     expect(mockSetUsers).toHaveBeenCalledWith(mockUsersData);
+  });
+
+  it('shows error toast when approve fails', async () => {
+    mockUsers = [mockUsersData[0]];
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      json: () => Promise.resolve({ error: 'Approval failed' }),
+    });
+    globalThis.fetch = mockFetch;
+
+    render(<UsersManager initialUsers={[mockUsersData[0]]} />);
+    fireEvent.click(screen.getByTitle('Freigeben'));
+
+    await waitFor(() => {
+      expect(mockShowErrorToast).toHaveBeenCalledWith('Approval failed');
+    });
+  });
+
+  it('shows success toast when approve succeeds', async () => {
+    mockUsers = [mockUsersData[0]];
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ user: { ...mockUsersData[0], status: 'APPROVED' } }),
+    });
+    globalThis.fetch = mockFetch;
+
+    render(<UsersManager initialUsers={[mockUsersData[0]]} />);
+    fireEvent.click(screen.getByTitle('Freigeben'));
+
+    await waitFor(() => {
+      expect(mockShowSuccessToast).toHaveBeenCalledWith('Benutzer freigegeben');
+    });
+    expect(mockUpdateUser).toHaveBeenCalled();
+  });
+
+  it('calls reject API when reject clicked', async () => {
+    mockUsers = [mockUsersData[0]];
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ user: { ...mockUsersData[0], status: 'REJECTED' } }),
+    });
+    globalThis.fetch = mockFetch;
+
+    render(<UsersManager initialUsers={[mockUsersData[0]]} />);
+    fireEvent.click(screen.getByTitle('Ablehnen'));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/admin/users/1',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ status: 'REJECTED' }),
+        })
+      );
+    });
+    expect(mockShowSuccessToast).toHaveBeenCalledWith('Benutzer abgelehnt');
+  });
+
+  it('calls promote to admin API', async () => {
+    mockUsers = [mockUsersData[1]]; // Active non-admin user
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ user: { ...mockUsersData[1], role: 'ADMIN' } }),
+    });
+    globalThis.fetch = mockFetch;
+
+    render(<UsersManager initialUsers={[mockUsersData[1]]} />);
+    fireEvent.click(screen.getByTitle('Zum Admin machen'));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/admin/users/2',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ role: 'ADMIN' }),
+        })
+      );
+    });
+    expect(mockShowSuccessToast).toHaveBeenCalledWith('Zum Admin befördert');
+  });
+
+  it('opens demote confirmation modal for admin', async () => {
+    mockUsers = [mockUsersData[2]]; // Admin user
+    renderWithMantine(<UsersManager initialUsers={[mockUsersData[2]]} />);
+
+    fireEvent.click(screen.getByTitle('Adminrechte entziehen'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Adminrechte entziehen?')).toBeInTheDocument();
+    });
+  });
+
+  it('demotes admin when confirmed', async () => {
+    mockUsers = [mockUsersData[2]]; // Admin user
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ user: { ...mockUsersData[2], role: 'USER' } }),
+    });
+    globalThis.fetch = mockFetch;
+
+    renderWithMantine(<UsersManager initialUsers={[mockUsersData[2]]} />);
+    fireEvent.click(screen.getByTitle('Adminrechte entziehen'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Adminrechte entziehen?')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getAllByRole('button').find(btn =>
+      btn.textContent?.includes('Rechte entziehen')
+    );
+    fireEvent.click(confirmButton!);
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/admin/users/3',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ role: 'USER' }),
+        })
+      );
+    });
+    expect(mockShowSuccessToast).toHaveBeenCalledWith('Adminrechte entzogen');
+  });
+
+  it('opens suspend confirmation modal', async () => {
+    mockUsers = [mockUsersData[1]]; // Active user
+    renderWithMantine(<UsersManager initialUsers={[mockUsersData[1]]} />);
+
+    fireEvent.click(screen.getByTitle('Sperren'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Benutzer sperren?')).toBeInTheDocument();
+    });
+  });
+
+  it('suspends user when confirmed', async () => {
+    mockUsers = [mockUsersData[1]]; // Active user
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ user: { ...mockUsersData[1], status: 'SUSPENDED' } }),
+    });
+    globalThis.fetch = mockFetch;
+
+    renderWithMantine(<UsersManager initialUsers={[mockUsersData[1]]} />);
+    fireEvent.click(screen.getByTitle('Sperren'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Benutzer sperren?')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getAllByRole('button').find(btn =>
+      btn.textContent?.includes('Sperren') && !btn.hasAttribute('title')
+    );
+    fireEvent.click(confirmButton!);
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/admin/users/2',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ status: 'SUSPENDED' }),
+        })
+      );
+    });
+    expect(mockShowSuccessToast).toHaveBeenCalledWith('Benutzer gesperrt');
+  });
+
+  it('reactivates suspended user', async () => {
+    mockUsers = [mockUsersData[3]]; // Suspended user
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ user: { ...mockUsersData[3], status: 'APPROVED' } }),
+    });
+    globalThis.fetch = mockFetch;
+
+    render(<UsersManager initialUsers={[mockUsersData[3]]} />);
+    fireEvent.click(screen.getByTitle('Reaktivieren'));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/admin/users/4',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ status: 'APPROVED' }),
+        })
+      );
+    });
+    expect(mockShowSuccessToast).toHaveBeenCalledWith('Benutzer freigegeben');
+  });
+
+  it('shows error toast when delete fails', async () => {
+    mockUsers = mockUsersData;
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      json: () => Promise.resolve({ error: 'Cannot delete' }),
+    });
+    globalThis.fetch = mockFetch;
+
+    renderWithMantine(<UsersManager initialUsers={mockUsersData} />);
+
+    const deleteButtons = screen.getAllByTitle('Löschen');
+    fireEvent.click(deleteButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('Benutzer löschen?')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getAllByRole('button').find(btn =>
+      btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
+    );
+    fireEvent.click(confirmButton!);
+
+    await waitFor(() => {
+      expect(mockShowErrorToast).toHaveBeenCalledWith('Cannot delete');
+    });
+  });
+
+  it('shows success toast and refetches after successful delete', async () => {
+    mockUsers = mockUsersData;
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
+    mockFetchUsers.mockResolvedValue(undefined);
+    globalThis.fetch = mockFetch;
+
+    renderWithMantine(<UsersManager initialUsers={mockUsersData} />);
+
+    const deleteButtons = screen.getAllByTitle('Löschen');
+    fireEvent.click(deleteButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('Benutzer löschen?')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getAllByRole('button').find(btn =>
+      btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
+    );
+    fireEvent.click(confirmButton!);
+
+    await waitFor(() => {
+      expect(mockShowSuccessToast).toHaveBeenCalledWith('Benutzer gelöscht');
+    });
+    expect(mockFetchUsers).toHaveBeenCalled();
+  });
+
+  it('shows error toast when role change fails', async () => {
+    mockUsers = [mockUsersData[1]];
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      json: () => Promise.resolve({ error: 'Cannot promote' }),
+    });
+    globalThis.fetch = mockFetch;
+
+    render(<UsersManager initialUsers={[mockUsersData[1]]} />);
+    fireEvent.click(screen.getByTitle('Zum Admin machen'));
+
+    await waitFor(() => {
+      expect(mockShowErrorToast).toHaveBeenCalledWith('Cannot promote');
+    });
+  });
+
+  it('falls back to username when displayName is null', () => {
+    const userWithoutDisplayName = {
+      ...mockUsersData[0],
+      displayName: null,
+    };
+    mockUsers = [userWithoutDisplayName];
+    render(<UsersManager initialUsers={[userWithoutDisplayName]} />);
+    expect(screen.getByText('pending_user')).toBeInTheDocument();
   });
 });

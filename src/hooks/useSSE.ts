@@ -14,8 +14,24 @@ type SSEEventType =
   | "prophecy:created"
   | "prophecy:updated"
   | "prophecy:deleted"
-  | "rating:created"
-  | "rating:updated";
+  | "prophecy:rated";
+
+// Custom event for prophecy updates that components can subscribe to
+export interface ProphecyRatedEvent {
+  id: string;
+  roundId: string;
+  averageRating: number | null;
+  ratingCount: number;
+}
+
+// Event emitter for prophecy events
+type ProphecyEventHandler = (data: ProphecyRatedEvent) => void;
+const prophecyRatedHandlers = new Set<ProphecyEventHandler>();
+
+export function onProphecyRated(handler: ProphecyEventHandler): () => void {
+  prophecyRatedHandlers.add(handler);
+  return () => prophecyRatedHandlers.delete(handler);
+}
 
 export function useSSE() {
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -42,6 +58,18 @@ export function useSSE() {
         case "user:created":
         case "user:deleted":
           useUserStore.getState().fetchUsers();
+          break;
+        case "prophecy:rated":
+          // Notify all subscribed components about the rating update
+          prophecyRatedHandlers.forEach((handler) => {
+            handler(data as ProphecyRatedEvent);
+          });
+          break;
+        case "prophecy:created":
+        case "prophecy:updated":
+        case "prophecy:deleted":
+          // These events could be handled by a prophecy store if needed
+          console.log(`[SSE] Prophecy event: ${type}`, data);
           break;
         default:
           console.log(`[SSE] Unhandled event: ${type}`, data);
@@ -88,8 +116,7 @@ export function useSSE() {
       "prophecy:created",
       "prophecy:updated",
       "prophecy:deleted",
-      "rating:created",
-      "rating:updated",
+      "prophecy:rated",
     ];
 
     eventTypes.forEach((type) => {

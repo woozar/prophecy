@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { sseEmitter } from "@/lib/sse/event-emitter";
 import { updateProphecySchema } from "@/lib/schemas/prophecy";
+import { Errors, handleApiError, getProphecyWithAccessCheck } from "@/lib/api";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -10,52 +11,23 @@ interface RouteParams {
 
 // PUT /api/prophecies/[id] - Update own prophecy (only before submission deadline)
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-  const session = await getSession();
-  const { id } = await params;
+  return handleApiError(async () => {
+    const session = await getSession();
+    const { id } = await params;
 
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    if (!session) {
+      throw Errors.unauthorized();
+    }
 
-  try {
-    // Get prophecy with round info
-    const prophecy = await prisma.prophecy.findUnique({
-      where: { id },
-      include: { round: true },
+    const prophecy = await getProphecyWithAccessCheck(id, session.userId, {
+      deadlineErrorMessage: "Einreichungsfrist ist abgelaufen, Bearbeiten nicht mehr möglich",
     });
-
-    if (!prophecy) {
-      return NextResponse.json(
-        { error: "Prophezeiung nicht gefunden" },
-        { status: 404 }
-      );
-    }
-
-    // Check if user owns the prophecy
-    if (prophecy.creatorId !== session.userId) {
-      return NextResponse.json(
-        { error: "Keine Berechtigung" },
-        { status: 403 }
-      );
-    }
-
-    // Check if submission deadline has passed
-    if (new Date() > prophecy.round.submissionDeadline) {
-      return NextResponse.json(
-        { error: "Einreichungsfrist ist abgelaufen, Bearbeiten nicht mehr möglich" },
-        { status: 400 }
-      );
-    }
 
     const body = await request.json();
     const parsed = updateProphecySchema.safeParse(body);
 
     if (!parsed.success) {
-      const firstError = parsed.error.errors[0];
-      return NextResponse.json(
-        { error: firstError.message },
-        { status: 400 }
-      );
+      throw Errors.badRequest(parsed.error.errors[0].message);
     }
 
     const { title, description } = parsed.data;
@@ -80,7 +52,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       data: {
         ...updatedProphecy,
         averageRating: prophecy.averageRating,
-        ratingCount: 0,
+        ratingCount: prophecy.ratingCount,
         userRating: null,
         isOwn: true,
       },
@@ -90,58 +62,27 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       prophecy: {
         ...updatedProphecy,
         averageRating: prophecy.averageRating,
-        ratingCount: 0,
+        ratingCount: prophecy.ratingCount,
         userRating: null,
         isOwn: true,
       },
     });
-  } catch (error) {
-    console.error("Error updating prophecy:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Aktualisieren der Prophezeiung" },
-      { status: 500 }
-    );
-  }
+  }, "Error updating prophecy:");
 }
 
 // DELETE /api/prophecies/[id] - Delete own prophecy (only before submission deadline)
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  const session = await getSession();
-  const { id } = await params;
+  return handleApiError(async () => {
+    const session = await getSession();
+    const { id } = await params;
 
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    if (!session) {
+      throw Errors.unauthorized();
+    }
 
-  try {
-    // Get prophecy with round info
-    const prophecy = await prisma.prophecy.findUnique({
-      where: { id },
-      include: { round: true },
+    const prophecy = await getProphecyWithAccessCheck(id, session.userId, {
+      deadlineErrorMessage: "Einreichungsfrist ist abgelaufen, Löschen nicht mehr möglich",
     });
-
-    if (!prophecy) {
-      return NextResponse.json(
-        { error: "Prophezeiung nicht gefunden" },
-        { status: 404 }
-      );
-    }
-
-    // Check if user owns the prophecy
-    if (prophecy.creatorId !== session.userId) {
-      return NextResponse.json(
-        { error: "Keine Berechtigung" },
-        { status: 403 }
-      );
-    }
-
-    // Check if submission deadline has passed
-    if (new Date() > prophecy.round.submissionDeadline) {
-      return NextResponse.json(
-        { error: "Einreichungsfrist ist abgelaufen, Löschen nicht mehr möglich" },
-        { status: 400 }
-      );
-    }
 
     await prisma.prophecy.delete({
       where: { id },
@@ -154,11 +95,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error deleting prophecy:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Löschen der Prophezeiung" },
-      { status: 500 }
-    );
-  }
+  }, "Error deleting prophecy:");
 }

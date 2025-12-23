@@ -49,7 +49,9 @@ describe('UserAvatar', () => {
     const { container: container2 } = render(<UserAvatar username="consistent" />);
 
     // Both should have the same color classes
-    expect(container1.firstChild?.className).toBe(container2.firstChild?.className);
+    const el1 = container1.firstChild as HTMLElement;
+    const el2 = container2.firstChild as HTMLElement;
+    expect(el1.className).toBe(el2.className);
   });
 
   it('applies custom className', () => {

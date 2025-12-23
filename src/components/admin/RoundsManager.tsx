@@ -72,7 +72,13 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
     resetForm();
   }, [resetForm]);
 
-  const handleCreate = useCallback(async () => {
+  const validateAndSubmit = useCallback(async (
+    schema: typeof createRoundSchema | typeof updateRoundSchema,
+    url: string,
+    method: 'POST' | 'PUT',
+    successMessage: string,
+    errorMessage: string
+  ) => {
     const input = {
       title: title.trim(),
       submissionDeadline,
@@ -80,7 +86,7 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
       fulfillmentDate,
     };
 
-    const parsed = createRoundSchema.safeParse(input);
+    const parsed = schema.safeParse(input);
     if (!parsed.success) {
       const errors: FormErrors = {};
       for (const err of parsed.error.errors) {
@@ -94,19 +100,19 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
     setFormErrors({});
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/rounds', {
-        method: 'POST',
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(parsed.data),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Fehler beim Erstellen');
+        throw new Error(data.error || errorMessage);
       }
 
       await res.json();
-      showSuccessToast('Runde erstellt');
+      showSuccessToast(successMessage);
       closeModals();
     } catch (error) {
       showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
@@ -115,50 +121,26 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
     }
   }, [title, submissionDeadline, ratingDeadline, fulfillmentDate, closeModals]);
 
-  const handleUpdate = useCallback(async () => {
+  const handleCreate = useCallback(() => {
+    return validateAndSubmit(
+      createRoundSchema,
+      '/api/rounds',
+      'POST',
+      'Runde erstellt',
+      'Fehler beim Erstellen'
+    );
+  }, [validateAndSubmit]);
+
+  const handleUpdate = useCallback(() => {
     if (!editingRound) return;
-
-    const input = {
-      title: title.trim(),
-      submissionDeadline,
-      ratingDeadline,
-      fulfillmentDate,
-    };
-
-    const parsed = updateRoundSchema.safeParse(input);
-    if (!parsed.success) {
-      const errors: FormErrors = {};
-      for (const err of parsed.error.errors) {
-        const field = err.path[0] as keyof FormErrors;
-        if (!errors[field]) errors[field] = err.message;
-      }
-      setFormErrors(errors);
-      return;
-    }
-
-    setFormErrors({});
-    setIsSubmitting(true);
-    try {
-      const res = await fetch(`/api/rounds/${editingRound.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsed.data),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Fehler beim Aktualisieren');
-      }
-
-      await res.json();
-      showSuccessToast('Runde aktualisiert');
-      closeModals();
-    } catch (error) {
-      showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [editingRound, title, submissionDeadline, ratingDeadline, fulfillmentDate, closeModals]);
+    return validateAndSubmit(
+      updateRoundSchema,
+      `/api/rounds/${editingRound.id}`,
+      'PUT',
+      'Runde aktualisiert',
+      'Fehler beim Aktualisieren'
+    );
+  }, [editingRound, validateAndSubmit]);
 
   const handleDelete = useCallback(async () => {
     if (!deletingRoundId) return;

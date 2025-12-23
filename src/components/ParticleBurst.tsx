@@ -2,29 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo, memo } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-
-interface Particle {
-  id: number;
-  x: number;
-  y: number;
-  angle: number;
-  speed: number;
-  opacity: number;
-  size: number;
-  color: string;
-  wobble: number; // random wobble factor for chaotic movement
-}
-
-// Mystical color palette matching the app theme
-const PARTICLE_COLORS = [
-  "#22d3ee", // cyan-400
-  "#14b8a6", // teal-500
-  "#06b6d4", // cyan-500
-  "#10b981", // emerald-500
-  "#8b5cf6", // violet-500
-  "#a855f7", // purple-500
-  "#6366f1", // indigo-500
-];
+import { type AngularParticle, MYSTICAL_COLORS } from "@/types/particle";
 
 interface ParticleBurstConfig {
   /** Number of particles per burst (default: 8) */
@@ -57,12 +35,12 @@ export const ParticleBurst = memo(function ParticleBurst({
   mobileMaxInterval = 400,
   speed = 3,
   fadeDuration = 1000,
-  colors = PARTICLE_COLORS,
+  colors = MYSTICAL_COLORS,
   minSize = 2,
   maxSize = 6,
 }: Readonly<ParticleBurstConfig>) {
   const reducedMotion = useReducedMotion();
-  const [particles, setParticles] = useState<Particle[]>([]);
+  const [particles, setParticles] = useState<AngularParticle[]>([]);
   const [isTouching, setIsTouching] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const mousePos = useRef({ x: 0, y: 0 });
@@ -134,7 +112,7 @@ export const ParticleBurst = memo(function ParticleBurst({
     // Don't create particles if mouse hasn't moved (still at 0,0)
     if (x === 0 && y === 0) return;
 
-    const newParticles: Particle[] = [];
+    const newParticles: AngularParticle[] = [];
     const angleStep = (Math.PI * 2) / particleCount;
 
     for (let i = 0; i < particleCount; i++) {
@@ -162,7 +140,7 @@ export const ParticleBurst = memo(function ParticleBurst({
 
     // Schedule removal after fade duration
     const particleIds = new Set(newParticles.map((np) => np.id));
-    const removeParticles = (prev: Particle[]) => prev.filter((p) => !particleIds.has(p.id));
+    const removeParticles = (prev: AngularParticle[]) => prev.filter((p) => !particleIds.has(p.id));
     setTimeout(() => setParticles(removeParticles), fadeDuration + 100);
   }, [particleCount, speed, fadeDuration, minSize, maxSize, colors]);
 
@@ -196,8 +174,8 @@ export const ParticleBurst = memo(function ParticleBurst({
 
     const fadePerFrame = 1 / (fadeDuration / 16.67); // ~60fps
 
-    const updateParticle = (p: Particle): Particle => {
-      const wobbleAmount = Math.sin(p.wobble) * 0.3;
+    const updateParticle = (p: AngularParticle): AngularParticle => {
+      const wobbleAmount = Math.sin(p.wobble ?? 0) * 0.3;
       const newAngle = p.angle + wobbleAmount;
       return {
         ...p,
@@ -206,7 +184,7 @@ export const ParticleBurst = memo(function ParticleBurst({
         angle: p.angle + (Math.random() - 0.5) * 0.2,
         opacity: Math.max(0, p.opacity - fadePerFrame),
         speed: p.speed * 0.97,
-        wobble: p.wobble + 0.3,
+        wobble: (p.wobble ?? 0) + 0.3,
       };
     };
 

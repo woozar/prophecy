@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const baseRoundSchema = z.object({
-  title: z.string().min(1, "Titel ist erforderlich").max(100, "Titel darf maximal 100 Zeichen haben"),
+  title: z.string().trim().min(1, "Titel ist erforderlich").max(100, "Titel darf maximal 100 Zeichen haben"),
   submissionDeadline: z.coerce.date({ required_error: "Einreichungs-Deadline ist erforderlich" }),
   ratingDeadline: z.coerce.date({ required_error: "Bewertungs-Deadline ist erforderlich" }),
   fulfillmentDate: z.coerce.date({ required_error: "Stichtag ist erforderlich" }),

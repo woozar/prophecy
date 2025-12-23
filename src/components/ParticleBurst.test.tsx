@@ -75,7 +75,7 @@ describe('ParticleBurst', () => {
 
     // Simulate mouse move
     act(() => {
-      fireEvent.mouseMove(globalThis, { clientX: 100, clientY: 100 });
+      fireEvent.mouseMove(window, { clientX: 100, clientY: 100 });
     });
 
     // Wait for burst interval
@@ -92,7 +92,7 @@ describe('ParticleBurst', () => {
 
     // Simulate mouse move
     act(() => {
-      fireEvent.mouseMove(globalThis, { clientX: 100, clientY: 100 });
+      fireEvent.mouseMove(window, { clientX: 100, clientY: 100 });
     });
 
     // Wait for burst interval
@@ -117,7 +117,7 @@ describe('ParticleBurst', () => {
 
     // Simulate mouse move
     act(() => {
-      fireEvent.mouseMove(globalThis, { clientX: 100, clientY: 100 });
+      fireEvent.mouseMove(window, { clientX: 100, clientY: 100 });
     });
 
     // Manually trigger first burst by waiting for first interval (won't happen with 100s interval)
@@ -155,7 +155,7 @@ describe('ParticleBurst', () => {
 
     // Simulate touch start
     act(() => {
-      fireEvent.touchStart(globalThis, {
+      fireEvent.touchStart(window, {
         touches: [{ clientX: 100, clientY: 100 }]
       });
     });
@@ -195,7 +195,7 @@ describe('ParticleBurst', () => {
 
     // Simulate touch start and move
     act(() => {
-      fireEvent.touchStart(globalThis, {
+      fireEvent.touchStart(window, {
         touches: [{ clientX: 100, clientY: 100 }]
       });
     });
@@ -209,7 +209,7 @@ describe('ParticleBurst', () => {
 
     // Simulate touch end
     act(() => {
-      fireEvent.touchEnd(globalThis);
+      fireEvent.touchEnd(window);
     });
 
     // Wait longer - no new particles should be created after touch end
@@ -235,7 +235,7 @@ describe('ParticleBurst', () => {
 
     // Simulate mouse move
     act(() => {
-      fireEvent.mouseMove(globalThis, { clientX: 100, clientY: 100 });
+      fireEvent.mouseMove(window, { clientX: 100, clientY: 100 });
     });
 
     // Wait for burst

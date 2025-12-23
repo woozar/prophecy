@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, memo, useMemo } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { type AngularParticle } from "@/types/particle";
 
 interface RatingSliderProps {
   value?: number;
@@ -12,18 +13,7 @@ interface RatingSliderProps {
   disabled?: boolean;
 }
 
-interface Particle {
-  id: number;
-  x: number;
-  y: number;
-  angle: number;
-  speed: number;
-  opacity: number;
-  size: number;
-  color: string;
-}
-
-const BURST_COLORS = ["#22d3ee", "#14b8a6", "#8b5cf6", "#a855f7"];
+const SLIDER_BURST_COLORS = ["#22d3ee", "#14b8a6", "#8b5cf6", "#a855f7"];
 
 function getSliderColor(value: number): string {
   if (value <= -5) return "#ef4444"; // red
@@ -43,7 +33,7 @@ export const RatingSlider = memo(function RatingSlider({
 }: Readonly<RatingSliderProps>) {
   const reducedMotion = useReducedMotion();
   const [internalValue, setInternalValue] = useState(0);
-  const [particles, setParticles] = useState<Particle[]>([]);
+  const [particles, setParticles] = useState<AngularParticle[]>([]);
   const sliderRef = useRef<HTMLInputElement>(null);
   const particleIdRef = useRef(0);
   const lastValueRef = useRef<number | null>(null);
@@ -51,7 +41,7 @@ export const RatingSlider = memo(function RatingSlider({
   const value = controlledValue ?? internalValue;
 
   const createBurst = useCallback((thumbX: number, thumbY: number) => {
-    const newParticles: Particle[] = [];
+    const newParticles: AngularParticle[] = [];
     const particleCount = 6;
 
     for (let i = 0; i < particleCount; i++) {
@@ -64,7 +54,7 @@ export const RatingSlider = memo(function RatingSlider({
         speed: 2 + Math.random() * 2,
         opacity: 1,
         size: 2 + Math.random() * 3,
-        color: BURST_COLORS[Math.floor(Math.random() * BURST_COLORS.length)],
+        color: SLIDER_BURST_COLORS[Math.floor(Math.random() * SLIDER_BURST_COLORS.length)],
       });
     }
 
@@ -75,7 +65,7 @@ export const RatingSlider = memo(function RatingSlider({
     const startTime = Date.now();
     const duration = 400;
 
-    const updateParticle = (p: Particle, progress: number): Particle => ({
+    const updateParticle = (p: AngularParticle, progress: number): AngularParticle => ({
       ...p,
       x: p.x + Math.cos(p.angle) * p.speed,
       y: p.y + Math.sin(p.angle) * p.speed,
@@ -83,10 +73,10 @@ export const RatingSlider = memo(function RatingSlider({
       speed: p.speed * 0.95,
     });
 
-    const updateParticles = (prev: Particle[], progress: number) =>
+    const updateParticles = (prev: AngularParticle[], progress: number) =>
       prev.map((p) => (particleIds.has(p.id) ? updateParticle(p, progress) : p));
 
-    const removeParticles = (prev: Particle[]) =>
+    const removeParticles = (prev: AngularParticle[]) =>
       prev.filter((p) => !particleIds.has(p.id));
 
     const animate = () => {

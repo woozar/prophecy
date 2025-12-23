@@ -1,4 +1,19 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: prophezeiung-app
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://prophezeiung:prophezeiung_dev@db:5432/prophezeiung
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
   db:
     image: postgres:16-alpine
     container_name: prophezeiung-db

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { notifications } from "@mantine/notifications";
@@ -11,7 +11,7 @@ import { TextInput } from "@/components/TextInput";
 import { PasswordInput } from "@/components/PasswordInput";
 import { successToast, errorToast, infoToast, warningToast } from "@/lib/toast/toast-styles";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
@@ -273,5 +273,13 @@ export default function LoginPage() {
         </p>
       </div>
     </Card>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<Card padding="p-8"><div className="text-center">Laden...</div></Card>}>
+      <LoginForm />
+    </Suspense>
   );
 }

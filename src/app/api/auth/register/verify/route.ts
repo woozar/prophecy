@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyRegistrationResponse } from "@simplewebauthn/server";
-import type { RegistrationResponseJSON } from "@simplewebauthn/types";
+import { verifyRegistrationResponse, type RegistrationResponseJSON } from "@simplewebauthn/server";
 import { prisma } from "@/lib/db/prisma";
 import { webauthnConfig, getChallenge, clearChallenge } from "@/lib/auth/webauthn";
 import { cookies } from "next/headers";

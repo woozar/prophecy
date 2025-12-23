@@ -11,7 +11,15 @@ export const Footer = memo(function Footer() {
         <div className="flex items-center justify-between h-12">
           {/* Copyright */}
           <p className="text-xs text-(--text-muted)">
-            &copy; {currentYear} Prophezeiung
+            &copy; {currentYear}{" "}
+            <a
+              href="https://github.com/woozar/prophecy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-(--accent-primary) transition-colors duration-200"
+            >
+              Prophezeiung
+            </a>
           </p>
 
           {/* Version / Links */}

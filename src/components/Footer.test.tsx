@@ -20,9 +20,11 @@ describe('Footer', () => {
     expect(screen.getByRole('contentinfo')).toBeInTheDocument();
   });
 
-  it('displays current year in copyright', () => {
+  it('displays current year in copyright with link to GitHub', () => {
     render(<Footer />);
-    expect(screen.getByText(/© 2025 Prophezeiung/)).toBeInTheDocument();
+    expect(screen.getByText(/© 2025/)).toBeInTheDocument();
+    const link = screen.getByRole('link', { name: 'Prophezeiung' });
+    expect(link).toHaveAttribute('href', 'https://github.com/woozar/prophecy');
   });
 
   it('displays version number', () => {

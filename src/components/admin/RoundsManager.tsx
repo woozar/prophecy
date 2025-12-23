@@ -6,7 +6,7 @@ import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { TextInput } from '@/components/TextInput';
-import { GlowBadge } from '@/components/GlowBadge';
+import { RoundStatusBadge } from '@/components/RoundStatusBadge';
 import { useRoundStore, type Round } from '@/store/useRoundStore';
 import { showSuccessToast, showErrorToast } from '@/lib/toast/toast';
 import { createRoundSchema, updateRoundSchema } from '@/lib/schemas/round';
@@ -174,18 +174,6 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
     return title.trim() && submissionDeadline && ratingDeadline && fulfillmentDate;
   }, [title, submissionDeadline, ratingDeadline, fulfillmentDate]);
 
-  const getRoundStatus = (round: Round) => {
-    const now = new Date();
-    const submission = new Date(round.submissionDeadline);
-    const rating = new Date(round.ratingDeadline);
-    const fulfillment = new Date(round.fulfillmentDate);
-
-    if (now < submission) return { label: 'Einreichung offen', color: 'green' as const };
-    if (now < rating) return { label: 'Bewertung offen', color: 'cyan' as const };
-    if (now < fulfillment) return { label: 'Wartet auf Stichtag', color: 'yellow' as const };
-    return { label: 'Abgeschlossen', color: 'gray' as const };
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('de-DE', {
       day: '2-digit',
@@ -218,17 +206,13 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
             <p className="text-center text-(--text-muted)">Keine Runden vorhanden. Erstelle die erste Runde!</p>
           </Card>
         ) : (
-          rounds.map((round) => {
-            const status = getRoundStatus(round);
-            return (
+          rounds.map((round) => (
               <Card key={round.id} padding="p-5">
                 <div className="flex flex-row items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-white truncate">{round.title}</h3>
-                      <GlowBadge size="sm" color={status.color} className="self-start">
-                        {status.label}
-                      </GlowBadge>
+                      <RoundStatusBadge round={round} variant="full" />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
@@ -269,8 +253,7 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
                   </div>
                 </div>
               </Card>
-            );
-          })
+          ))
         )}
       </div>
 

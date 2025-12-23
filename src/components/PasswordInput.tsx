@@ -3,6 +3,7 @@
 import { memo, forwardRef, InputHTMLAttributes, useId, useState, useCallback } from "react";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { Button } from "./Button";
+import { RequiredAsterisk } from "./RequiredAsterisk";
 
 interface PasswordInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "size" | "type"> {
   label?: string;
@@ -28,7 +29,7 @@ export const PasswordInput = memo(forwardRef<HTMLInputElement, Readonly<Password
             className="text-sm font-medium text-(--text-primary)"
           >
             {label}
-            {props.required && <span className="text-red-400 ml-1">*</span>}
+            {props.required && <RequiredAsterisk />}
           </label>
         )}
         {description && (

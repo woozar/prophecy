@@ -331,7 +331,7 @@ describe('RoundsManager', () => {
 
     mockRounds = [roundWaiting];
     renderWithMantine(<RoundsManager initialRounds={[roundWaiting]} />);
-    expect(screen.getByText('Wartet auf Stichtag')).toBeInTheDocument();
+    expect(screen.getByText('Läuft')).toBeInTheDocument();
   });
 
   it('shows completed status when fulfillment date passed', () => {

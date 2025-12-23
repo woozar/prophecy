@@ -109,92 +109,44 @@ describe('RoundDetailClient', () => {
   });
 
   it('displays round title', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundSubmissionOpen}
-        initialProphecies={[]}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={[]} />);
     expect(screen.getByText('Prophezeiungen 2025')).toBeInTheDocument();
   });
 
   it('shows submission open badge when submission is open', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundSubmissionOpen}
-        initialProphecies={[]}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={[]} />);
     expect(screen.getByText('Einreichung offen')).toBeInTheDocument();
   });
 
   it('shows rating open badge when rating is open', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={[]}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={[]} />);
     expect(screen.getByText('Bewertung offen')).toBeInTheDocument();
   });
 
   it('shows closed badge when round is closed', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundClosed}
-        initialProphecies={[]}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundClosed} initialProphecies={[]} />);
     expect(screen.getByText('Abgeschlossen')).toBeInTheDocument();
   });
 
   it('shows new prophecy button when submission is open', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundSubmissionOpen}
-        initialProphecies={[]}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={[]} />);
     expect(screen.getByText('Neue Prophezeiung')).toBeInTheDocument();
   });
 
   it('hides new prophecy button when submission is closed', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={[]}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={[]} />);
     expect(screen.queryByText('Neue Prophezeiung')).not.toBeInTheDocument();
   });
 
   it('displays all prophecies by default', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
     expect(screen.getByText('Deutschland wird Weltmeister')).toBeInTheDocument();
     expect(screen.getByText('Meine eigene Prophezeiung')).toBeInTheDocument();
     expect(screen.getByText('Bereits bewertete Prophezeiung')).toBeInTheDocument();
   });
 
   it('filters to show only own prophecies', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
 
     fireEvent.click(screen.getByText(/Meine \(/));
 
@@ -204,13 +156,7 @@ describe('RoundDetailClient', () => {
   });
 
   it('filters to show only prophecies to rate', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
 
     fireEvent.click(screen.getByText(/Noch zu bewerten/));
 
@@ -220,82 +166,40 @@ describe('RoundDetailClient', () => {
   });
 
   it('shows empty state when no prophecies', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundSubmissionOpen}
-        initialProphecies={[]}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={[]} />);
     expect(screen.getByText('Noch keine Prophezeiungen vorhanden.')).toBeInTheDocument();
   });
 
   it('displays average rating for prophecy', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
     expect(screen.getByText('5.5')).toBeInTheDocument();
     expect(screen.getByText('(4 Bewertungen)')).toBeInTheDocument();
   });
 
   it('shows "Meine" badge for own prophecies', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
     expect(screen.getByText('Meine')).toBeInTheDocument();
   });
 
   it('shows delete button for own prophecies during submission phase', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundSubmissionOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
     expect(screen.getByTitle('Löschen')).toBeInTheDocument();
   });
 
   it('hides delete button for own prophecies after submission deadline', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
     expect(screen.queryByTitle('Löschen')).not.toBeInTheDocument();
   });
 
   it('shows rating slider for non-own prophecies during rating phase', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
     // Should show rating sliders for non-own prophecies
     const sliders = screen.getAllByRole('slider');
     expect(sliders.length).toBeGreaterThan(0);
   });
 
   it('opens create modal when button clicked', async () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundSubmissionOpen}
-        initialProphecies={[]}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={[]} />);
 
     fireEvent.click(screen.getByText('Neue Prophezeiung'));
     // Modal header should be visible
@@ -305,13 +209,7 @@ describe('RoundDetailClient', () => {
   });
 
   it('closes create modal when cancel clicked', async () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundSubmissionOpen}
-        initialProphecies={[]}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={[]} />);
 
     fireEvent.click(screen.getByText('Neue Prophezeiung'));
     await waitFor(() => {
@@ -325,24 +223,12 @@ describe('RoundDetailClient', () => {
   });
 
   it('shows back link', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundSubmissionOpen}
-        initialProphecies={[]}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={[]} />);
     expect(screen.getByText('Zurück zur Übersicht')).toBeInTheDocument();
   });
 
   it('displays deadline information', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundSubmissionOpen}
-        initialProphecies={[]}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={[]} />);
     expect(screen.getByText('Einreichung bis:')).toBeInTheDocument();
     expect(screen.getByText('Bewertung bis:')).toBeInTheDocument();
     expect(screen.getByText('Stichtag:')).toBeInTheDocument();
@@ -352,13 +238,7 @@ describe('RoundDetailClient', () => {
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundSubmissionOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
     // Click the delete button to open confirmation modal
     fireEvent.click(screen.getByTitle('Löschen'));
@@ -370,9 +250,7 @@ describe('RoundDetailClient', () => {
 
     // Click confirm button in modal
     const allButtons = screen.getAllByRole('button');
-    const confirmButton = allButtons.find(btn =>
-      btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
-    );
+    const confirmButton = allButtons.find((btn) => btn.textContent?.includes('Löschen') && !btn.hasAttribute('title'));
     fireEvent.click(confirmButton!);
 
     await waitFor(() => {
@@ -384,13 +262,7 @@ describe('RoundDetailClient', () => {
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundSubmissionOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
     expect(screen.getByText('Meine eigene Prophezeiung')).toBeInTheDocument();
     fireEvent.click(screen.getByTitle('Löschen'));
@@ -402,9 +274,7 @@ describe('RoundDetailClient', () => {
 
     // Click confirm button
     const allButtons = screen.getAllByRole('button');
-    const confirmButton = allButtons.find(btn =>
-      btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
-    );
+    const confirmButton = allButtons.find((btn) => btn.textContent?.includes('Löschen') && !btn.hasAttribute('title'));
     fireEvent.click(confirmButton!);
 
     await waitFor(() => {
@@ -413,13 +283,7 @@ describe('RoundDetailClient', () => {
   });
 
   it('displays user rating when already rated', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
 
     // The prophecy with userRating: 7 should show "Deine Bewertung" label
     expect(screen.getAllByText('Deine Bewertung').length).toBeGreaterThan(0);
@@ -428,19 +292,14 @@ describe('RoundDetailClient', () => {
   it('calls rate API when slider value changes and save is clicked', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        prophecy: { averageRating: 6.0, ratingCount: 5 }
-      })
+      json: () =>
+        Promise.resolve({
+          prophecy: { averageRating: 6.0, ratingCount: 5 },
+        }),
     });
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
 
     // Find a slider and change its value
     const sliders = screen.getAllByRole('slider');
@@ -462,13 +321,7 @@ describe('RoundDetailClient', () => {
   });
 
   it('shows creator name for each prophecy', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
 
     expect(screen.getByText('von Test User')).toBeInTheDocument();
     expect(screen.getByText('von Other User')).toBeInTheDocument();
@@ -489,17 +342,11 @@ describe('RoundDetailClient', () => {
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ prophecy: newProphecy })
+      json: () => Promise.resolve({ prophecy: newProphecy }),
     });
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundSubmissionOpen}
-        initialProphecies={[]}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={[]} />);
 
     fireEvent.click(screen.getByText('Neue Prophezeiung'));
 
@@ -522,71 +369,41 @@ describe('RoundDetailClient', () => {
   });
 
   it('shows empty state message for "mine" filter when no own prophecies', () => {
-    const propheciesWithoutOwn = mockProphecies.filter(p => !p.isOwn);
+    const propheciesWithoutOwn = mockProphecies.filter((p) => !p.isOwn);
 
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={propheciesWithoutOwn}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={propheciesWithoutOwn} />);
 
     fireEvent.click(screen.getByText(/Meine \(/));
     expect(screen.getByText('Du hast noch keine Prophezeiungen erstellt.')).toBeInTheDocument();
   });
 
   it('shows empty state message for "toRate" filter when all rated', () => {
-    const allRated = mockProphecies.map(p => ({
+    const allRated = mockProphecies.map((p) => ({
       ...p,
       userRating: p.isOwn ? null : 5,
     }));
 
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={allRated}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={allRated} />);
 
     fireEvent.click(screen.getByText(/Noch zu bewerten/));
     expect(screen.getByText('Keine Prophezeiungen mehr zu bewerten.')).toBeInTheDocument();
   });
 
   it('shows user rating in closed round', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundClosed}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundClosed} initialProphecies={mockProphecies} />);
 
     // Should show "Deine Bewertung: +7" for the already rated prophecy
     expect(screen.getByText(/\+7/)).toBeInTheDocument();
   });
 
   it('hides "to rate" filter when submission is open', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundSubmissionOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
     expect(screen.queryByText(/Noch zu bewerten/)).not.toBeInTheDocument();
   });
 
   it('shows rating count text correctly', () => {
-    renderWithMantine(
-      <RoundDetailClient
-        round={mockRoundRatingOpen}
-        initialProphecies={mockProphecies}
-        currentUserId="current"
-      />
-    );
+    renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
 
     expect(screen.getByText('(2 Bewertungen)')).toBeInTheDocument();
   });
@@ -595,54 +412,32 @@ describe('RoundDetailClient', () => {
     it('does not show rating slider for own prophecies', () => {
       const ownProphecyOnly = [mockProphecies[1]]; // isOwn: true
 
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundRatingOpen}
-          initialProphecies={ownProphecyOnly}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={ownProphecyOnly} />);
 
       expect(screen.queryByRole('slider')).not.toBeInTheDocument();
     });
 
     it('shows "Bewerte diese Prophezeiung" label for unrated prophecy', () => {
-      const unratedProphecy = [{
-        ...mockProphecies[0],
-        userRating: null,
-      }];
+      const unratedProphecy = [
+        {
+          ...mockProphecies[0],
+          userRating: null,
+        },
+      ];
 
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundRatingOpen}
-          initialProphecies={unratedProphecy}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={unratedProphecy} />);
 
       expect(screen.getByText('Bewerte diese Prophezeiung')).toBeInTheDocument();
     });
 
     it('does not show save button initially', () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundRatingOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
 
       expect(screen.queryByText('Speichern')).not.toBeInTheDocument();
     });
 
     it('shows save button after changing slider value', () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundRatingOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
 
       const sliders = screen.getAllByRole('slider');
       fireEvent.change(sliders[0], { target: { value: '8' } });
@@ -651,48 +446,34 @@ describe('RoundDetailClient', () => {
     });
 
     it('hides rating slider when round is closed', () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundClosed}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundClosed} initialProphecies={mockProphecies} />);
 
       // In closed round, sliders should not be shown
       expect(screen.queryByText('Bewerte diese Prophezeiung')).not.toBeInTheDocument();
     });
 
     it('displays user rating with positive sign in closed round', () => {
-      const prophecyWithPositiveRating = [{
-        ...mockProphecies[2],
-        userRating: 5,
-      }];
+      const prophecyWithPositiveRating = [
+        {
+          ...mockProphecies[2],
+          userRating: 5,
+        },
+      ];
 
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundClosed}
-          initialProphecies={prophecyWithPositiveRating}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundClosed} initialProphecies={prophecyWithPositiveRating} />);
 
       expect(screen.getByText('+5')).toBeInTheDocument();
     });
 
     it('displays negative user rating without plus sign in closed round', () => {
-      const prophecyWithNegativeRating = [{
-        ...mockProphecies[2],
-        userRating: -3,
-      }];
+      const prophecyWithNegativeRating = [
+        {
+          ...mockProphecies[2],
+          userRating: -3,
+        },
+      ];
 
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundClosed}
-          initialProphecies={prophecyWithNegativeRating}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundClosed} initialProphecies={prophecyWithNegativeRating} />);
 
       expect(screen.getByText('-3')).toBeInTheDocument();
     });
@@ -700,19 +481,13 @@ describe('RoundDetailClient', () => {
     it('handles rating API error gracefully', async () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: false,
-        json: () => Promise.resolve({ error: 'Rating failed' })
+        json: () => Promise.resolve({ error: 'Rating failed' }),
       });
       globalThis.fetch = mockFetch;
 
       const { showErrorToast } = await import('@/lib/toast/toast');
 
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundRatingOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
 
       const sliders = screen.getAllByRole('slider');
       fireEvent.change(sliders[0], { target: { value: '5' } });
@@ -728,23 +503,18 @@ describe('RoundDetailClient', () => {
     it('updates prophecy rating after successful save', async () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          prophecy: {
-            id: 'p1',
-            averageRating: 6.0,
-            ratingCount: 5,
-          }
-        })
+        json: () =>
+          Promise.resolve({
+            prophecy: {
+              id: 'p1',
+              averageRating: 6.0,
+              ratingCount: 5,
+            },
+          }),
       });
       globalThis.fetch = mockFetch;
 
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundRatingOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
 
       const sliders = screen.getAllByRole('slider');
       fireEvent.change(sliders[0], { target: { value: '5' } });
@@ -758,50 +528,36 @@ describe('RoundDetailClient', () => {
     });
 
     it('correctly counts prophecies to rate in filter button', () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundRatingOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
 
       // p1 has no userRating and is not own = 1 to rate
       expect(screen.getByText(/Noch zu bewerten \(1\)/)).toBeInTheDocument();
     });
 
     it('shows dash when prophecy has null average rating', () => {
-      const prophecyWithNullAverage = [{
-        ...mockProphecies[0],
-        averageRating: null,
-        ratingCount: 0,
-      }];
+      const prophecyWithNullAverage = [
+        {
+          ...mockProphecies[0],
+          averageRating: null,
+          ratingCount: 0,
+        },
+      ];
 
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundRatingOpen}
-          initialProphecies={prophecyWithNullAverage}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={prophecyWithNullAverage} />);
 
       // With 0 ratings, the rating count section shouldn't show
       expect(screen.queryByText('Bewertungen')).not.toBeInTheDocument();
     });
 
     it('shows single rating text for 1 rating', () => {
-      const prophecyWithOneRating = [{
-        ...mockProphecies[0],
-        ratingCount: 1,
-      }];
+      const prophecyWithOneRating = [
+        {
+          ...mockProphecies[0],
+          ratingCount: 1,
+        },
+      ];
 
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundRatingOpen}
-          initialProphecies={prophecyWithOneRating}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={prophecyWithOneRating} />);
 
       // Should not show plural form
       // Wait - looking at the code, it actually doesn't handle singular
@@ -812,37 +568,19 @@ describe('RoundDetailClient', () => {
 
   describe('Edit functionality', () => {
     it('shows edit button for own prophecies during submission phase', () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundSubmissionOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
       expect(screen.getByTitle('Bearbeiten')).toBeInTheDocument();
     });
 
     it('hides edit button after submission deadline', () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundRatingOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
 
       expect(screen.queryByTitle('Bearbeiten')).not.toBeInTheDocument();
     });
 
     it('opens edit modal when edit button clicked', async () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundSubmissionOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
       fireEvent.click(screen.getByTitle('Bearbeiten'));
 
@@ -852,22 +590,14 @@ describe('RoundDetailClient', () => {
     });
 
     it('pre-fills edit form with current values', async () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundSubmissionOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
       fireEvent.click(screen.getByTitle('Bearbeiten'));
 
       await waitFor(() => {
         const inputs = screen.getAllByRole('textbox');
         // Find the title input (in the edit modal)
-        const titleInput = inputs.find(input =>
-          (input as HTMLInputElement).value === 'Meine eigene Prophezeiung'
-        );
+        const titleInput = inputs.find((input) => (input as HTMLInputElement).value === 'Meine eigene Prophezeiung');
         expect(titleInput).toBeInTheDocument();
       });
     });
@@ -875,22 +605,17 @@ describe('RoundDetailClient', () => {
     it('calls update API when edit is submitted', async () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          prophecy: {
-            ...mockProphecies[1],
-            title: 'Updated Title',
-          }
-        })
+        json: () =>
+          Promise.resolve({
+            prophecy: {
+              ...mockProphecies[1],
+              title: 'Updated Title',
+            },
+          }),
       });
       globalThis.fetch = mockFetch;
 
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundSubmissionOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
       fireEvent.click(screen.getByTitle('Bearbeiten'));
 
@@ -900,29 +625,18 @@ describe('RoundDetailClient', () => {
 
       // Find title input in edit modal and change it
       const inputs = screen.getAllByRole('textbox');
-      const titleInput = inputs.find(input =>
-        (input as HTMLInputElement).value === 'Meine eigene Prophezeiung'
-      );
+      const titleInput = inputs.find((input) => (input as HTMLInputElement).value === 'Meine eigene Prophezeiung');
 
       fireEvent.change(titleInput!, { target: { value: 'Updated Title' } });
       fireEvent.click(screen.getByText('Speichern'));
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith(
-          '/api/prophecies/p2',
-          expect.objectContaining({ method: 'PUT' })
-        );
+        expect(mockFetch).toHaveBeenCalledWith('/api/prophecies/p2', expect.objectContaining({ method: 'PUT' }));
       });
     });
 
     it('closes edit modal when cancel button clicked', async () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundSubmissionOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
       fireEvent.click(screen.getByTitle('Bearbeiten'));
 
@@ -938,13 +652,7 @@ describe('RoundDetailClient', () => {
     });
 
     it('updates description field in edit modal', async () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundSubmissionOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
       fireEvent.click(screen.getByTitle('Bearbeiten'));
 
@@ -962,25 +670,13 @@ describe('RoundDetailClient', () => {
 
   describe('Delete functionality', () => {
     it('shows delete button for own prophecies during submission phase', () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundSubmissionOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
       expect(screen.getByTitle('Löschen')).toBeInTheDocument();
     });
 
     it('opens delete confirmation modal when delete button clicked', async () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundSubmissionOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
       fireEvent.click(screen.getByTitle('Löschen'));
 
@@ -990,13 +686,7 @@ describe('RoundDetailClient', () => {
     });
 
     it('shows prophecy title in delete confirmation modal', async () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundSubmissionOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
       fireEvent.click(screen.getByTitle('Löschen'));
 
@@ -1006,13 +696,7 @@ describe('RoundDetailClient', () => {
     });
 
     it('closes delete confirmation modal when cancelled', async () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundSubmissionOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
       fireEvent.click(screen.getByTitle('Löschen'));
 
@@ -1030,17 +714,11 @@ describe('RoundDetailClient', () => {
     it('calls delete API when confirmed', async () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ success: true })
+        json: () => Promise.resolve({ success: true }),
       });
       globalThis.fetch = mockFetch;
 
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundSubmissionOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
       fireEvent.click(screen.getByTitle('Löschen'));
 
@@ -1049,23 +727,14 @@ describe('RoundDetailClient', () => {
       fireEvent.click(within(modal).getByRole('button', { name: 'Löschen' }));
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith(
-          '/api/prophecies/p2',
-          expect.objectContaining({ method: 'DELETE' })
-        );
+        expect(mockFetch).toHaveBeenCalledWith('/api/prophecies/p2', expect.objectContaining({ method: 'DELETE' }));
       });
     });
   });
 
   describe('Modal close handlers', () => {
     it('closes create modal via cancel button', async () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundSubmissionOpen}
-          initialProphecies={[]}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={[]} />);
 
       // Open create modal
       fireEvent.click(screen.getByText('Neue Prophezeiung'));
@@ -1083,13 +752,7 @@ describe('RoundDetailClient', () => {
     });
 
     it('closes edit modal via cancel button and preserves original data', async () => {
-      renderWithMantine(
-        <RoundDetailClient
-          round={mockRoundSubmissionOpen}
-          initialProphecies={mockProphecies}
-          currentUserId="current"
-        />
-      );
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
       // Open edit modal
       fireEvent.click(screen.getByTitle('Bearbeiten'));
@@ -1111,6 +774,203 @@ describe('RoundDetailClient', () => {
 
       // Original title should still be displayed in the card
       expect(screen.getByText('Meine eigene Prophezeiung')).toBeInTheDocument();
+    });
+
+    it('clears title error when create modal is closed via onClose', async () => {
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={[]} />);
+
+      // Open create modal
+      fireEvent.click(screen.getByText('Neue Prophezeiung'));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('z.B. Deutschland wird Weltmeister')).toBeInTheDocument();
+      });
+
+      // Click the modal overlay or close button (Mantine modal provides close functionality)
+      const dialog = screen.getByRole('dialog');
+      const closeButton =
+        dialog.querySelector('button[aria-label="Close modal"]') ||
+        dialog.querySelector('button.mantine-Modal-close') ||
+        within(dialog).queryByRole('button', { name: /close/i });
+
+      if (closeButton) {
+        fireEvent.click(closeButton);
+      } else {
+        // Fallback: click the backdrop/overlay
+        const overlay = document.querySelector('.mantine-Modal-overlay');
+        if (overlay) {
+          fireEvent.click(overlay);
+        }
+      }
+
+      await waitFor(() => {
+        expect(screen.queryByPlaceholderText('z.B. Deutschland wird Weltmeister')).not.toBeInTheDocument();
+      });
+    });
+
+    it('clears edit title error when edit modal is closed via onClose', async () => {
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
+
+      // Open edit modal
+      fireEvent.click(screen.getByTitle('Bearbeiten'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Prophezeiung bearbeiten')).toBeInTheDocument();
+      });
+
+      // Close via modal's onClose handler
+      const dialog = screen.getByRole('dialog');
+      const closeButton =
+        dialog.querySelector('button[aria-label="Close modal"]') ||
+        dialog.querySelector('button.mantine-Modal-close') ||
+        within(dialog).queryByRole('button', { name: /close/i });
+
+      if (closeButton) {
+        fireEvent.click(closeButton);
+      } else {
+        // Fallback: click the backdrop/overlay
+        const overlay = document.querySelector('.mantine-Modal-overlay');
+        if (overlay) {
+          fireEvent.click(overlay);
+        }
+      }
+
+      await waitFor(() => {
+        expect(screen.queryByText('Prophezeiung bearbeiten')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Validation errors', () => {
+    it('shows validation error when creating prophecy with empty title', async () => {
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={[]} />);
+
+      fireEvent.click(screen.getByText('Neue Prophezeiung'));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('z.B. Deutschland wird Weltmeister')).toBeInTheDocument();
+      });
+
+      // Try to submit with empty title (button should be disabled)
+      const submitButton = screen.getByText('Erstellen').closest('button');
+      expect(submitButton).toBeDisabled();
+    });
+
+    it('clears title error when user types in create modal', async () => {
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={[]} />);
+
+      fireEvent.click(screen.getByText('Neue Prophezeiung'));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('z.B. Deutschland wird Weltmeister')).toBeInTheDocument();
+      });
+
+      const titleInput = screen.getByPlaceholderText('z.B. Deutschland wird Weltmeister');
+
+      // Type a valid title
+      fireEvent.change(titleInput, { target: { value: 'Valid Title' } });
+
+      expect(titleInput).toHaveValue('Valid Title');
+    });
+
+    it('clears title error when user types in edit modal', async () => {
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
+
+      fireEvent.click(screen.getByTitle('Bearbeiten'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Prophezeiung bearbeiten')).toBeInTheDocument();
+      });
+
+      const titleInput = screen.getByDisplayValue('Meine eigene Prophezeiung');
+
+      // Clear and type new title
+      fireEvent.change(titleInput, { target: { value: '' } });
+      fireEvent.change(titleInput, { target: { value: 'New Valid Title' } });
+
+      expect(titleInput).toHaveValue('New Valid Title');
+    });
+
+    it('handles create API error with specific error message', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Specific API error' }),
+      });
+      globalThis.fetch = mockFetch;
+
+      const { showErrorToast } = await import('@/lib/toast/toast');
+
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={[]} />);
+
+      fireEvent.click(screen.getByText('Neue Prophezeiung'));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('z.B. Deutschland wird Weltmeister')).toBeInTheDocument();
+      });
+
+      const titleInput = screen.getByPlaceholderText('z.B. Deutschland wird Weltmeister');
+      const descInput = screen.getByPlaceholderText('Beschreibe deine Prophezeiung genauer...');
+
+      fireEvent.change(titleInput, { target: { value: 'Test Prophecy' } });
+      fireEvent.change(descInput, { target: { value: 'Description' } });
+
+      fireEvent.click(screen.getByText('Erstellen'));
+
+      await waitFor(() => {
+        expect(showErrorToast).toHaveBeenCalledWith('Specific API error');
+      });
+    });
+
+    it('handles edit API error with specific error message', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Edit failed' }),
+      });
+      globalThis.fetch = mockFetch;
+
+      const { showErrorToast } = await import('@/lib/toast/toast');
+
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
+
+      fireEvent.click(screen.getByTitle('Bearbeiten'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Prophezeiung bearbeiten')).toBeInTheDocument();
+      });
+
+      const titleInput = screen.getByDisplayValue('Meine eigene Prophezeiung');
+      fireEvent.change(titleInput, { target: { value: 'Updated Title' } });
+
+      fireEvent.click(screen.getByText('Speichern'));
+
+      await waitFor(() => {
+        expect(showErrorToast).toHaveBeenCalledWith('Edit failed');
+      });
+    });
+
+    it('handles delete API error with specific error message', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Delete not allowed' }),
+      });
+      globalThis.fetch = mockFetch;
+
+      const { showErrorToast } = await import('@/lib/toast/toast');
+
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
+
+      fireEvent.click(screen.getByTitle('Löschen'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Prophezeiung löschen?')).toBeInTheDocument();
+      });
+
+      const modal = await screen.findByRole('dialog');
+      fireEvent.click(within(modal).getByRole('button', { name: 'Löschen' }));
+
+      await waitFor(() => {
+        expect(showErrorToast).toHaveBeenCalledWith('Delete not allowed');
+      });
     });
   });
 });

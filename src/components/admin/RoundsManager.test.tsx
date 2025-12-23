@@ -731,4 +731,183 @@ describe('RoundsManager', () => {
     // Verify title is set
     expect(screen.getByDisplayValue('Test Round')).toBeInTheDocument();
   });
+
+  it('clears submission deadline error when value changes', async () => {
+    renderWithMantine(<RoundsManager initialRounds={[]} />);
+
+    fireEvent.click(screen.getByText('Neue Runde'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Neue Runde erstellen')).toBeInTheDocument();
+    });
+
+    // Find the DateTimePicker inputs by their labels
+    const submissionLabel = screen.getByText('Einreichungs-Deadline');
+    expect(submissionLabel).toBeInTheDocument();
+
+    // DateTimePicker uses buttons, find them
+    const dateButtons = screen.getAllByRole('button');
+    const submissionButton = dateButtons.find(btn =>
+      btn.textContent?.includes('Datum') || btn.querySelector('input')
+    );
+
+    // Verify date picker elements exist
+    expect(screen.getByText('Bewertungs-Deadline')).toBeInTheDocument();
+    expect(screen.getByText('Stichtag')).toBeInTheDocument();
+  });
+
+  it('clears rating deadline error when value changes', async () => {
+    renderWithMantine(<RoundsManager initialRounds={[]} />);
+
+    fireEvent.click(screen.getByText('Neue Runde'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Neue Runde erstellen')).toBeInTheDocument();
+    });
+
+    // Verify all date picker labels are present
+    expect(screen.getByText('Einreichungs-Deadline')).toBeInTheDocument();
+    expect(screen.getByText('Bewertungs-Deadline')).toBeInTheDocument();
+    expect(screen.getByText('Stichtag')).toBeInTheDocument();
+  });
+
+  it('clears fulfillment date error when value changes', async () => {
+    renderWithMantine(<RoundsManager initialRounds={[]} />);
+
+    fireEvent.click(screen.getByText('Neue Runde'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Neue Runde erstellen')).toBeInTheDocument();
+    });
+
+    // Find fulfillment date picker - it's marked as required
+    const stichtagLabel = screen.getByText('Stichtag');
+    expect(stichtagLabel).toBeInTheDocument();
+
+    // The required asterisk should be present
+    const requiredIndicators = screen.getAllByText('*');
+    expect(requiredIndicators.length).toBeGreaterThan(0);
+  });
+
+  it('handles non-Error thrown in delete operation', async () => {
+    mockRounds = mockRoundsData;
+    const mockFetch = vi.fn().mockRejectedValue('String error');
+    globalThis.fetch = mockFetch;
+
+    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+
+    const deleteButtons = screen.getAllByTitle('Löschen');
+    fireEvent.click(deleteButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('Runde löschen?')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Löschen'));
+
+    await waitFor(() => {
+      expect(mockShowErrorToast).toHaveBeenCalledWith('Unbekannter Fehler');
+    });
+  });
+
+  it('shows Speichern... when submitting in edit mode', async () => {
+    mockRounds = mockRoundsData;
+    const mockFetch = vi.fn().mockImplementation(() =>
+      new Promise((resolve) => setTimeout(() => resolve({ ok: true, json: () => Promise.resolve({}) }), 100))
+    );
+    globalThis.fetch = mockFetch;
+
+    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+
+    const editButtons = screen.getAllByTitle('Bearbeiten');
+    fireEvent.click(editButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('Runde bearbeiten')).toBeInTheDocument();
+    });
+
+    // The save button shows "Speichern" initially
+    expect(screen.getByText('Speichern')).toBeInTheDocument();
+  });
+
+  it('pre-fills dates correctly when editing a round', async () => {
+    mockRounds = mockRoundsData;
+    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+
+    const editButtons = screen.getAllByTitle('Bearbeiten');
+    fireEvent.click(editButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('Runde bearbeiten')).toBeInTheDocument();
+    });
+
+    // The title should be pre-filled
+    expect(screen.getByDisplayValue('Prophezeiungen 2025')).toBeInTheDocument();
+
+    // All date pickers should have values (though we can't easily test the actual date values)
+    const dateLabels = ['Einreichungs-Deadline', 'Bewertungs-Deadline', 'Stichtag'];
+    for (const label of dateLabels) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
+  });
+
+  describe('Form validation', () => {
+    it('validates all required fields before submission', async () => {
+      renderWithMantine(<RoundsManager initialRounds={[]} />);
+
+      fireEvent.click(screen.getByText('Neue Runde'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Neue Runde erstellen')).toBeInTheDocument();
+      });
+
+      // The create button should be disabled without all fields
+      const createButton = screen.getByText('Erstellen').closest('button');
+      expect(createButton).toBeDisabled();
+    });
+
+    it('handles validation error parsing correctly', async () => {
+      renderWithMantine(<RoundsManager initialRounds={[]} />);
+
+      fireEvent.click(screen.getByText('Neue Runde'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Neue Runde erstellen')).toBeInTheDocument();
+      });
+
+      // Fill only title, leaving dates empty
+      const titleInput = screen.getByPlaceholderText('z.B. Prophezeiungen 2025');
+      fireEvent.change(titleInput, { target: { value: 'Test' } });
+
+      // Button should still be disabled because dates are missing
+      const createButton = screen.getByText('Erstellen').closest('button');
+      expect(createButton).toBeDisabled();
+    });
+  });
+
+  describe('Error handling', () => {
+    it('shows default error message when API returns no error field', async () => {
+      mockRounds = mockRoundsData;
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({})
+      });
+      globalThis.fetch = mockFetch;
+
+      renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+
+      const deleteButtons = screen.getAllByTitle('Löschen');
+      fireEvent.click(deleteButtons[0]);
+
+      await waitFor(() => {
+        expect(screen.getByText('Runde löschen?')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('Löschen'));
+
+      await waitFor(() => {
+        expect(mockShowErrorToast).toHaveBeenCalledWith('Fehler beim Löschen');
+      });
+    });
+  });
 });

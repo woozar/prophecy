@@ -476,4 +476,131 @@ describe('useSSE', () => {
     // Should still only have 1 instance (initial)
     expect(createdInstances).toHaveLength(1);
   });
+
+  it('logs unhandled event types to console', () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    renderHook(() => useSSE());
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+
+    // Find any event listener and trigger it with an unknown event type
+    // We'll use the prophecy:updated listener since it should go to the default case
+    const prophecyUpdatedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'prophecy:updated'
+    )?.[1];
+
+    const eventData = { id: 'prophecy-1', title: 'Updated' };
+    act(() => {
+      prophecyUpdatedListener?.({ data: JSON.stringify(eventData) });
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith('[SSE] Prophecy event: prophecy:updated', eventData);
+    consoleSpy.mockRestore();
+  });
+
+  it('closes existing EventSource before creating new one in connect', async () => {
+    const { unmount, rerender } = renderHook(() => useSSE());
+
+    const firstInstance = createdInstances[0];
+    expect(firstInstance.close).not.toHaveBeenCalled();
+
+    // Trigger error to force reconnect
+    act(() => {
+      firstInstance.onerror?.();
+    });
+
+    // First instance should be closed
+    expect(firstInstance.close).toHaveBeenCalled();
+
+    // Fast-forward to trigger reconnect
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    // New instance should be created
+    expect(createdInstances).toHaveLength(2);
+
+    // Clean up
+    unmount();
+  });
+
+  it('handles prophecy:deleted event and logs to console', () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    renderHook(() => useSSE());
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const prophecyDeletedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'prophecy:deleted'
+    )?.[1];
+
+    const prophecyData = { id: 'prophecy-1' };
+    act(() => {
+      prophecyDeletedListener?.({ data: JSON.stringify(prophecyData) });
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith('[SSE] Prophecy event: prophecy:deleted', prophecyData);
+    consoleSpy.mockRestore();
+  });
+
+  it('handles user:created event and fetches users', async () => {
+    const mockFetchUsers = vi.fn();
+    const { useUserStore } = await import('@/store/useUserStore');
+    vi.mocked(useUserStore).getState = () => ({
+      fetchUsers: mockFetchUsers,
+      users: [],
+      setUsers: vi.fn(),
+      isLoading: false,
+      setLoading: vi.fn(),
+      error: null,
+      updateUser: vi.fn(),
+      setError: vi.fn(),
+    });
+
+    renderHook(() => useSSE());
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const userCreatedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'user:created'
+    )?.[1];
+
+    act(() => {
+      userCreatedListener?.({ data: JSON.stringify({ id: 'user-1' }) });
+    });
+
+    expect(mockFetchUsers).toHaveBeenCalled();
+  });
+
+  it('handles user:deleted event and fetches users', async () => {
+    const mockFetchUsers = vi.fn();
+    const { useUserStore } = await import('@/store/useUserStore');
+    vi.mocked(useUserStore).getState = () => ({
+      fetchUsers: mockFetchUsers,
+      users: [],
+      setUsers: vi.fn(),
+      isLoading: false,
+      setLoading: vi.fn(),
+      error: null,
+      updateUser: vi.fn(),
+      setError: vi.fn(),
+    });
+
+    renderHook(() => useSSE());
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const userDeletedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'user:deleted'
+    )?.[1];
+
+    act(() => {
+      userDeletedListener?.({ data: JSON.stringify({ id: 'user-1' }) });
+    });
+
+    expect(mockFetchUsers).toHaveBeenCalled();
+  });
 });

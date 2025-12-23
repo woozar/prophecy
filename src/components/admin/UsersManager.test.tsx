@@ -556,4 +556,82 @@ describe('UsersManager', () => {
     render(<UsersManager initialUsers={[userWithoutDisplayName]} />);
     expect(screen.getByText('pending_user')).toBeInTheDocument();
   });
+
+  it('opens delete confirmation modal for active users', async () => {
+    mockUsers = [mockUsersData[1]]; // Active user
+    renderWithMantine(<UsersManager initialUsers={[mockUsersData[1]]} />);
+
+    const deleteButton = screen.getByTitle('Löschen');
+    fireEvent.click(deleteButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Benutzer löschen?')).toBeInTheDocument();
+    });
+    expect(screen.getByText(/"Active User"/)).toBeInTheDocument();
+  });
+
+  it('opens delete confirmation modal for suspended users (other users section)', async () => {
+    mockUsers = [mockUsersData[3]]; // Suspended user
+    renderWithMantine(<UsersManager initialUsers={[mockUsersData[3]]} />);
+
+    const deleteButton = screen.getByTitle('Löschen');
+    fireEvent.click(deleteButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Benutzer löschen?')).toBeInTheDocument();
+    });
+    expect(screen.getByText(/"Suspended User"/)).toBeInTheDocument();
+  });
+
+  it('deletes active user when confirmed', async () => {
+    mockUsers = [mockUsersData[1]]; // Active user
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
+    mockFetchUsers.mockResolvedValue(undefined);
+    globalThis.fetch = mockFetch;
+
+    renderWithMantine(<UsersManager initialUsers={[mockUsersData[1]]} />);
+
+    const deleteButton = screen.getByTitle('Löschen');
+    fireEvent.click(deleteButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Benutzer löschen?')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getAllByRole('button').find(btn =>
+      btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
+    );
+    fireEvent.click(confirmButton!);
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/2', { method: 'DELETE' });
+    });
+    expect(mockShowSuccessToast).toHaveBeenCalledWith('Benutzer gelöscht');
+  });
+
+  it('deletes suspended user when confirmed', async () => {
+    mockUsers = [mockUsersData[3]]; // Suspended user
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
+    mockFetchUsers.mockResolvedValue(undefined);
+    globalThis.fetch = mockFetch;
+
+    renderWithMantine(<UsersManager initialUsers={[mockUsersData[3]]} />);
+
+    const deleteButton = screen.getByTitle('Löschen');
+    fireEvent.click(deleteButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Benutzer löschen?')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getAllByRole('button').find(btn =>
+      btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
+    );
+    fireEvent.click(confirmButton!);
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/4', { method: 'DELETE' });
+    });
+    expect(mockShowSuccessToast).toHaveBeenCalledWith('Benutzer gelöscht');
+  });
 });

@@ -52,7 +52,6 @@ interface Round {
 interface RoundDetailClientProps {
   round: Round;
   initialProphecies: Prophecy[];
-  currentUserId: string;
 }
 
 type FilterType = 'all' | 'mine' | 'toRate';
@@ -70,7 +69,6 @@ function getEmptyStateMessage(filter: FilterType): string {
 export const RoundDetailClient = memo(function RoundDetailClient({
   round,
   initialProphecies,
-  currentUserId,
 }: Readonly<RoundDetailClientProps>) {
   const [prophecies, setProphecies] = useState<Prophecy[]>(initialProphecies);
   const [filter, setFilter] = useState<FilterType>('all');

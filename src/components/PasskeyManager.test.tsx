@@ -539,4 +539,103 @@ describe('PasskeyManager', () => {
       });
     });
   });
+
+  it('closes edit modal when cancel button is clicked', async () => {
+    renderWithMantine(<PasskeyManager initialPasskeys={mockPasskeys} />);
+
+    // Open edit modal
+    const editButtons = screen.getAllByTitle('Umbenennen');
+    fireEvent.click(editButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('Passkey umbenennen')).toBeInTheDocument();
+    });
+
+    // Change the name
+    const input = screen.getByDisplayValue('MacBook Pro');
+    fireEvent.change(input, { target: { value: 'Modified Name' } });
+
+    // Click cancel button
+    fireEvent.click(screen.getByText('Abbrechen'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Passkey umbenennen')).not.toBeInTheDocument();
+    });
+
+    // Original name should still be displayed
+    expect(screen.getByText('MacBook Pro')).toBeInTheDocument();
+  });
+
+  it('closes edit modal via onClose and resets edit name', async () => {
+    renderWithMantine(<PasskeyManager initialPasskeys={mockPasskeys} />);
+
+    // Open edit modal
+    const editButtons = screen.getAllByTitle('Umbenennen');
+    fireEvent.click(editButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('Passkey umbenennen')).toBeInTheDocument();
+    });
+
+    // Change the name
+    const input = screen.getByDisplayValue('MacBook Pro');
+    fireEvent.change(input, { target: { value: 'New Name' } });
+
+    // Close modal via overlay click (triggers onClose)
+    const overlay = document.querySelector('.mantine-Modal-overlay');
+    if (overlay) {
+      fireEvent.click(overlay);
+    }
+
+    await waitFor(() => {
+      expect(screen.queryByText('Passkey umbenennen')).not.toBeInTheDocument();
+    });
+  });
+
+  it('closes delete confirmation modal via onClose', async () => {
+    renderWithMantine(<PasskeyManager initialPasskeys={mockPasskeys} />);
+
+    // Open delete modal
+    const deleteButtons = screen.getAllByTitle('Löschen');
+    fireEvent.click(deleteButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('Passkey löschen?')).toBeInTheDocument();
+    });
+
+    // Close modal via overlay click (triggers onClose)
+    const overlay = document.querySelector('.mantine-Modal-overlay');
+    if (overlay) {
+      fireEvent.click(overlay);
+    }
+
+    await waitFor(() => {
+      expect(screen.queryByText('Passkey löschen?')).not.toBeInTheDocument();
+    });
+  });
+
+  it('handles generic error during registration', async () => {
+    const genericError = new Error('Generic error');
+    mockStartRegistration.mockRejectedValue(genericError);
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ options: { challenge: 'test' } })
+    });
+    globalThis.fetch = mockFetch;
+
+    renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
+
+    fireEvent.click(screen.getByText('Passkey hinzufügen'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Neuer Passkey')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Passkey erstellen'));
+
+    await waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith('Fehler', 'Generic error');
+    });
+  });
 });

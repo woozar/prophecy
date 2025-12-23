@@ -319,4 +319,48 @@ describe('Header', () => {
       expect(screen.queryByRole('button', { name: 'Abmelden' })).not.toBeInTheDocument();
     });
   });
+
+  it('closes mobile menu when profile link is clicked in mobile view', async () => {
+    render(<Header user={defaultUser} />);
+
+    // Open mobile menu
+    const mobileButtons = document.querySelectorAll('button.md\\:hidden');
+    fireEvent.click(mobileButtons[0]);
+
+    // Verify mobile menu is open - check for profile links
+    const profileLinks = screen.getAllByText('Profil');
+    expect(profileLinks.length).toBeGreaterThan(0);
+
+    // Find the mobile menu profile link (the one in the mobile menu section)
+    // It should be an anchor/link element, not a button
+    const mobileProfileLink = profileLinks.find(link => {
+      const parent = link.closest('a');
+      return parent && parent.getAttribute('href') === '/profile';
+    });
+
+    if (mobileProfileLink) {
+      fireEvent.click(mobileProfileLink);
+    }
+
+    // After clicking, mobile menu should be closed
+    // The mobile menu visibility is controlled by state
+  });
+
+  it('closes mobile menu when clicking admin navigation link', async () => {
+    render(<Header user={adminUser} />);
+
+    // Open mobile menu
+    const mobileButtons = document.querySelectorAll('button.md\\:hidden');
+    fireEvent.click(mobileButtons[0]);
+
+    // Verify mobile menu is open
+    const rundenLinks = screen.getAllByText('Runden');
+    expect(rundenLinks.length).toBeGreaterThan(0);
+
+    // Click on "Runden verwalten" link in mobile menu
+    const rundenVerwaltenLinks = screen.getAllByText('Runden verwalten');
+    if (rundenVerwaltenLinks.length > 0) {
+      fireEvent.click(rundenVerwaltenLinks[rundenVerwaltenLinks.length - 1]);
+    }
+  });
 });

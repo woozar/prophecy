@@ -72,7 +72,6 @@ export default async function RoundDetailPage({ params }: Readonly<PageProps>) {
     <RoundDetailClient
       round={roundData}
       initialProphecies={prophecies}
-      currentUserId={session.userId}
     />
   );
 }

@@ -83,6 +83,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editTitleError, setEditTitleError] = useState<string | undefined>(undefined);
+  const [confirmEditProphecy, setConfirmEditProphecy] = useState<Prophecy | null>(null);
 
   // Subscribe to real-time rating updates from other users
   const handleProphecyRated = useCallback((event: ProphecyRatedEvent) => {
@@ -195,12 +196,27 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     }
   }, [prophecies]);
 
-  const handleStartEdit = useCallback((prophecy: Prophecy) => {
+  const openEditModal = useCallback((prophecy: Prophecy) => {
     setEditingProphecy(prophecy);
     setEditTitle(prophecy.title);
     setEditDescription(prophecy.description);
     setEditTitleError(undefined);
   }, []);
+
+  const handleStartEdit = useCallback((prophecy: Prophecy) => {
+    if (prophecy.ratingCount > 0) {
+      setConfirmEditProphecy(prophecy);
+    } else {
+      openEditModal(prophecy);
+    }
+  }, [openEditModal]);
+
+  const handleConfirmEdit = useCallback(() => {
+    if (confirmEditProphecy) {
+      openEditModal(confirmEditProphecy);
+      setConfirmEditProphecy(null);
+    }
+  }, [confirmEditProphecy, openEditModal]);
 
   const handleEditProphecy = useCallback(async () => {
     if (!editingProphecy) return;
@@ -334,7 +350,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
         <FilterButton active={filter === 'mine'} onClick={() => setFilter('mine')}>
           Meine ({myCount})
         </FilterButton>
-        {isRatingOpen && (
+        {(isSubmissionOpen || isRatingOpen) && (
           <FilterButton active={filter === 'toRate'} onClick={() => setFilter('toRate')}>
             Noch zu bewerten ({toRateCount})
           </FilterButton>
@@ -428,6 +444,24 @@ export const RoundDetailClient = memo(function RoundDetailClient({
           </p>
         )}
         <p className="text-sm">Diese Aktion kann nicht rückgängig gemacht werden.</p>
+      </ConfirmModal>
+
+      {/* Edit Confirmation Modal (only shown when prophecy has ratings) */}
+      <ConfirmModal
+        opened={!!confirmEditProphecy}
+        onClose={() => setConfirmEditProphecy(null)}
+        onConfirm={handleConfirmEdit}
+        title="Prophezeiung bearbeiten?"
+        confirmText="Trotzdem bearbeiten"
+        variant="warning"
+      >
+        <p className="mb-2">Diese Prophezeiung hat bereits Bewertungen erhalten.</p>
+        {confirmEditProphecy && (
+          <p className="text-white font-medium mb-4">
+            {confirmEditProphecy.ratingCount} {confirmEditProphecy.ratingCount === 1 ? 'Bewertung' : 'Bewertungen'}
+          </p>
+        )}
+        <p className="text-sm">Beim Speichern werden alle Bewertungen gelöscht.</p>
       </ConfirmModal>
 
       {/* Edit Modal */}
@@ -573,7 +607,7 @@ const ProphecyCard = memo(function ProphecyCard({
       </div>
 
       {/* Rating Section */}
-      {isRatingOpen && !prophecy.isOwn && (
+      {(isSubmissionOpen || isRatingOpen) && !prophecy.isOwn && (
         <div className="mt-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
           <div className="flex flex-col md:flex-row md:items-end gap-3 md:gap-4">
             <div className="flex-1">
@@ -595,7 +629,7 @@ const ProphecyCard = memo(function ProphecyCard({
       )}
 
       {/* Show user's rating when rating is closed */}
-      {!isRatingOpen && prophecy.userRating !== null && (
+      {!isSubmissionOpen && !isRatingOpen && prophecy.userRating !== null && (
         <div className="mt-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
           <p className="text-sm text-(--text-muted)">
             Deine Bewertung:{' '}

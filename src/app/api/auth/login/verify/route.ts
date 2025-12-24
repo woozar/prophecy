@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAuthenticationResponse, type AuthenticationResponseJSON } from "@simplewebauthn/server";
 import { prisma } from "@/lib/db/prisma";
 import { webauthnConfig, getChallenge, clearChallenge } from "@/lib/auth/webauthn";
-import { cookies } from "next/headers";
+import {
+  setSessionCookie,
+  loginSuccessResponse,
+  loginErrorResponse,
+} from "@/lib/auth/session";
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,7 +33,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Authenticator anhand der Credential ID finden
-    // Debug: Log credential ID from browser
     console.log("[Login] Looking for credential ID:", credential.id);
 
     // Versuche verschiedene Encodings
@@ -48,7 +51,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (!authenticator) {
-      // Debug: Liste alle gespeicherten Credential IDs
       const allAuthenticators = await prisma.authenticator.findMany({
         select: { credentialID: true },
       });
@@ -102,41 +104,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Session-Cookie setzen
-    const cookieStore = await cookies();
+    await setSessionCookie(authenticator.user);
 
-    // Einfaches Session-Token (in Produktion sollte JWT oder signiertes Token verwendet werden)
-    const sessionToken = Buffer.from(
-      JSON.stringify({
-        userId: authenticator.user.id,
-        username: authenticator.user.username,
-        role: authenticator.user.role,
-        iat: Date.now(),
-      })
-    ).toString("base64");
-
-    cookieStore.set("session", sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24 * 7, // 7 Tage
-      path: "/",
-    });
-
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: authenticator.user.id,
-        username: authenticator.user.username,
-        displayName: authenticator.user.displayName,
-        role: authenticator.user.role,
-      },
-    });
+    return loginSuccessResponse(authenticator.user);
   } catch (error) {
-    console.error("Login verify error:", error);
-    return NextResponse.json(
-      { error: "Fehler bei der Anmeldung" },
-      { status: 500 }
-    );
+    return loginErrorResponse(error, "Login verify error");
   }
 }

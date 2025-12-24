@@ -396,10 +396,10 @@ describe('RoundDetailClient', () => {
     expect(screen.getByText(/\+7/)).toBeInTheDocument();
   });
 
-  it('hides "to rate" filter when submission is open', () => {
+  it('shows "to rate" filter during submission phase (ratings possible from start)', () => {
     renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
 
-    expect(screen.queryByText(/Noch zu bewerten/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Noch zu bewerten/)).toBeInTheDocument();
   });
 
   it('shows rating count text correctly', () => {
@@ -443,6 +443,23 @@ describe('RoundDetailClient', () => {
       fireEvent.change(sliders[0], { target: { value: '8' } });
 
       expect(screen.getByText('Speichern')).toBeInTheDocument();
+    });
+
+    it('shows rating slider during submission phase for other users prophecies', () => {
+      const otherUserProphecy = [mockProphecies[0]]; // isOwn: false
+
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={otherUserProphecy} />);
+
+      expect(screen.getByRole('slider')).toBeInTheDocument();
+      expect(screen.getByText('Bewerte diese Prophezeiung')).toBeInTheDocument();
+    });
+
+    it('does not show rating slider for own prophecies during submission phase', () => {
+      const ownProphecyOnly = [mockProphecies[1]]; // isOwn: true
+
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={ownProphecyOnly} />);
+
+      expect(screen.queryByRole('slider')).not.toBeInTheDocument();
     });
 
     it('hides rating slider when round is closed', () => {
@@ -665,6 +682,164 @@ describe('RoundDetailClient', () => {
       fireEvent.change(descriptionInput, { target: { value: 'Updated description' } });
 
       expect(descriptionInput).toHaveValue('Updated description');
+    });
+
+    it('shows confirmation dialog when editing prophecy with ratings', async () => {
+      const prophecyWithRatings = [
+        {
+          id: 'p-rated',
+          title: 'Prophezeiung mit Bewertungen',
+          description: 'Diese hat schon Bewertungen',
+          createdAt: new Date().toISOString(),
+          creator: { id: 'current', username: 'current', displayName: 'Current User' },
+          averageRating: 4.5,
+          ratingCount: 3,
+          userRating: null,
+          isOwn: true,
+          fulfilled: null,
+          resolvedAt: null,
+        },
+      ];
+
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={prophecyWithRatings} />);
+
+      fireEvent.click(screen.getByTitle('Bearbeiten'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Prophezeiung bearbeiten?')).toBeInTheDocument();
+      });
+    });
+
+    it('shows correct rating count in edit confirmation dialog', async () => {
+      const prophecyWith5Ratings = [
+        {
+          id: 'p-rated',
+          title: 'Prophezeiung mit 5 Bewertungen',
+          description: 'Diese hat 5 Bewertungen',
+          createdAt: new Date().toISOString(),
+          creator: { id: 'current', username: 'current', displayName: 'Current User' },
+          averageRating: 4.5,
+          ratingCount: 5,
+          userRating: null,
+          isOwn: true,
+          fulfilled: null,
+          resolvedAt: null,
+        },
+      ];
+
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={prophecyWith5Ratings} />);
+
+      fireEvent.click(screen.getByTitle('Bearbeiten'));
+
+      await waitFor(() => {
+        expect(screen.getByText('5 Bewertungen')).toBeInTheDocument();
+        expect(screen.getByText('Beim Speichern werden alle Bewertungen gelöscht.')).toBeInTheDocument();
+      });
+    });
+
+    it('shows singular "Bewertung" for single rating in confirmation dialog', async () => {
+      const prophecyWith1Rating = [
+        {
+          id: 'p-rated',
+          title: 'Prophezeiung mit 1 Bewertung',
+          description: 'Diese hat 1 Bewertung',
+          createdAt: new Date().toISOString(),
+          creator: { id: 'current', username: 'current', displayName: 'Current User' },
+          averageRating: 4.5,
+          ratingCount: 1,
+          userRating: null,
+          isOwn: true,
+          fulfilled: null,
+          resolvedAt: null,
+        },
+      ];
+
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={prophecyWith1Rating} />);
+
+      fireEvent.click(screen.getByTitle('Bearbeiten'));
+
+      await waitFor(() => {
+        expect(screen.getByText('1 Bewertung')).toBeInTheDocument();
+      });
+    });
+
+    it('opens edit modal directly when prophecy has no ratings', async () => {
+      // mockProphecies[1] has ratingCount: 0 and isOwn: true
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
+
+      fireEvent.click(screen.getByTitle('Bearbeiten'));
+
+      await waitFor(() => {
+        // Should open edit modal directly, not confirmation dialog
+        expect(screen.getByText('Prophezeiung bearbeiten')).toBeInTheDocument();
+        expect(screen.queryByText('Prophezeiung bearbeiten?')).not.toBeInTheDocument();
+      });
+    });
+
+    it('opens edit modal after confirming in dialog', async () => {
+      const prophecyWithRatings = [
+        {
+          id: 'p-rated',
+          title: 'Prophezeiung mit Bewertungen',
+          description: 'Diese hat schon Bewertungen',
+          createdAt: new Date().toISOString(),
+          creator: { id: 'current', username: 'current', displayName: 'Current User' },
+          averageRating: 4.5,
+          ratingCount: 3,
+          userRating: null,
+          isOwn: true,
+          fulfilled: null,
+          resolvedAt: null,
+        },
+      ];
+
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={prophecyWithRatings} />);
+
+      fireEvent.click(screen.getByTitle('Bearbeiten'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Prophezeiung bearbeiten?')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('Trotzdem bearbeiten'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Prophezeiung bearbeiten')).toBeInTheDocument();
+        expect(screen.queryByText('Prophezeiung bearbeiten?')).not.toBeInTheDocument();
+      });
+    });
+
+    it('closes confirmation dialog when cancelled', async () => {
+      const prophecyWithRatings = [
+        {
+          id: 'p-rated',
+          title: 'Prophezeiung mit Bewertungen',
+          description: 'Diese hat schon Bewertungen',
+          createdAt: new Date().toISOString(),
+          creator: { id: 'current', username: 'current', displayName: 'Current User' },
+          averageRating: 4.5,
+          ratingCount: 3,
+          userRating: null,
+          isOwn: true,
+          fulfilled: null,
+          resolvedAt: null,
+        },
+      ];
+
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={prophecyWithRatings} />);
+
+      fireEvent.click(screen.getByTitle('Bearbeiten'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Prophezeiung bearbeiten?')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }));
+
+      await waitFor(() => {
+        expect(screen.queryByText('Prophezeiung bearbeiten?')).not.toBeInTheDocument();
+        expect(screen.queryByText('Prophezeiung bearbeiten')).not.toBeInTheDocument();
+      });
     });
   });
 
@@ -971,6 +1146,81 @@ describe('RoundDetailClient', () => {
       await waitFor(() => {
         expect(showErrorToast).toHaveBeenCalledWith('Delete not allowed');
       });
+    });
+
+    it('shows validation error when edit title is cleared and saved', async () => {
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
+
+      fireEvent.click(screen.getByTitle('Bearbeiten'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Prophezeiung bearbeiten')).toBeInTheDocument();
+      });
+
+      const titleInput = screen.getByDisplayValue('Meine eigene Prophezeiung');
+      fireEvent.change(titleInput, { target: { value: '' } });
+
+      // Save button should be disabled when title is empty
+      const saveButton = screen.getByText('Speichern').closest('button');
+      expect(saveButton).toBeDisabled();
+    });
+  });
+
+  describe('Filter functionality', () => {
+    it('filters to show only own prophecies when "Meine" is clicked', () => {
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
+
+      // Click on "Meine" filter
+      fireEvent.click(screen.getByText(/Meine \(/));
+
+      // Should only show own prophecy
+      expect(screen.getByText('Meine eigene Prophezeiung')).toBeInTheDocument();
+      expect(screen.queryByText('Deutschland wird Weltmeister')).not.toBeInTheDocument();
+    });
+
+    it('shows all prophecies when "Alle" is clicked after filtering', () => {
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
+
+      // First filter to "Meine"
+      fireEvent.click(screen.getByText(/Meine \(/));
+
+      // Then click "Alle"
+      fireEvent.click(screen.getByText(/Alle \(/));
+
+      // Should show all prophecies
+      expect(screen.getByText('Meine eigene Prophezeiung')).toBeInTheDocument();
+      expect(screen.getByText('Deutschland wird Weltmeister')).toBeInTheDocument();
+    });
+
+    it('filters to show only unrated prophecies when "Noch zu bewerten" is clicked', () => {
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={mockProphecies} />);
+
+      // Click on "Noch zu bewerten" filter
+      fireEvent.click(screen.getByText(/Noch zu bewerten/));
+
+      // Should show unrated prophecy (p1 has userRating: null and isOwn: false)
+      expect(screen.getByText('Deutschland wird Weltmeister')).toBeInTheDocument();
+      // Should not show own prophecy or already rated ones
+      expect(screen.queryByText('Meine eigene Prophezeiung')).not.toBeInTheDocument();
+    });
+
+    it('shows empty state when filter has no results', () => {
+      const onlyOwnProphecy = [mockProphecies[1]]; // isOwn: true
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={onlyOwnProphecy} />);
+
+      // Click on "Noch zu bewerten" filter - should have no results since all are own
+      fireEvent.click(screen.getByText(/Noch zu bewerten/));
+
+      expect(screen.getByText('Keine Prophezeiungen mehr zu bewerten.')).toBeInTheDocument();
+    });
+
+    it('shows correct empty state for "Meine" filter with no own prophecies', () => {
+      const othersProphecies = [mockProphecies[0]]; // isOwn: false
+      renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} initialProphecies={othersProphecies} />);
+
+      fireEvent.click(screen.getByText(/Meine \(/));
+
+      expect(screen.getByText('Du hast noch keine Prophezeiungen erstellt.')).toBeInTheDocument();
     });
   });
 });

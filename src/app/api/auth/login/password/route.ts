@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { prisma, ensureInitialized } from "@/lib/db/prisma";
-import { cookies } from "next/headers";
+import {
+  setSessionCookie,
+  loginSuccessResponse,
+  loginErrorResponse,
+} from "@/lib/auth/session";
 
 export async function POST(request: NextRequest) {
   await ensureInitialized();
@@ -61,40 +65,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Session-Cookie setzen
-    const cookieStore = await cookies();
+    await setSessionCookie(user);
 
-    const sessionToken = Buffer.from(
-      JSON.stringify({
-        userId: user.id,
-        username: user.username,
-        role: user.role,
-        iat: Date.now(),
-      })
-    ).toString("base64");
-
-    cookieStore.set("session", sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24 * 7, // 7 Tage
-      path: "/",
-    });
-
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        username: user.username,
-        displayName: user.displayName,
-        role: user.role,
-      },
-    });
+    return loginSuccessResponse(user);
   } catch (error) {
-    console.error("Password login error:", error);
-    return NextResponse.json(
-      { error: "Fehler bei der Anmeldung" },
-      { status: 500 }
-    );
+    return loginErrorResponse(error, "Password login error");
   }
 }

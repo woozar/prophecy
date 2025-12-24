@@ -21,21 +21,35 @@ vi.mock('@/lib/db/prisma', () => ({
     user: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    rating: {
       findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
+    },
+    rating: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
       upsert: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    authenticator: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
     },
     $transaction: vi.fn((fn) => fn({
       round: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
       prophecy: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     })),
   },
+  ensureInitialized: vi.fn(),
 }));
 
 // Mock Next.js cookies for server tests
@@ -50,8 +64,10 @@ vi.mock('next/headers', () => ({
 // Mock session for server tests
 vi.mock('@/lib/auth/session', () => ({
   getSession: vi.fn(),
-  createSession: vi.fn(),
-  deleteSession: vi.fn(),
+  requireSession: vi.fn(),
+  setSessionCookie: vi.fn(),
+  loginSuccessResponse: vi.fn(),
+  loginErrorResponse: vi.fn(),
 }));
 
 // Mock SSE for server tests

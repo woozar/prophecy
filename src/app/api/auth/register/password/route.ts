@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { prisma, ensureInitialized } from "@/lib/db/prisma";
-import { cookies } from "next/headers";
+import {
+  findExistingUser,
+  normalizeUsername,
+  duplicateUsernameResponse,
+  setPendingUserCookie,
+  registrationSuccessResponse,
+  registrationErrorResponse,
+} from "@/lib/auth/registration";
 
 export async function POST(request: NextRequest) {
   await ensureInitialized();
@@ -36,18 +43,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const normalizedUsername = username.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+    const normalizedUsername = normalizeUsername(username);
 
     // Prüfen ob Username bereits vergeben
-    const existingUser = await prisma.user.findUnique({
-      where: { username: normalizedUsername },
-    });
-
+    const existingUser = await findExistingUser(username);
     if (existingUser) {
-      return NextResponse.json(
-        { error: "Dieser Benutzername ist bereits vergeben" },
-        { status: 409 }
-      );
+      return duplicateUsernameResponse();
     }
 
     // Passwort hashen
@@ -59,34 +60,14 @@ export async function POST(request: NextRequest) {
         username: normalizedUsername,
         displayName: displayName || username,
         passwordHash,
-        status: "PENDING", // Muss von Admin freigegeben werden
+        status: "PENDING",
       },
     });
 
-    // Session-Cookie setzen (für den Redirect nach Login)
-    const cookieStore = await cookies();
-    cookieStore.set("pendingUser", user.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60, // 1 Stunde
-      path: "/",
-    });
+    await setPendingUserCookie(user.id);
 
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        username: user.username,
-        displayName: user.displayName,
-        status: user.status,
-      },
-    });
+    return registrationSuccessResponse(user);
   } catch (error) {
-    console.error("Password registration error:", error);
-    return NextResponse.json(
-      { error: "Fehler bei der Registrierung" },
-      { status: 500 }
-    );
+    return registrationErrorResponse(error, "Password registration error");
   }
 }

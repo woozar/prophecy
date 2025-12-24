@@ -49,15 +49,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Check if rating phase is open
+    // Check if rating deadline has passed
     const now = new Date();
-    if (now < prophecy.round.submissionDeadline) {
-      return NextResponse.json(
-        { error: "Bewertungsphase hat noch nicht begonnen" },
-        { status: 400 }
-      );
-    }
-
     if (now > prophecy.round.ratingDeadline) {
       return NextResponse.json(
         { error: "Bewertungsphase ist beendet" },

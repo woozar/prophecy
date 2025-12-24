@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyRegistrationResponse, type RegistrationResponseJSON } from "@simplewebauthn/server";
 import { prisma } from "@/lib/db/prisma";
 import { webauthnConfig, getChallenge, clearChallenge } from "@/lib/auth/webauthn";
-import { cookies } from "next/headers";
+import {
+  normalizeUsername,
+  duplicateUsernameResponse,
+  setPendingUserCookie,
+  registrationSuccessResponse,
+  registrationErrorResponse,
+} from "@/lib/auth/registration";
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,27 +58,26 @@ export async function POST(request: NextRequest) {
     // Challenge löschen
     clearChallenge(tempUserId);
 
+    const normalizedUsername = normalizeUsername(username);
+
     // Prüfen ob Username mittlerweile vergeben wurde (Race Condition)
     const existingUser = await prisma.user.findUnique({
-      where: { username: username.toLowerCase() },
+      where: { username: normalizedUsername },
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "Dieser Benutzername ist bereits vergeben" },
-        { status: 409 }
-      );
+      return duplicateUsernameResponse();
     }
 
     // User und Authenticator in einer Transaktion erstellen
     const user = await prisma.user.create({
       data: {
-        username: username.toLowerCase(),
+        username: normalizedUsername,
         displayName: displayName || username,
-        status: "PENDING", // Muss von Admin freigegeben werden
+        status: "PENDING",
         authenticators: {
           create: {
-            credentialID: credential.id, // Already base64url encoded from browser
+            credentialID: credential.id,
             credentialPublicKey: Buffer.from(credentialInfo.publicKey).toString("base64"),
             counter: credentialInfo.counter,
             credentialDeviceType,
@@ -87,31 +92,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Session-Cookie setzen (für den Redirect nach Login)
-    // Der User ist noch PENDING, aber wir merken uns, wer er ist
-    const cookieStore = await cookies();
-    cookieStore.set("pendingUser", user.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60, // 1 Stunde
-      path: "/",
-    });
+    await setPendingUserCookie(user.id);
 
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        username: user.username,
-        displayName: user.displayName,
-        status: user.status,
-      },
-    });
+    return registrationSuccessResponse(user);
   } catch (error) {
-    console.error("Registration verify error:", error);
-    return NextResponse.json(
-      { error: "Fehler bei der Registrierung" },
-      { status: 500 }
-    );
+    return registrationErrorResponse(error, "Registration verify error");
   }
 }

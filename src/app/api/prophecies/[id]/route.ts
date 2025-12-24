@@ -19,7 +19,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       throw Errors.unauthorized();
     }
 
-    const prophecy = await getProphecyWithAccessCheck(id, session.userId, {
+    // Access check - validates ownership and deadline (result not needed after ratings reset)
+    await getProphecyWithAccessCheck(id, session.userId, {
       deadlineErrorMessage: "Einreichungsfrist ist abgelaufen, Bearbeiten nicht mehr möglich",
     });
 
@@ -32,9 +33,19 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const { title, description } = parsed.data;
 
+    // Delete all ratings for this prophecy (they become invalid after edit)
+    await prisma.rating.deleteMany({
+      where: { prophecyId: id },
+    });
+
     const updatedProphecy = await prisma.prophecy.update({
       where: { id },
-      data: { title, description },
+      data: {
+        title,
+        description,
+        averageRating: null,
+        ratingCount: 0,
+      },
       include: {
         creator: {
           select: {
@@ -51,8 +62,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       type: "prophecy:updated",
       data: {
         ...updatedProphecy,
-        averageRating: prophecy.averageRating,
-        ratingCount: prophecy.ratingCount,
+        averageRating: null,
+        ratingCount: 0,
         userRating: null,
         isOwn: true,
       },
@@ -61,8 +72,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({
       prophecy: {
         ...updatedProphecy,
-        averageRating: prophecy.averageRating,
-        ratingCount: prophecy.ratingCount,
+        averageRating: null,
+        ratingCount: 0,
         userRating: null,
         isOwn: true,
       },

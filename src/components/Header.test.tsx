@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Header } from './Header';
 import { notifications } from '@mantine/notifications';
@@ -264,8 +264,10 @@ describe('Header', () => {
       expect(screen.getByText('Abmelden...')).toBeInTheDocument();
     });
 
-    // Resolve to clean up
-    resolveLogout!();
+    // Resolve and wait for state updates to complete
+    await act(async () => {
+      resolveLogout!();
+    });
   });
 
   it('applies active style to current route', () => {

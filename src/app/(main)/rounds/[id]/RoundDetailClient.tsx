@@ -10,6 +10,7 @@ import { TextInput } from '@/components/TextInput';
 import { GlowBadge } from '@/components/GlowBadge';
 import { RoundStatusBadge } from '@/components/RoundStatusBadge';
 import { RatingSlider } from '@/components/RatingSlider';
+import { GlassScaleBar } from '@/components/GlassScaleBar';
 import { showSuccessToast, showErrorToast } from '@/lib/toast/toast';
 import { createProphecySchema, updateProphecySchema } from '@/lib/schemas/prophecy';
 import { IconPlus, IconTrash, IconEdit, IconFilter } from '@tabler/icons-react';
@@ -573,14 +574,6 @@ const ProphecyCard = memo(function ProphecyCard({
               <span>von {creatorName}</span>
             </span>
             <span>{formatDate(prophecy.createdAt, 'date')}</span>
-            {prophecy.ratingCount > 0 && (
-              <span className="flex items-center gap-1">
-                <span className="text-cyan-400">
-                  {prophecy.averageRating === null ? '—' : prophecy.averageRating.toFixed(1)}
-                </span>
-                <span>({prophecy.ratingCount} Bewertungen)</span>
-              </span>
-            )}
           </div>
         </div>
 
@@ -605,6 +598,35 @@ const ProphecyCard = memo(function ProphecyCard({
           )}
         </div>
       </div>
+
+      {/* Average Rating Display */}
+      {prophecy.ratingCount > 0 && prophecy.averageRating !== null && (
+        <div className="mt-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
+          <div className="flex flex-col md:flex-row md:items-end gap-3 md:gap-4">
+            <div className="flex-1">
+              <h3 className="text-sm font-medium mb-3 text-(--text-secondary)">
+                Durchschnitt ({prophecy.ratingCount} {prophecy.ratingCount === 1 ? 'Bewertung' : 'Bewertungen'})
+              </h3>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-(--text-muted) w-6">-10</span>
+                <div className="relative flex-1">
+                  <GlassScaleBar value={prophecy.averageRating} thickness={16} />
+                </div>
+                <span className="text-xs text-(--text-muted) w-6">+10</span>
+                <span
+                  className="text-lg font-bold w-10 text-right"
+                  style={{
+                    color: prophecy.averageRating >= 0 ? '#22d3ee' : '#a855f7',
+                    textShadow: `0 0 15px ${prophecy.averageRating >= 0 ? '#22d3ee40' : '#a855f740'}`,
+                  }}
+                >
+                  {prophecy.averageRating > 0 ? '+' : ''}{prophecy.averageRating.toFixed(1)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Rating Section */}
       {(isSubmissionOpen || isRatingOpen) && !prophecy.isOwn && (

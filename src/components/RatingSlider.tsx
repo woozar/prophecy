@@ -34,6 +34,7 @@ export const RatingSlider = memo(function RatingSlider({
   const reducedMotion = useReducedMotion();
   const [internalValue, setInternalValue] = useState(0);
   const [particles, setParticles] = useState<AngularParticle[]>([]);
+  const [isFocused, setIsFocused] = useState(false);
   const sliderRef = useRef<HTMLInputElement>(null);
   const particleIdRef = useRef(0);
   const lastValueRef = useRef<number | null>(null);
@@ -118,6 +119,81 @@ export const RatingSlider = memo(function RatingSlider({
     textShadow: `0 0 15px ${color}40`,
   }), [color]);
 
+  const getMarkerPosition = useCallback((value: number) => {
+    const percentage = ((value - min) / (max - min)) * 100;
+    // Track goes from 10px to calc(100% - 10px)
+    return `calc(10px + ${percentage}% - ${percentage * 0.2}px)`;
+  }, [min, max]);
+
+  const centerMarkerStyle = useMemo(() => ({
+    left: getMarkerPosition(0),
+    top: "50%",
+    height: 14,
+    width: 3,
+    transform: "translate(-50%, -50%)",
+    background: "rgba(255, 255, 255, 0.9)",
+    boxShadow: `
+      0 0 8px rgba(255, 255, 255, 1),
+      0 0 16px rgba(255, 255, 255, 0.8),
+      0 0 24px rgba(255, 255, 255, 0.5),
+      0 0 32px rgba(200, 220, 255, 0.4)
+    `,
+    filter: "blur(1px)",
+    zIndex: 20,
+    animation: "center-glow-pulse 2s ease-in-out infinite",
+  }), [getMarkerPosition]);
+
+  const tickMarkers = useMemo(() => {
+    const markers = [];
+    // Only from min+1 to max-1 (skip endpoints and zero)
+    for (let i = min + 1; i < max; i++) {
+      if (i === 0) continue;
+      markers.push({ value: i, left: getMarkerPosition(i) });
+    }
+    return markers;
+  }, [min, max, getMarkerPosition]);
+
+  const tickMarkerStyle = useMemo(() => ({
+    top: "50%",
+    height: 8,
+    width: 2,
+    transform: "translate(-50%, -50%)",
+    background: "rgba(255, 255, 255, 0.5)",
+    boxShadow: `
+      0 0 4px rgba(255, 255, 255, 0.6),
+      0 0 8px rgba(255, 255, 255, 0.3)
+    `,
+    filter: "blur(0.5px)",
+    zIndex: 20,
+  }), []);
+
+  const trackStyle = useMemo(() => ({
+    left: 10,
+    right: 10,
+    top: "50%",
+    height: 8,
+    transform: "translateY(-50%)",
+    background: "linear-gradient(90deg, #ef4444, #eab308 40%, #22d3ee 60%, #14b8a6)",
+    borderRadius: 4,
+    zIndex: 0,
+  }), []);
+
+  const focusIndicatorStyle = useMemo(() => ({
+    left: 7,
+    right: 7,
+    top: "50%",
+    height: 14,
+    transform: "translateY(-50%)",
+    border: "2px solid rgba(6, 182, 212, 0.9)",
+    borderRadius: 7,
+    boxShadow: `
+      0 0 8px rgba(6, 182, 212, 0.8),
+      0 0 16px rgba(6, 182, 212, 0.5),
+      0 0 24px rgba(6, 182, 212, 0.3)
+    `,
+    zIndex: 1,
+  }), []);
+
   return (
     <div className={disabled ? "opacity-50" : ""}>
       {label && (
@@ -126,6 +202,20 @@ export const RatingSlider = memo(function RatingSlider({
       <div className="flex items-center gap-3">
         <span className="text-xs text-(--text-muted) w-6">{min}</span>
         <div className="relative flex-1">
+          {/* Custom track */}
+          <div className="absolute pointer-events-none" style={trackStyle} />
+          {/* Focus indicator */}
+          {isFocused && <div className="absolute pointer-events-none" style={focusIndicatorStyle} />}
+          {/* Tick markers for all values */}
+          {tickMarkers.map((marker) => (
+            <div
+              key={marker.value}
+              className="absolute pointer-events-none"
+              style={{ ...tickMarkerStyle, left: marker.left }}
+            />
+          ))}
+          {/* Center zero marker */}
+          <div className="absolute pointer-events-none" style={centerMarkerStyle} />
           <input
             ref={sliderRef}
             type="range"
@@ -134,7 +224,9 @@ export const RatingSlider = memo(function RatingSlider({
             step={1}
             value={value}
             onChange={(e) => handleChange(Number(e.target.value))}
-            className="rating-slider w-full"
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            className="rating-slider w-full relative z-10"
             disabled={disabled}
           />
           {/* Burst particles */}

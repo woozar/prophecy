@@ -257,4 +257,105 @@ describe('RatingSlider', () => {
       expect(screen.getByText('+3')).toBeInTheDocument();
     });
   });
+
+  describe('tick markers', () => {
+    it('renders tick markers for values between min+1 and max-1', () => {
+      const { container } = render(<RatingSlider min={-10} max={10} />);
+      // Should have markers for -9 to +9 (excluding 0), so 18 tick markers
+      // Plus center marker, track, and other elements
+      const markers = container.querySelectorAll('.absolute.pointer-events-none');
+      // At least 18 tick markers + 1 center marker + 1 track = 20
+      expect(markers.length).toBeGreaterThanOrEqual(20);
+    });
+
+    it('does not render tick markers at endpoints (-10 and +10)', () => {
+      const { container } = render(<RatingSlider min={-10} max={10} />);
+      const allElements = container.querySelectorAll('.absolute.pointer-events-none');
+
+      // Check that no marker is positioned at 0% or 100%
+      const styles = Array.from(allElements).map((el) => el.getAttribute('style') || '');
+      const hasEndpointMarker = styles.some(
+        (style) => style.includes('left: calc(10px + 0%') || style.includes('left: calc(10px + 100%')
+      );
+      expect(hasEndpointMarker).toBe(false);
+    });
+
+    it('renders center marker at zero position', () => {
+      const { container } = render(<RatingSlider min={-10} max={10} />);
+      const markers = container.querySelectorAll('.absolute.pointer-events-none');
+
+      // Center marker has animation
+      const centerMarker = Array.from(markers).find(
+        (el) => el.getAttribute('style')?.includes('center-glow-pulse')
+      );
+      expect(centerMarker).toBeInTheDocument();
+    });
+  });
+
+  describe('custom track', () => {
+    it('renders custom track element', () => {
+      const { container } = render(<RatingSlider />);
+      const track = Array.from(container.querySelectorAll('.absolute.pointer-events-none')).find(
+        (el) => el.getAttribute('style')?.includes('linear-gradient')
+      );
+      expect(track).toBeInTheDocument();
+    });
+
+    it('track has correct positioning (10px from edges)', () => {
+      const { container } = render(<RatingSlider />);
+      const track = Array.from(container.querySelectorAll('.absolute.pointer-events-none')).find(
+        (el) => el.getAttribute('style')?.includes('linear-gradient')
+      );
+      expect(track).toHaveStyle({ left: '10px', right: '10px' });
+    });
+  });
+
+  describe('focus indicator', () => {
+    it('shows focus indicator when slider is focused', () => {
+      const { container } = render(<RatingSlider />);
+      const slider = screen.getByRole('slider');
+
+      // Initially no focus indicator
+      let focusIndicator = Array.from(container.querySelectorAll('.absolute.pointer-events-none')).find(
+        (el) => el.getAttribute('style')?.includes('border: 2px solid')
+      );
+      expect(focusIndicator).toBeUndefined();
+
+      // Focus the slider
+      fireEvent.focus(slider);
+
+      // Now focus indicator should be visible
+      focusIndicator = Array.from(container.querySelectorAll('.absolute.pointer-events-none')).find(
+        (el) => el.getAttribute('style')?.includes('border: 2px solid')
+      );
+      expect(focusIndicator).toBeInTheDocument();
+    });
+
+    it('hides focus indicator when slider is blurred', () => {
+      const { container } = render(<RatingSlider />);
+      const slider = screen.getByRole('slider');
+
+      // Focus then blur
+      fireEvent.focus(slider);
+      fireEvent.blur(slider);
+
+      // Focus indicator should be gone
+      const focusIndicator = Array.from(container.querySelectorAll('.absolute.pointer-events-none')).find(
+        (el) => el.getAttribute('style')?.includes('border: 2px solid')
+      );
+      expect(focusIndicator).toBeUndefined();
+    });
+
+    it('focus indicator has correct positioning', () => {
+      const { container } = render(<RatingSlider />);
+      const slider = screen.getByRole('slider');
+
+      fireEvent.focus(slider);
+
+      const focusIndicator = Array.from(container.querySelectorAll('.absolute.pointer-events-none')).find(
+        (el) => el.getAttribute('style')?.includes('border: 2px solid')
+      );
+      expect(focusIndicator).toHaveStyle({ left: '7px', right: '7px' });
+    });
+  });
 });

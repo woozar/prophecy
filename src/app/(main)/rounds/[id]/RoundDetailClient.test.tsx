@@ -172,8 +172,9 @@ describe('RoundDetailClient', () => {
 
   it('displays average rating for prophecy', () => {
     renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
-    expect(screen.getByText('5.5')).toBeInTheDocument();
-    expect(screen.getByText('(4 Bewertungen)')).toBeInTheDocument();
+    // Positive values are displayed with + prefix
+    expect(screen.getByText('+5.5')).toBeInTheDocument();
+    expect(screen.getByText(/Durchschnitt \(4 Bewertungen\)/)).toBeInTheDocument();
   });
 
   it('shows "Meine" badge for own prophecies', () => {
@@ -405,7 +406,7 @@ describe('RoundDetailClient', () => {
   it('shows rating count text correctly', () => {
     renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={mockProphecies} />);
 
-    expect(screen.getByText('(2 Bewertungen)')).toBeInTheDocument();
+    expect(screen.getByText(/Durchschnitt \(2 Bewertungen\)/)).toBeInTheDocument();
   });
 
   describe('Rating functionality', () => {
@@ -540,7 +541,7 @@ describe('RoundDetailClient', () => {
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        expect(screen.getByText('(5 Bewertungen)')).toBeInTheDocument();
+        expect(screen.getByText(/Durchschnitt \(5 Bewertungen\)/)).toBeInTheDocument();
       });
     });
 
@@ -576,10 +577,8 @@ describe('RoundDetailClient', () => {
 
       renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} initialProphecies={prophecyWithOneRating} />);
 
-      // Should not show plural form
-      // Wait - looking at the code, it actually doesn't handle singular
-      // Just verify the count displays
-      expect(screen.getByText('(1 Bewertungen)')).toBeInTheDocument();
+      // Should show singular form
+      expect(screen.getByText(/Durchschnitt \(1 Bewertung\)/)).toBeInTheDocument();
     });
   });
 

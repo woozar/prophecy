@@ -1,5 +1,49 @@
 import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
+import React from 'react';
+
+// Fix jsdom "Not implemented: navigation" error
+// See: https://github.com/vitest-dev/vitest/issues/4450
+// jsdom doesn't support navigation, so we replace window.location entirely
+const locationMock = {
+  href: 'http://localhost:3000/',
+  origin: 'http://localhost:3000',
+  protocol: 'http:',
+  host: 'localhost:3000',
+  hostname: 'localhost',
+  port: '3000',
+  pathname: '/',
+  search: '',
+  hash: '',
+  assign: vi.fn(),
+  replace: vi.fn(),
+  reload: vi.fn(),
+};
+
+// Delete and replace window.location to prevent jsdom navigation errors
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+delete (window as any).location;
+window.location = locationMock as unknown as Location;
+
+// Mock next/link to prevent jsdom navigation errors when clicking links
+// See: https://github.com/vercel/next.js/discussions/60125
+vi.mock('next/link', () => ({
+  default: ({ children, href, onClick, ...props }: {
+    children: React.ReactNode;
+    href: string;
+    onClick?: (e: React.MouseEvent) => void;
+    [key: string]: unknown;
+  }) => {
+    return React.createElement('a', {
+      ...props,
+      href,
+      onClick: (e: React.MouseEvent) => {
+        e.preventDefault(); // Prevent jsdom navigation
+        onClick?.(e);
+      },
+    }, children);
+  },
+}));
 
 // Mock Prisma for server tests
 vi.mock('@/lib/db/prisma', () => ({

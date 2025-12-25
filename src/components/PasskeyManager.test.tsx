@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { PasskeyManager } from './PasskeyManager';
 import { MantineProvider } from '@mantine/core';
@@ -479,10 +479,15 @@ describe('PasskeyManager', () => {
     });
     mockStartRegistration.mockReturnValue(registrationPromise as never);
 
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ options: { challenge: 'test' } })
-    });
+    const mockFetch = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ options: { challenge: 'test' } })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ passkey: { id: 'test', name: 'Test', createdAt: new Date().toISOString() } })
+      });
     globalThis.fetch = mockFetch;
 
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
@@ -499,8 +504,10 @@ describe('PasskeyManager', () => {
       expect(screen.getByText('Wird registriert...')).toBeInTheDocument();
     });
 
-    // Cleanup: resolve the promise to avoid hanging
-    resolveRegistration!({ id: 'test', type: 'public-key' });
+    // Cleanup: resolve the promise and wait for state updates
+    await act(async () => {
+      resolveRegistration!({ id: 'test', type: 'public-key' });
+    });
   });
 
   it('registers passkey without custom name', async () => {

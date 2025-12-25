@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcrypt";
-import { prisma, ensureInitialized } from "@/lib/db/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcrypt';
+import { prisma, ensureInitialized } from '@/lib/db/prisma';
 import {
   findExistingUser,
   normalizeUsername,
@@ -8,7 +8,7 @@ import {
   setPendingUserCookie,
   registrationSuccessResponse,
   registrationErrorResponse,
-} from "@/lib/auth/registration";
+} from '@/lib/auth/registration';
 
 export async function POST(request: NextRequest) {
   await ensureInitialized();
@@ -24,21 +24,21 @@ export async function POST(request: NextRequest) {
     // Validierung
     if (!username || !password) {
       return NextResponse.json(
-        { error: "Benutzername und Passwort erforderlich" },
+        { error: 'Benutzername und Passwort erforderlich' },
         { status: 400 }
       );
     }
 
     if (username.length < 3) {
       return NextResponse.json(
-        { error: "Benutzername muss mindestens 3 Zeichen lang sein" },
+        { error: 'Benutzername muss mindestens 3 Zeichen lang sein' },
         { status: 400 }
       );
     }
 
     if (password.length < 8) {
       return NextResponse.json(
-        { error: "Passwort muss mindestens 8 Zeichen lang sein" },
+        { error: 'Passwort muss mindestens 8 Zeichen lang sein' },
         { status: 400 }
       );
     }
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         username: normalizedUsername,
         displayName: displayName || username,
         passwordHash,
-        status: "PENDING",
+        status: 'PENDING',
       },
     });
 
@@ -68,6 +68,6 @@ export async function POST(request: NextRequest) {
 
     return registrationSuccessResponse(user);
   } catch (error) {
-    return registrationErrorResponse(error, "Password registration error");
+    return registrationErrorResponse(error, 'Password registration error');
   }
 }

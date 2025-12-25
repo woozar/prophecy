@@ -21,7 +21,11 @@ describe('GlowBadge', () => {
   });
 
   it('applies medium size classes when size is md', () => {
-    render(<GlowBadge size="md" data-testid="badge">Badge</GlowBadge>);
+    render(
+      <GlowBadge size="md" data-testid="badge">
+        Badge
+      </GlowBadge>
+    );
     const badge = screen.getByTestId('badge');
     expect(badge).toHaveClass('px-4', 'py-2', 'text-sm');
   });
@@ -34,14 +38,22 @@ describe('GlowBadge', () => {
   });
 
   it('shows pulsing dot when withDot is true', () => {
-    render(<GlowBadge withDot data-testid="badge">Badge</GlowBadge>);
+    render(
+      <GlowBadge withDot data-testid="badge">
+        Badge
+      </GlowBadge>
+    );
     const badge = screen.getByTestId('badge');
     const dot = badge.querySelector('.animate-pulse');
     expect(dot).toBeInTheDocument();
   });
 
   it('merges custom className', () => {
-    render(<GlowBadge className="custom-class" data-testid="badge">Badge</GlowBadge>);
+    render(
+      <GlowBadge className="custom-class" data-testid="badge">
+        Badge
+      </GlowBadge>
+    );
     const badge = screen.getByTestId('badge');
     expect(badge).toHaveClass('custom-class');
     expect(badge).toHaveClass('rounded-full');
@@ -54,7 +66,11 @@ describe('GlowBadge', () => {
   });
 
   it('passes through additional HTML attributes', () => {
-    render(<GlowBadge data-testid="badge" id="my-badge">Badge</GlowBadge>);
+    render(
+      <GlowBadge data-testid="badge" id="my-badge">
+        Badge
+      </GlowBadge>
+    );
     const badge = screen.getByTestId('badge');
     expect(badge).toHaveAttribute('id', 'my-badge');
   });

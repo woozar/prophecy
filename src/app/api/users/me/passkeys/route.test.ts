@@ -6,9 +6,11 @@ import { prisma } from '@/lib/db/prisma';
 const mockGet = vi.fn();
 
 vi.mock('next/headers', () => ({
-  cookies: vi.fn(() => Promise.resolve({
-    get: mockGet,
-  })),
+  cookies: vi.fn(() =>
+    Promise.resolve({
+      get: mockGet,
+    })
+  ),
 }));
 
 // Mock webauthn
@@ -82,9 +84,7 @@ describe('GET /api/users/me/passkeys', () => {
 
   it('returns passkeys when authenticated', async () => {
     mockGet.mockReturnValue({ value: mockSessionCookie });
-    vi.mocked(prisma.authenticator.findMany).mockResolvedValue([
-      createMockAuthenticator(),
-    ]);
+    vi.mocked(prisma.authenticator.findMany).mockResolvedValue([createMockAuthenticator()]);
 
     const response = await GET();
     const data = await response.json();
@@ -263,7 +263,9 @@ describe('DELETE /api/users/me/passkeys', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Du kannst deinen letzten Passkey nicht löschen, wenn kein Passwort gesetzt ist.');
+    expect(data.error).toBe(
+      'Du kannst deinen letzten Passkey nicht löschen, wenn kein Passwort gesetzt ist.'
+    );
   });
 
   it('deletes passkey successfully', async () => {

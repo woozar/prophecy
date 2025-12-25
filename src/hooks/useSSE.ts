@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useCallback } from "react";
-import { useRoundStore, type Round } from "@/store/useRoundStore";
-import { useUserStore } from "@/store/useUserStore";
+import { useEffect, useRef, useCallback } from 'react';
+import { useRoundStore, type Round } from '@/store/useRoundStore';
+import { useUserStore } from '@/store/useUserStore';
 
 type SSEEventType =
-  | "round:created"
-  | "round:updated"
-  | "round:deleted"
-  | "user:created"
-  | "user:updated"
-  | "user:deleted"
-  | "prophecy:created"
-  | "prophecy:updated"
-  | "prophecy:deleted"
-  | "prophecy:rated";
+  | 'round:created'
+  | 'round:updated'
+  | 'round:deleted'
+  | 'user:created'
+  | 'user:updated'
+  | 'user:deleted'
+  | 'prophecy:created'
+  | 'prophecy:updated'
+  | 'prophecy:deleted'
+  | 'prophecy:rated';
 
 // Custom event for prophecy updates that components can subscribe to
 export interface ProphecyRatedEvent {
@@ -45,29 +45,29 @@ export function useSSE() {
   const handleEvent = useCallback(
     (type: SSEEventType, data: unknown) => {
       switch (type) {
-        case "round:created":
+        case 'round:created':
           addRound(data as Round);
           break;
-        case "round:updated":
+        case 'round:updated':
           updateRound(data as Round);
           break;
-        case "round:deleted":
+        case 'round:deleted':
           deleteRound((data as { id: string }).id);
           break;
-        case "user:updated":
-        case "user:created":
-        case "user:deleted":
+        case 'user:updated':
+        case 'user:created':
+        case 'user:deleted':
           useUserStore.getState().fetchUsers();
           break;
-        case "prophecy:rated":
+        case 'prophecy:rated':
           // Notify all subscribed components about the rating update
           prophecyRatedHandlers.forEach((handler) => {
             handler(data as ProphecyRatedEvent);
           });
           break;
-        case "prophecy:created":
-        case "prophecy:updated":
-        case "prophecy:deleted":
+        case 'prophecy:created':
+        case 'prophecy:updated':
+        case 'prophecy:deleted':
           // These events could be handled by a prophecy store if needed
           console.log(`[SSE] Prophecy event: ${type}`, data);
           break;
@@ -83,16 +83,16 @@ export function useSSE() {
       eventSourceRef.current.close();
     }
 
-    const eventSource = new EventSource("/api/sse");
+    const eventSource = new EventSource('/api/sse');
     eventSourceRef.current = eventSource;
 
     eventSource.onopen = () => {
-      console.log("[SSE] Connected");
+      console.log('[SSE] Connected');
       reconnectAttempts.current = 0;
     };
 
     eventSource.onerror = () => {
-      console.log("[SSE] Connection error, attempting reconnect...");
+      console.log('[SSE] Connection error, attempting reconnect...');
       eventSource.close();
       eventSourceRef.current = null;
 
@@ -107,16 +107,16 @@ export function useSSE() {
 
     // Listen for all event types
     const eventTypes: SSEEventType[] = [
-      "round:created",
-      "round:updated",
-      "round:deleted",
-      "user:created",
-      "user:updated",
-      "user:deleted",
-      "prophecy:created",
-      "prophecy:updated",
-      "prophecy:deleted",
-      "prophecy:rated",
+      'round:created',
+      'round:updated',
+      'round:deleted',
+      'user:created',
+      'user:updated',
+      'user:deleted',
+      'prophecy:created',
+      'prophecy:updated',
+      'prophecy:deleted',
+      'prophecy:rated',
     ];
 
     eventTypes.forEach((type) => {

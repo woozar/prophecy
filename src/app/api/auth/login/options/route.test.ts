@@ -66,9 +66,7 @@ describe('POST /api/auth/login/options', () => {
   });
 
   it('returns 403 when user not approved', async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(
-      createMockUser({ status: 'PENDING' })
-    );
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(createMockUser({ status: 'PENDING' }));
 
     const request = new NextRequest('http://localhost/api/auth/login/options', {
       method: 'POST',
@@ -82,9 +80,7 @@ describe('POST /api/auth/login/options', () => {
   });
 
   it('returns 400 when user has no passkeys', async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(
-      createMockUser({ authenticators: [] })
-    );
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(createMockUser({ authenticators: [] }));
 
     const request = new NextRequest('http://localhost/api/auth/login/options', {
       method: 'POST',

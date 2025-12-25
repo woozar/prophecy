@@ -4,11 +4,11 @@ services:
     pull_policy: always
     container_name: prophezeiung-app
     ports:
-      - "30055:3000"
+      - '30055:3000'
     environment:
       DATABASE_URL: postgresql://prophezeiung:prophezeiung_dev@db:5432/prophezeiung
       NODE_ENV: production
-      WEBAUTHN_RP_ID: prophecy.12-of-spades.com                                                                             
+      WEBAUTHN_RP_ID: prophecy.12-of-spades.com
       WEBAUTHN_ORIGIN: https://prophecy.12-of-spades.com
     depends_on:
       db:
@@ -27,7 +27,7 @@ services:
     volumes:
       - /mnt/Master/Apps/Prophecy/db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U prophezeiung"]
+      test: ['CMD-SHELL', 'pg_isready -U prophezeiung']
       interval: 5s
       timeout: 5s
       retries: 5

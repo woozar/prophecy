@@ -1,13 +1,13 @@
-import bcrypt from "bcrypt";
-import { prisma } from "@/lib/db/prisma";
+import bcrypt from 'bcrypt';
+import { prisma } from '@/lib/db/prisma';
 
-const ADMIN_USERNAME = "admin";
+const ADMIN_USERNAME = 'admin';
 
 export async function ensureAdminExists(): Promise<void> {
   const adminPassword = process.env.ADMIN_PW;
 
   if (!adminPassword) {
-    console.warn("⚠️  ADMIN_PW nicht gesetzt - kein Admin-User erstellt");
+    console.warn('⚠️  ADMIN_PW nicht gesetzt - kein Admin-User erstellt');
     return;
   }
 
@@ -27,15 +27,15 @@ export async function ensureAdminExists(): Promise<void> {
     await prisma.user.create({
       data: {
         username: ADMIN_USERNAME,
-        displayName: "Administrator",
+        displayName: 'Administrator',
         passwordHash,
-        role: "ADMIN",
-        status: "APPROVED",
+        role: 'ADMIN',
+        status: 'APPROVED',
       },
     });
 
-    console.log("✓ Admin-User erstellt (username: admin)");
+    console.log('✓ Admin-User erstellt (username: admin)');
   } catch (error) {
-    console.error("Fehler beim Erstellen des Admin-Users:", error);
+    console.error('Fehler beim Erstellen des Admin-Users:', error);
   }
 }

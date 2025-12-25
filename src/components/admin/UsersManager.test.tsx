@@ -275,8 +275,8 @@ describe('UsersManager', () => {
 
     // Find the confirm button in the modal
     const allButtons = screen.getAllByRole('button');
-    const confirmButton = allButtons.find(btn =>
-      btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
+    const confirmButton = allButtons.find(
+      (btn) => btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
     );
     fireEvent.click(confirmButton!);
 
@@ -395,9 +395,9 @@ describe('UsersManager', () => {
       expect(screen.getByText('Adminrechte entziehen?')).toBeInTheDocument();
     });
 
-    const confirmButton = screen.getAllByRole('button').find(btn =>
-      btn.textContent?.includes('Rechte entziehen')
-    );
+    const confirmButton = screen
+      .getAllByRole('button')
+      .find((btn) => btn.textContent?.includes('Rechte entziehen'));
     fireEvent.click(confirmButton!);
 
     await waitFor(() => {
@@ -438,9 +438,9 @@ describe('UsersManager', () => {
       expect(screen.getByText('Benutzer sperren?')).toBeInTheDocument();
     });
 
-    const confirmButton = screen.getAllByRole('button').find(btn =>
-      btn.textContent?.includes('Sperren') && !btn.hasAttribute('title')
-    );
+    const confirmButton = screen
+      .getAllByRole('button')
+      .find((btn) => btn.textContent?.includes('Sperren') && !btn.hasAttribute('title'));
     fireEvent.click(confirmButton!);
 
     await waitFor(() => {
@@ -495,9 +495,9 @@ describe('UsersManager', () => {
       expect(screen.getByText('Benutzer löschen?')).toBeInTheDocument();
     });
 
-    const confirmButton = screen.getAllByRole('button').find(btn =>
-      btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
-    );
+    const confirmButton = screen
+      .getAllByRole('button')
+      .find((btn) => btn.textContent?.includes('Löschen') && !btn.hasAttribute('title'));
     fireEvent.click(confirmButton!);
 
     await waitFor(() => {
@@ -520,9 +520,9 @@ describe('UsersManager', () => {
       expect(screen.getByText('Benutzer löschen?')).toBeInTheDocument();
     });
 
-    const confirmButton = screen.getAllByRole('button').find(btn =>
-      btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
-    );
+    const confirmButton = screen
+      .getAllByRole('button')
+      .find((btn) => btn.textContent?.includes('Löschen') && !btn.hasAttribute('title'));
     fireEvent.click(confirmButton!);
 
     await waitFor(() => {
@@ -598,9 +598,9 @@ describe('UsersManager', () => {
       expect(screen.getByText('Benutzer löschen?')).toBeInTheDocument();
     });
 
-    const confirmButton = screen.getAllByRole('button').find(btn =>
-      btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
-    );
+    const confirmButton = screen
+      .getAllByRole('button')
+      .find((btn) => btn.textContent?.includes('Löschen') && !btn.hasAttribute('title'));
     fireEvent.click(confirmButton!);
 
     await waitFor(() => {
@@ -624,9 +624,9 @@ describe('UsersManager', () => {
       expect(screen.getByText('Benutzer löschen?')).toBeInTheDocument();
     });
 
-    const confirmButton = screen.getAllByRole('button').find(btn =>
-      btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
-    );
+    const confirmButton = screen
+      .getAllByRole('button')
+      .find((btn) => btn.textContent?.includes('Löschen') && !btn.hasAttribute('title'));
     fireEvent.click(confirmButton!);
 
     await waitFor(() => {

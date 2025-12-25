@@ -29,16 +29,16 @@ export interface AngularParticle {
   wobble?: number;
 }
 
-export const BURST_COLORS = ["#22d3ee", "#14b8a6", "#06b6d4", "#2dd4bf"];
+export const BURST_COLORS = ['#22d3ee', '#14b8a6', '#06b6d4', '#2dd4bf'];
 
 export const MYSTICAL_COLORS = [
-  "#22d3ee", // cyan-400
-  "#14b8a6", // teal-500
-  "#06b6d4", // cyan-500
-  "#10b981", // emerald-500
-  "#8b5cf6", // violet-500
-  "#a855f7", // purple-500
-  "#6366f1", // indigo-500
+  '#22d3ee', // cyan-400
+  '#14b8a6', // teal-500
+  '#06b6d4', // cyan-500
+  '#10b981', // emerald-500
+  '#8b5cf6', // violet-500
+  '#a855f7', // purple-500
+  '#6366f1', // indigo-500
 ];
 
 /**

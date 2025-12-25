@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -15,13 +15,13 @@ function createPrismaClient() {
 
   return new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   });
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 // Admin-Seeding beim ersten DB-Zugriff
 export async function ensureInitialized(): Promise<void> {
@@ -29,6 +29,6 @@ export async function ensureInitialized(): Promise<void> {
   globalForPrisma.adminSeeded = true;
 
   // Dynamischer Import um zirkuläre Abhängigkeiten zu vermeiden
-  const { ensureAdminExists } = await import("@/lib/auth/admin-seed");
+  const { ensureAdminExists } = await import('@/lib/auth/admin-seed');
   await ensureAdminExists();
 }

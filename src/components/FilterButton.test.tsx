@@ -41,7 +41,11 @@ describe('FilterButton', () => {
 
   it('can be disabled', () => {
     const handleClick = vi.fn();
-    render(<FilterButton onClick={handleClick} disabled>Disabled</FilterButton>);
+    render(
+      <FilterButton onClick={handleClick} disabled>
+        Disabled
+      </FilterButton>
+    );
 
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();

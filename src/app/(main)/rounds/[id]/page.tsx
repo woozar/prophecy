@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation";
-import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/db/prisma";
-import { RoundDetailClient } from "./RoundDetailClient";
+import { notFound } from 'next/navigation';
+import { getSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
+import { RoundDetailClient } from './RoundDetailClient';
 
 interface PageProps {
   readonly params: Promise<{ id: string }>;
@@ -20,7 +20,7 @@ export default async function RoundDetailPage({ params }: Readonly<PageProps>) {
     where: { id },
     include: {
       prophecies: {
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         include: {
           creator: {
             select: {
@@ -68,10 +68,5 @@ export default async function RoundDetailPage({ params }: Readonly<PageProps>) {
     fulfillmentDate: round.fulfillmentDate.toISOString(),
   };
 
-  return (
-    <RoundDetailClient
-      round={roundData}
-      initialProphecies={prophecies}
-    />
-  );
+  return <RoundDetailClient round={roundData} initialProphecies={prophecies} />;
 }

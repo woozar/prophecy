@@ -4,9 +4,11 @@ import { POST } from './route';
 const mockDelete = vi.fn();
 
 vi.mock('next/headers', () => ({
-  cookies: vi.fn(() => Promise.resolve({
-    delete: mockDelete,
-  })),
+  cookies: vi.fn(() =>
+    Promise.resolve({
+      delete: mockDelete,
+    })
+  ),
 }));
 
 describe('POST /api/auth/logout', () => {

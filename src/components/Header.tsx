@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { memo, useCallback, useState, useEffect, useRef } from "react";
-import { IconChevronDown, IconUser, IconLogout, IconMenu2, IconX } from "@tabler/icons-react";
-import { Link } from "@/components/Link";
-import { Button } from "@/components/Button";
-import { useRouter, usePathname } from "next/navigation";
-import { notifications } from "@mantine/notifications";
-import { successToast, errorToast } from "@/lib/toast/toast-styles";
+import { memo, useCallback, useState, useEffect, useRef } from 'react';
+import { IconChevronDown, IconUser, IconLogout, IconMenu2, IconX } from '@tabler/icons-react';
+import { Link } from '@/components/Link';
+import { Button } from '@/components/Button';
+import { useRouter, usePathname } from 'next/navigation';
+import { notifications } from '@mantine/notifications';
+import { successToast, errorToast } from '@/lib/toast/toast-styles';
 
 interface HeaderProps {
   user: {
@@ -16,13 +16,11 @@ interface HeaderProps {
   };
 }
 
-const navItems = [
-  { href: "/", label: "Runden", icon: "home" },
-];
+const navItems = [{ href: '/', label: 'Runden', icon: 'home' }];
 
 const adminItems = [
-  { href: "/admin/users", label: "Benutzer", icon: "users" },
-  { href: "/admin/rounds", label: "Runden verwalten", icon: "settings" },
+  { href: '/admin/users', label: 'Benutzer', icon: 'users' },
+  { href: '/admin/rounds', label: 'Runden verwalten', icon: 'settings' },
 ];
 
 export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
@@ -40,33 +38,33 @@ export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
         setUserMenuOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleLogout = useCallback(async () => {
     setIsLoggingOut(true);
     try {
-      const response = await fetch("/api/auth/logout", { method: "POST" });
+      const response = await fetch('/api/auth/logout', { method: 'POST' });
       if (response.ok) {
-        notifications.show(successToast("Abgemeldet", "Bis bald!"));
-        router.push("/login");
+        notifications.show(successToast('Abgemeldet', 'Bis bald!'));
+        router.push('/login');
       } else {
-        notifications.show(errorToast("Fehler", "Abmeldung fehlgeschlagen"));
+        notifications.show(errorToast('Fehler', 'Abmeldung fehlgeschlagen'));
       }
     } catch {
-      notifications.show(errorToast("Fehler", "Abmeldung fehlgeschlagen"));
+      notifications.show(errorToast('Fehler', 'Abmeldung fehlgeschlagen'));
     } finally {
       setIsLoggingOut(false);
     }
   }, [router]);
 
   const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
+    if (href === '/') return pathname === '/';
     return pathname.startsWith(href);
   };
 
-  const allNavItems = user.role === "ADMIN" ? [...navItems, ...adminItems] : navItems;
+  const allNavItems = user.role === 'ADMIN' ? [...navItems, ...adminItems] : navItems;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[rgba(10,25,41,0.85)] backdrop-blur-xl border-b border-[rgba(98,125,152,0.2)]">
@@ -76,7 +74,9 @@ export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
           <Link href="/" className="flex items-center gap-2 group">
             <span className="text-xl font-bold">
               <span className="text-white group-hover:text-cyan-100 transition-colors">Prophe</span>
-              <span className="text-cyan-400 group-hover:text-cyan-300 transition-colors">zeiung</span>
+              <span className="text-cyan-400 group-hover:text-cyan-300 transition-colors">
+                zeiung
+              </span>
             </span>
           </Link>
 
@@ -87,7 +87,7 @@ export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
                 key={item.href}
                 href={item.href}
                 className={`link-underline ghost-glow text-sm font-medium py-1 px-2 ${
-                  isActive(item.href) ? "link-underline-active" : ""
+                  isActive(item.href) ? 'link-underline-active' : ''
                 }`}
               >
                 {item.label}
@@ -109,7 +109,7 @@ export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
                     {user.displayName || user.username}
                   </p>
                   <p className="text-xs text-(--text-muted)">
-                    {user.role === "ADMIN" ? "Administrator" : "Benutzer"}
+                    {user.role === 'ADMIN' ? 'Administrator' : 'Benutzer'}
                   </p>
                 </div>
                 <div className="w-9 h-9 rounded-full bg-linear-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-sm font-bold text-white shadow-[0_0_15px_rgba(6,182,212,0.3)]">
@@ -117,7 +117,7 @@ export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
                 </div>
                 <IconChevronDown
                   size={16}
-                  className={`text-(--text-muted) transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""}`}
+                  className={`text-(--text-muted) transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`}
                 />
               </Button>
 
@@ -140,7 +140,7 @@ export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-[rgba(239,68,68,0.1)]"
                   >
                     <IconLogout size={18} />
-                    {isLoggingOut ? "Abmelden..." : "Abmelden"}
+                    {isLoggingOut ? 'Abmelden...' : 'Abmelden'}
                   </Button>
                 </div>
               )}
@@ -172,7 +172,7 @@ export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
                   {user.displayName || user.username}
                 </p>
                 <p className="text-xs text-(--text-muted)">
-                  {user.role === "ADMIN" ? "Administrator" : "Benutzer"}
+                  {user.role === 'ADMIN' ? 'Administrator' : 'Benutzer'}
                 </p>
               </div>
             </div>
@@ -185,7 +185,7 @@ export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`link-underline ghost-glow py-2 px-2 text-sm font-medium ${
-                    isActive(item.href) ? "link-underline-active" : ""
+                    isActive(item.href) ? 'link-underline-active' : ''
                   }`}
                 >
                   {item.label}
@@ -197,7 +197,7 @@ export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
                 href="/profile"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`link-underline ghost-glow py-2 px-2 text-sm font-medium ${
-                  isActive("/profile") ? "link-underline-active" : ""
+                  isActive('/profile') ? 'link-underline-active' : ''
                 }`}
               >
                 Profil
@@ -212,7 +212,7 @@ export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
               className="flex items-center justify-center gap-2 py-3 mx-auto text-sm text-red-400 hover:text-red-300"
             >
               <IconLogout size={18} />
-              {isLoggingOut ? "Abmelden..." : "Abmelden"}
+              {isLoggingOut ? 'Abmelden...' : 'Abmelden'}
             </Button>
           </div>
         </div>

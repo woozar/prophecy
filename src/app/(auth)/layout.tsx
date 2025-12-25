@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { ReactNode } from "react";
-import Image from "next/image";
-import { FogBackground } from "@/components/FogBackground";
-import { ParticleBurst } from "@/components/ParticleBurst";
+import { ReactNode } from 'react';
+import Image from 'next/image';
+import { FogBackground } from '@/components/FogBackground';
+import { ParticleBurst } from '@/components/ParticleBurst';
 
 interface AuthLayoutProps {
   readonly children: ReactNode;
@@ -38,14 +38,18 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           <div
             className="absolute inset-0 pointer-events-none animate-fade-in"
             style={{
-              background: "radial-gradient(circle at center, rgba(6, 182, 212, 0.2) 0%, transparent 50%)",
+              background:
+                'radial-gradient(circle at center, rgba(6, 182, 212, 0.2) 0%, transparent 50%)',
             }}
           />
         </div>
 
         {/* Right side - Auth Form */}
         <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-          <div className="w-full max-w-md animate-slide-in-right opacity-0 animation-delay-200" style={{ animationFillMode: 'forwards' }}>
+          <div
+            className="w-full max-w-md animate-slide-in-right opacity-0 animation-delay-200"
+            style={{ animationFillMode: 'forwards' }}
+          >
             {children}
           </div>
         </div>

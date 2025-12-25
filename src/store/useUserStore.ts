@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 export interface User {
   id: string;
@@ -33,9 +33,10 @@ export const useUserStore = create<UserState>((set, get) => ({
 
   setUsers: (users) => set({ users }),
 
-  updateUser: (user) => set((state) => ({
-    users: state.users.map((u) => u.id === user.id ? user : u)
-  })),
+  updateUser: (user) =>
+    set((state) => ({
+      users: state.users.map((u) => (u.id === user.id ? user : u)),
+    })),
 
   setLoading: (isLoading) => set({ isLoading }),
 
@@ -47,12 +48,12 @@ export const useUserStore = create<UserState>((set, get) => ({
     setError(null);
 
     try {
-      const res = await fetch("/api/admin/users");
-      if (!res.ok) throw new Error("Fehler beim Laden der Benutzer");
+      const res = await fetch('/api/admin/users');
+      if (!res.ok) throw new Error('Fehler beim Laden der Benutzer');
       const data = await res.json();
       setUsers(data.users);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Unbekannter Fehler");
+      setError(error instanceof Error ? error.message : 'Unbekannter Fehler');
     } finally {
       setLoading(false);
     }

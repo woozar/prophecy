@@ -78,9 +78,7 @@ describe('POST /api/auth/login/password', () => {
   });
 
   it('returns 400 when user has no password', async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(
-      createMockUser({ passwordHash: null })
-    );
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(createMockUser({ passwordHash: null }));
 
     const request = new NextRequest('http://localhost/api/auth/login/password', {
       method: 'POST',
@@ -109,9 +107,7 @@ describe('POST /api/auth/login/password', () => {
   });
 
   it('returns 403 when user is pending', async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(
-      createMockUser({ status: 'PENDING' })
-    );
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(createMockUser({ status: 'PENDING' }));
     vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
 
     const request = new NextRequest('http://localhost/api/auth/login/password', {
@@ -126,9 +122,7 @@ describe('POST /api/auth/login/password', () => {
   });
 
   it('returns 403 when user is suspended', async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(
-      createMockUser({ status: 'SUSPENDED' })
-    );
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(createMockUser({ status: 'SUSPENDED' }));
     vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
 
     const request = new NextRequest('http://localhost/api/auth/login/password', {

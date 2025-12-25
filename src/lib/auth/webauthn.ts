@@ -3,11 +3,11 @@
 // Relying Party (RP) Info - muss mit der Domain übereinstimmen
 // In Entwicklung: localhost
 // In Produktion: die tatsächliche Domain
-const rpID = process.env.WEBAUTHN_RP_ID || "localhost";
-const rpName = "Prophezeiung";
+const rpID = process.env.WEBAUTHN_RP_ID || 'localhost';
+const rpName = 'Prophezeiung';
 
 // Origin muss das Protokoll und den Port enthalten
-const origin = process.env.WEBAUTHN_ORIGIN || "http://localhost:3001";
+const origin = process.env.WEBAUTHN_ORIGIN || 'http://localhost:3001';
 
 export const webauthnConfig = {
   rpID,
@@ -18,8 +18,8 @@ export const webauthnConfig = {
   // Wir bevorzugen Platform-Authenticators (TouchID, FaceID, Windows Hello)
   // aber erlauben auch Security Keys
   authenticatorSelection: {
-    residentKey: "preferred" as const,
-    userVerification: "preferred" as const,
+    residentKey: 'preferred' as const,
+    userVerification: 'preferred' as const,
     authenticatorAttachment: undefined, // Erlaubt sowohl platform als auch cross-platform
   },
   // Unterstützte Algorithmen

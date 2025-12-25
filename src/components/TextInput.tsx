@@ -1,33 +1,31 @@
-"use client";
+'use client';
 
-import { memo, forwardRef, InputHTMLAttributes, useId } from "react";
-import { RequiredAsterisk } from "./RequiredAsterisk";
+import { memo, forwardRef, InputHTMLAttributes, useId } from 'react';
+import { RequiredAsterisk } from './RequiredAsterisk';
 
-interface TextInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
+interface TextInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
   description?: string;
   error?: string;
 }
 
-export const TextInput = memo(forwardRef<HTMLInputElement, Readonly<TextInputProps>>(
-  function TextInput({ label, description, error, className = "", id, ...props }, ref) {
+export const TextInput = memo(
+  forwardRef<HTMLInputElement, Readonly<TextInputProps>>(function TextInput(
+    { label, description, error, className = '', id, ...props },
+    ref
+  ) {
     const generatedId = useId();
     const inputId = id || generatedId;
 
     return (
       <div className="flex flex-col gap-1">
         {label && (
-          <label
-            htmlFor={inputId}
-            className="text-sm font-medium text-(--text-primary)"
-          >
+          <label htmlFor={inputId} className="text-sm font-medium text-(--text-primary)">
             {label}
             {props.required && <RequiredAsterisk />}
           </label>
         )}
-        {description && (
-          <p className="text-xs text-(--text-muted)">{description}</p>
-        )}
+        {description && <p className="text-xs text-(--text-muted)">{description}</p>}
         <input
           ref={ref}
           id={inputId}
@@ -42,15 +40,13 @@ export const TextInput = memo(forwardRef<HTMLInputElement, Readonly<TextInputPro
             focus:outline-none focus:border-cyan-500
             focus:shadow-[0_0_0_3px_rgba(6,182,212,0.15),0_0_20px_rgba(6,182,212,0.1)]
             disabled:opacity-50 disabled:cursor-not-allowed
-            ${error ? "border-red-500/50 focus:border-red-500" : ""}
+            ${error ? 'border-red-500/50 focus:border-red-500' : ''}
             ${className}
           `.trim()}
           {...props}
         />
-        {error && (
-          <p className="text-xs text-red-400 mt-0.5">{error}</p>
-        )}
+        {error && <p className="text-xs text-red-400 mt-0.5">{error}</p>}
       </div>
     );
-  }
-));
+  })
+);

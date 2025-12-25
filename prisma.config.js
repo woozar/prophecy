@@ -1,10 +1,10 @@
 // Prisma config for production (no TypeScript/dotenv needed)
-const { defineConfig } = require("prisma/config");
+const { defineConfig } = require('prisma/config');
 
 module.exports = defineConfig({
-  schema: "prisma/schema.prisma",
+  schema: 'prisma/schema.prisma',
   migrations: {
-    path: "prisma/migrations",
+    path: 'prisma/migrations',
   },
   datasource: {
     url: process.env.DATABASE_URL,

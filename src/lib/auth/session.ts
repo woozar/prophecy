@@ -1,10 +1,10 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 export interface SessionUser {
   userId: string;
   username: string;
-  role: "USER" | "ADMIN";
+  role: 'USER' | 'ADMIN';
   iat: number;
 }
 
@@ -17,14 +17,14 @@ interface LoginUser {
 
 export async function getSession(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get("session");
+  const sessionCookie = cookieStore.get('session');
 
   if (!sessionCookie?.value) {
     return null;
   }
 
   try {
-    const session = JSON.parse(Buffer.from(sessionCookie.value, "base64").toString());
+    const session = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString());
     return session as SessionUser;
   } catch {
     return null;
@@ -34,7 +34,7 @@ export async function getSession(): Promise<SessionUser | null> {
 export async function requireSession(): Promise<SessionUser> {
   const session = await getSession();
   if (!session) {
-    throw new Error("Nicht angemeldet");
+    throw new Error('Nicht angemeldet');
   }
   return session;
 }
@@ -52,14 +52,14 @@ export async function setSessionCookie(user: LoginUser) {
       role: user.role,
       iat: Date.now(),
     })
-  ).toString("base64");
+  ).toString('base64');
 
-  cookieStore.set("session", sessionToken, {
+  cookieStore.set('session', sessionToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
     maxAge: 60 * 60 * 24 * 7, // 7 days
-    path: "/",
+    path: '/',
   });
 }
 
@@ -83,8 +83,5 @@ export function loginSuccessResponse(user: LoginUser) {
  */
 export function loginErrorResponse(error: unknown, context: string) {
   console.error(`${context}:`, error);
-  return NextResponse.json(
-    { error: "Fehler bei der Anmeldung" },
-    { status: 500 }
-  );
+  return NextResponse.json({ error: 'Fehler bei der Anmeldung' }, { status: 500 });
 }

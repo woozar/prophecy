@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/db/prisma";
-import { sseEmitter } from "@/lib/sse/event-emitter";
-import { updateRoundSchema } from "@/lib/schemas/round";
+import { NextRequest, NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
+import { sseEmitter } from '@/lib/sse/event-emitter';
+import { updateRoundSchema } from '@/lib/schemas/round';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -28,19 +28,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     if (!round) {
-      return NextResponse.json(
-        { error: "Runde nicht gefunden" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Runde nicht gefunden' }, { status: 404 });
     }
 
     return NextResponse.json({ round });
   } catch (error) {
-    console.error("Error fetching round:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Laden der Runde" },
-      { status: 500 }
-    );
+    console.error('Error fetching round:', error);
+    return NextResponse.json({ error: 'Fehler beim Laden der Runde' }, { status: 500 });
   }
 }
 
@@ -50,11 +44,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (session.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (session.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
@@ -63,10 +57,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     if (!parsed.success) {
       const firstError = parsed.error.errors[0];
-      return NextResponse.json(
-        { error: firstError.message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: firstError.message }, { status: 400 });
     }
 
     const { title, submissionDeadline, ratingDeadline, fulfillmentDate } = parsed.data;
@@ -88,17 +79,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Broadcast to all connected clients
     sseEmitter.broadcast({
-      type: "round:updated",
+      type: 'round:updated',
       data: round,
     });
 
     return NextResponse.json({ round });
   } catch (error) {
-    console.error("Error updating round:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Aktualisieren der Runde" },
-      { status: 500 }
-    );
+    console.error('Error updating round:', error);
+    return NextResponse.json({ error: 'Fehler beim Aktualisieren der Runde' }, { status: 500 });
   }
 }
 
@@ -108,11 +96,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (session.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (session.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
@@ -122,16 +110,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // Broadcast to all connected clients
     sseEmitter.broadcast({
-      type: "round:deleted",
+      type: 'round:deleted',
       data: { id },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting round:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Löschen der Runde" },
-      { status: 500 }
-    );
+    console.error('Error deleting round:', error);
+    return NextResponse.json({ error: 'Fehler beim Löschen der Runde' }, { status: 500 });
   }
 }

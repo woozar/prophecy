@@ -1,15 +1,15 @@
-import { NextRequest } from "next/server";
-import { getSession } from "@/lib/auth/session";
-import { sseEmitter } from "@/lib/sse/event-emitter";
+import { NextRequest } from 'next/server';
+import { getSession } from '@/lib/auth/session';
+import { sseEmitter } from '@/lib/sse/event-emitter';
 
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   const session = await getSession();
 
   if (!session) {
-    return new Response("Unauthorized", { status: 401 });
+    return new Response('Unauthorized', { status: 401 });
   }
 
   const clientId = `${session.userId}-${Date.now()}`;
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       // Send initial connection message
-      controller.enqueue(encoder.encode(": connected\n\n"));
+      controller.enqueue(encoder.encode(': connected\n\n'));
 
       // Register client
       sseEmitter.addClient(clientId, controller);
@@ -26,14 +26,14 @@ export async function GET(request: NextRequest) {
       // Keep-alive ping every 30 seconds
       const pingInterval = setInterval(() => {
         try {
-          controller.enqueue(encoder.encode(": ping\n\n"));
+          controller.enqueue(encoder.encode(': ping\n\n'));
         } catch {
           clearInterval(pingInterval);
         }
       }, 30000);
 
       // Handle client disconnect
-      request.signal.addEventListener("abort", () => {
+      request.signal.addEventListener('abort', () => {
         clearInterval(pingInterval);
         sseEmitter.removeClient(clientId);
       });
@@ -45,10 +45,10 @@ export async function GET(request: NextRequest) {
 
   return new Response(stream, {
     headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      "X-Accel-Buffering": "no",
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
     },
   });
 }

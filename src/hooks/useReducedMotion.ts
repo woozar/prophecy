@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore } from 'react';
 
-const MEDIA_QUERY = "(prefers-reduced-motion: reduce)";
+const MEDIA_QUERY = '(prefers-reduced-motion: reduce)';
 
 function getSnapshot(): boolean {
   return globalThis.matchMedia(MEDIA_QUERY).matches;
@@ -14,8 +14,8 @@ function getServerSnapshot(): boolean {
 
 function subscribe(callback: () => void): () => void {
   const mediaQuery = globalThis.matchMedia(MEDIA_QUERY);
-  mediaQuery.addEventListener("change", callback);
-  return () => mediaQuery.removeEventListener("change", callback);
+  mediaQuery.addEventListener('change', callback);
+  return () => mediaQuery.removeEventListener('change', callback);
 }
 
 /**

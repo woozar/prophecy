@@ -164,15 +164,16 @@ describe('useUserStore', () => {
 
   describe('fetchUsers', () => {
     it('sets loading during fetch', async () => {
-      const mockFetch = vi.fn(() =>
-        new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              ok: true,
-              json: () => Promise.resolve({ users: [] }),
-            });
-          }, 10);
-        })
+      const mockFetch = vi.fn(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(() => {
+              resolve({
+                ok: true,
+                json: () => Promise.resolve({ users: [] }),
+              });
+            }, 10);
+          })
       ) as unknown as typeof fetch;
 
       vi.stubGlobal('fetch', mockFetch);
@@ -202,9 +203,7 @@ describe('useUserStore', () => {
     });
 
     it('sets error on API failure', async () => {
-      const mockFetch = vi.fn(() =>
-        Promise.resolve({ ok: false })
-      ) as unknown as typeof fetch;
+      const mockFetch = vi.fn(() => Promise.resolve({ ok: false })) as unknown as typeof fetch;
 
       vi.stubGlobal('fetch', mockFetch);
 
@@ -227,9 +226,7 @@ describe('useUserStore', () => {
     });
 
     it('sets generic error for non-Error exceptions', async () => {
-      const mockFetch = vi.fn(() =>
-        Promise.reject('Unknown')
-      ) as unknown as typeof fetch;
+      const mockFetch = vi.fn(() => Promise.reject('Unknown')) as unknown as typeof fetch;
 
       vi.stubGlobal('fetch', mockFetch);
 

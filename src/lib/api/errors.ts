@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 /**
  * Custom API error class for typed HTTP error responses.
@@ -9,7 +9,7 @@ export class ApiError extends Error {
     public status: number = 500
   ) {
     super(message);
-    this.name = "ApiError";
+    this.name = 'ApiError';
   }
 
   /**
@@ -22,8 +22,8 @@ export class ApiError extends Error {
 
 // Common error factories
 export const Errors = {
-  unauthorized: () => new ApiError("Unauthorized", 401),
-  forbidden: (message = "Keine Berechtigung") => new ApiError(message, 403),
+  unauthorized: () => new ApiError('Unauthorized', 401),
+  forbidden: (message = 'Keine Berechtigung') => new ApiError(message, 403),
   notFound: (resource: string) => new ApiError(`${resource} nicht gefunden`, 404),
   badRequest: (message: string) => new ApiError(message, 400),
   internal: (message: string) => new ApiError(message, 500),
@@ -53,6 +53,6 @@ export async function handleApiError(
       return error.toResponse();
     }
     console.error(errorLogMessage, error);
-    return Errors.internal(errorLogMessage.replace("Error ", "Fehler beim ")).toResponse();
+    return Errors.internal(errorLogMessage.replace('Error ', 'Fehler beim ')).toResponse();
   }
 }

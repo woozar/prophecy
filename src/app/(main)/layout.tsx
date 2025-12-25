@@ -1,12 +1,12 @@
-import { ReactNode } from "react";
-import { redirect } from "next/navigation";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { FogBackground } from "@/components/FogBackground";
-import { ParticleBurst } from "@/components/ParticleBurst";
-import { SSEProvider } from "@/components/SSEProvider";
-import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/db/prisma";
+import { ReactNode } from 'react';
+import { redirect } from 'next/navigation';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { FogBackground } from '@/components/FogBackground';
+import { ParticleBurst } from '@/components/ParticleBurst';
+import { SSEProvider } from '@/components/SSEProvider';
+import { getSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
 
 interface MainLayoutProps {
   readonly children: ReactNode;
@@ -16,7 +16,7 @@ export default async function MainLayout({ children }: MainLayoutProps) {
   const session = await getSession();
 
   if (!session) {
-    redirect("/login");
+    redirect('/login');
   }
 
   // User-Daten aus der Datenbank holen
@@ -30,8 +30,8 @@ export default async function MainLayout({ children }: MainLayoutProps) {
     },
   });
 
-  if (user?.status !== "APPROVED") {
-    redirect("/login");
+  if (user?.status !== 'APPROVED') {
+    redirect('/login');
   }
 
   return (
@@ -49,9 +49,7 @@ export default async function MainLayout({ children }: MainLayoutProps) {
       <FogBackground />
       <Header user={user} />
       <main className="relative z-10 pt-20 pb-16 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {children}
-        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">{children}</div>
       </main>
       <Footer />
     </>

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useRef, useCallback, useMemo, memo } from "react";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { type AngularParticle, MYSTICAL_COLORS } from "@/types/particle";
+import { useEffect, useState, useRef, useCallback, useMemo, memo } from 'react';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { type AngularParticle, MYSTICAL_COLORS } from '@/types/particle';
 
 interface ParticleBurstConfig {
   /** Number of particles per burst (default: 8) */
@@ -60,11 +60,11 @@ export const ParticleBurst = memo(function ParticleBurst({
   // Detect mobile device
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(globalThis.matchMedia("(pointer: coarse)").matches);
+      setIsMobile(globalThis.matchMedia('(pointer: coarse)').matches);
     };
     checkMobile();
-    globalThis.addEventListener("resize", checkMobile);
-    return () => globalThis.removeEventListener("resize", checkMobile);
+    globalThis.addEventListener('resize', checkMobile);
+    return () => globalThis.removeEventListener('resize', checkMobile);
   }, []);
 
   // Track mouse/touch position
@@ -90,18 +90,18 @@ export const ParticleBurst = memo(function ParticleBurst({
       setIsTouching(false);
     };
 
-    globalThis.addEventListener("mousemove", handleMouseMove);
-    globalThis.addEventListener("touchstart", handleTouchStart);
-    globalThis.addEventListener("touchmove", handleTouchMove);
-    globalThis.addEventListener("touchend", handleTouchEnd);
-    globalThis.addEventListener("touchcancel", handleTouchEnd);
+    globalThis.addEventListener('mousemove', handleMouseMove);
+    globalThis.addEventListener('touchstart', handleTouchStart);
+    globalThis.addEventListener('touchmove', handleTouchMove);
+    globalThis.addEventListener('touchend', handleTouchEnd);
+    globalThis.addEventListener('touchcancel', handleTouchEnd);
 
     return () => {
-      globalThis.removeEventListener("mousemove", handleMouseMove);
-      globalThis.removeEventListener("touchstart", handleTouchStart);
-      globalThis.removeEventListener("touchmove", handleTouchMove);
-      globalThis.removeEventListener("touchend", handleTouchEnd);
-      globalThis.removeEventListener("touchcancel", handleTouchEnd);
+      globalThis.removeEventListener('mousemove', handleMouseMove);
+      globalThis.removeEventListener('touchstart', handleTouchStart);
+      globalThis.removeEventListener('touchmove', handleTouchMove);
+      globalThis.removeEventListener('touchend', handleTouchEnd);
+      globalThis.removeEventListener('touchcancel', handleTouchEnd);
     };
   }, []);
 
@@ -208,10 +208,7 @@ export const ParticleBurst = memo(function ParticleBurst({
   }
 
   return (
-    <div
-      className="pointer-events-none fixed inset-0 z-50 overflow-hidden"
-      aria-hidden="true"
-    >
+    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden" aria-hidden="true">
       {particles.map((particle) => (
         <div
           key={particle.id}
@@ -230,7 +227,7 @@ export const ParticleBurst = memo(function ParticleBurst({
               0 0 ${particle.size * 10}px ${particle.color}90,
               0 0 ${particle.size * 16}px ${particle.color}50
             `,
-            transform: "translate(-50%, -50%)",
+            transform: 'translate(-50%, -50%)',
           }}
         />
       ))}

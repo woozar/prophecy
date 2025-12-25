@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { memo, ReactNode, useMemo } from "react";
-import { Card } from "@/components/Card";
+import { memo, ReactNode, useMemo } from 'react';
+import { Card } from '@/components/Card';
 
 interface EmptyStateProps {
   /** Main message to display */
@@ -13,7 +13,7 @@ interface EmptyStateProps {
   /** Optional action button or element */
   action?: ReactNode;
   /** Card padding size */
-  padding?: "p-6" | "p-8";
+  padding?: 'p-6' | 'p-8';
 }
 
 export const EmptyState = memo(function EmptyState({
@@ -21,7 +21,7 @@ export const EmptyState = memo(function EmptyState({
   icon,
   description,
   action,
-  padding = "p-8",
+  padding = 'p-8',
 }: Readonly<EmptyStateProps>) {
   const hasExtras = useMemo(() => icon || description || action, [icon, description, action]);
 
@@ -35,9 +35,7 @@ export const EmptyState = memo(function EmptyState({
             </div>
           )}
           <h2 className="text-xl font-semibold text-white mb-2">{message}</h2>
-          {description && (
-            <p className="text-(--text-secondary)">{description}</p>
-          )}
+          {description && <p className="text-(--text-secondary)">{description}</p>}
           {action && <div className="mt-4">{action}</div>}
         </div>
       </Card>

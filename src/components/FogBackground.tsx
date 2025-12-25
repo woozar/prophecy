@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { memo } from "react";
+import { memo } from 'react';
 
 export const FogBackground = memo(function FogBackground() {
   return (

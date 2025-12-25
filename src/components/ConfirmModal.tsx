@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { memo, useMemo, ReactNode } from "react";
-import { Modal } from "@/components/Modal";
-import { Button } from "@/components/Button";
+import { memo, useMemo, ReactNode } from 'react';
+import { Modal } from '@/components/Modal';
+import { Button } from '@/components/Button';
 
-type ModalVariant = "danger" | "warning" | "violet";
+type ModalVariant = 'danger' | 'warning' | 'violet';
 
 interface ConfirmModalProps {
   /** Whether the modal is open */
@@ -27,10 +27,13 @@ interface ConfirmModalProps {
   variant?: ModalVariant;
 }
 
-const outlineVariants: Record<ModalVariant, "danger-outline" | "warning-outline" | "violet-outline"> = {
-  danger: "danger-outline",
-  warning: "warning-outline",
-  violet: "violet-outline",
+const outlineVariants: Record<
+  ModalVariant,
+  'danger-outline' | 'warning-outline' | 'violet-outline'
+> = {
+  danger: 'danger-outline',
+  warning: 'warning-outline',
+  violet: 'violet-outline',
 };
 
 export const ConfirmModal = memo(function ConfirmModal({
@@ -40,20 +43,14 @@ export const ConfirmModal = memo(function ConfirmModal({
   title,
   children,
   confirmText,
-  confirmingText = "Bitte warten...",
+  confirmingText = 'Bitte warten...',
   isSubmitting = false,
-  variant = "danger",
+  variant = 'danger',
 }: Readonly<ConfirmModalProps>) {
   const outlineVariant = useMemo(() => outlineVariants[variant], [variant]);
 
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      title={title}
-      variant={variant}
-      size="sm"
-    >
+    <Modal opened={opened} onClose={onClose} title={title} variant={variant} size="sm">
       <div className="text-(--text-muted) mb-6">{children}</div>
 
       <div className="flex justify-end gap-3">

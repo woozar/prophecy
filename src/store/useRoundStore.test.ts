@@ -254,15 +254,16 @@ describe('useRoundStore', () => {
 
   describe('fetchRounds', () => {
     it('sets loading state during fetch', async () => {
-      const mockFetch = vi.fn(() =>
-        new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              ok: true,
-              json: () => Promise.resolve({ rounds: [mockRound] }),
-            });
-          }, 10);
-        })
+      const mockFetch = vi.fn(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(() => {
+              resolve({
+                ok: true,
+                json: () => Promise.resolve({ rounds: [mockRound] }),
+              });
+            }, 10);
+          })
       ) as unknown as typeof fetch;
 
       vi.stubGlobal('fetch', mockFetch);
@@ -332,9 +333,7 @@ describe('useRoundStore', () => {
     });
 
     it('sets generic error for non-Error exceptions', async () => {
-      const mockFetch = vi.fn(() =>
-        Promise.reject('Unknown failure')
-      ) as unknown as typeof fetch;
+      const mockFetch = vi.fn(() => Promise.reject('Unknown failure')) as unknown as typeof fetch;
 
       vi.stubGlobal('fetch', mockFetch);
 

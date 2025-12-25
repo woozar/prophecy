@@ -189,11 +189,7 @@ describe('POST /api/prophecies/[id]/rate', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    vi.mocked(prisma.rating.findMany).mockResolvedValue([
-      { value: 8 },
-      { value: 4 },
-      { value: 6 },
-    ]);
+    vi.mocked(prisma.rating.findMany).mockResolvedValue([{ value: 8 }, { value: 4 }, { value: 6 }]);
     vi.mocked(prisma.prophecy.update).mockResolvedValue({
       ...createMockProphecy(),
       averageRating: 6,

@@ -133,9 +133,7 @@ describe('PUT /api/admin/users/[id]', () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(
       createMockUser({ id: 'admin-1', status: 'APPROVED', role: 'ADMIN' })
     );
-    vi.mocked(prisma.user.update).mockResolvedValue(
-      createMockUser({ status: 'APPROVED' })
-    );
+    vi.mocked(prisma.user.update).mockResolvedValue(createMockUser({ status: 'APPROVED' }));
 
     const request = new NextRequest('http://localhost/api/admin/users/user-1', {
       method: 'PUT',

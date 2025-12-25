@@ -36,7 +36,11 @@ describe('Button', () => {
 
   it('can be disabled', () => {
     const handleClick = vi.fn();
-    render(<Button disabled onClick={handleClick}>Disabled</Button>);
+    render(
+      <Button disabled onClick={handleClick}>
+        Disabled
+      </Button>
+    );
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
     fireEvent.click(button);
@@ -44,7 +48,11 @@ describe('Button', () => {
   });
 
   it('passes through additional HTML attributes', () => {
-    render(<Button type="submit" data-testid="submit-btn">Submit</Button>);
+    render(
+      <Button type="submit" data-testid="submit-btn">
+        Submit
+      </Button>
+    );
     const button = screen.getByTestId('submit-btn');
     expect(button).toHaveAttribute('type', 'submit');
   });

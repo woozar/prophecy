@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
-import { verifyRegistrationResponse, type RegistrationResponseJSON } from "@simplewebauthn/server";
-import { prisma } from "@/lib/db/prisma";
-import { webauthnConfig, getChallenge, clearChallenge } from "@/lib/auth/webauthn";
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyRegistrationResponse, type RegistrationResponseJSON } from '@simplewebauthn/server';
+import { prisma } from '@/lib/db/prisma';
+import { webauthnConfig, getChallenge, clearChallenge } from '@/lib/auth/webauthn';
 import {
   normalizeUsername,
   duplicateUsernameResponse,
   setPendingUserCookie,
   registrationSuccessResponse,
   registrationErrorResponse,
-} from "@/lib/auth/registration";
+} from '@/lib/auth/registration';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,17 +22,14 @@ export async function POST(request: NextRequest) {
 
     // Validierung
     if (!credential || !tempUserId || !username) {
-      return NextResponse.json(
-        { error: "Ungültige Anfrage" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Ungültige Anfrage' }, { status: 400 });
     }
 
     // Challenge abrufen
     const expectedChallenge = getChallenge(tempUserId);
     if (!expectedChallenge) {
       return NextResponse.json(
-        { error: "Registrierung abgelaufen. Bitte erneut versuchen." },
+        { error: 'Registrierung abgelaufen. Bitte erneut versuchen.' },
         { status: 400 }
       );
     }
@@ -47,13 +44,14 @@ export async function POST(request: NextRequest) {
     });
 
     if (!verification.verified || !verification.registrationInfo) {
-      return NextResponse.json(
-        { error: "Passkey-Verifizierung fehlgeschlagen" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Passkey-Verifizierung fehlgeschlagen' }, { status: 400 });
     }
 
-    const { credential: credentialInfo, credentialDeviceType, credentialBackedUp } = verification.registrationInfo;
+    const {
+      credential: credentialInfo,
+      credentialDeviceType,
+      credentialBackedUp,
+    } = verification.registrationInfo;
 
     // Challenge löschen
     clearChallenge(tempUserId);
@@ -74,16 +72,16 @@ export async function POST(request: NextRequest) {
       data: {
         username: normalizedUsername,
         displayName: displayName || username,
-        status: "PENDING",
+        status: 'PENDING',
         authenticators: {
           create: {
             credentialID: credential.id,
-            credentialPublicKey: Buffer.from(credentialInfo.publicKey).toString("base64"),
+            credentialPublicKey: Buffer.from(credentialInfo.publicKey).toString('base64'),
             counter: credentialInfo.counter,
             credentialDeviceType,
             credentialBackedUp,
-            transports: credential.response.transports?.join(",") || null,
-            name: "Mein Passkey",
+            transports: credential.response.transports?.join(',') || null,
+            name: 'Mein Passkey',
           },
         },
       },
@@ -96,6 +94,6 @@ export async function POST(request: NextRequest) {
 
     return registrationSuccessResponse(user);
   } catch (error) {
-    return registrationErrorResponse(error, "Registration verify error");
+    return registrationErrorResponse(error, 'Registration verify error');
   }
 }

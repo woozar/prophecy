@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getProphecyWithAccessCheck } from "./prophecy-access";
-import { ApiError } from "./errors";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { getProphecyWithAccessCheck } from './prophecy-access';
+import { ApiError } from './errors';
 
 // Mock prisma
-vi.mock("@/lib/db/prisma", () => ({
+vi.mock('@/lib/db/prisma', () => ({
   prisma: {
     prophecy: {
       findUnique: vi.fn(),
@@ -11,30 +11,30 @@ vi.mock("@/lib/db/prisma", () => ({
   },
 }));
 
-import { prisma } from "@/lib/db/prisma";
-import type { Mock } from "vitest";
+import { prisma } from '@/lib/db/prisma';
+import type { Mock } from 'vitest';
 
 const mockFindUnique = prisma.prophecy.findUnique as Mock;
 
-describe("getProphecyWithAccessCheck", () => {
-  const userId = "user-123";
-  const prophecyId = "prophecy-456";
+describe('getProphecyWithAccessCheck', () => {
+  const userId = 'user-123';
+  const prophecyId = 'prophecy-456';
 
   const futureDate = new Date(Date.now() + 86400000); // tomorrow
   const pastDate = new Date(Date.now() - 86400000); // yesterday
 
   const mockProphecy = {
     id: prophecyId,
-    title: "Test Prophecy",
-    description: "Description",
+    title: 'Test Prophecy',
+    description: 'Description',
     creatorId: userId,
-    roundId: "round-789",
+    roundId: 'round-789',
     averageRating: null,
     ratingCount: 0,
     createdAt: new Date(),
     round: {
-      id: "round-789",
-      title: "Test Round",
+      id: 'round-789',
+      title: 'Test Round',
       submissionDeadline: futureDate,
       ratingDeadline: futureDate,
       fulfillmentDate: futureDate,
@@ -46,7 +46,7 @@ describe("getProphecyWithAccessCheck", () => {
     vi.clearAllMocks();
   });
 
-  it("returns prophecy when all checks pass", async () => {
+  it('returns prophecy when all checks pass', async () => {
     mockFindUnique.mockResolvedValue(mockProphecy);
 
     const result = await getProphecyWithAccessCheck(prophecyId, userId);
@@ -58,7 +58,7 @@ describe("getProphecyWithAccessCheck", () => {
     });
   });
 
-  it("throws 404 when prophecy not found", async () => {
+  it('throws 404 when prophecy not found', async () => {
     mockFindUnique.mockResolvedValue(null);
 
     await expect(getProphecyWithAccessCheck(prophecyId, userId)).rejects.toThrow(ApiError);
@@ -68,34 +68,34 @@ describe("getProphecyWithAccessCheck", () => {
     } catch (error) {
       expect(error).toBeInstanceOf(ApiError);
       expect((error as ApiError).status).toBe(404);
-      expect((error as ApiError).message).toBe("Prophezeiung nicht gefunden");
+      expect((error as ApiError).message).toBe('Prophezeiung nicht gefunden');
     }
   });
 
-  it("throws 403 when user is not owner", async () => {
+  it('throws 403 when user is not owner', async () => {
     mockFindUnique.mockResolvedValue(mockProphecy);
 
-    await expect(getProphecyWithAccessCheck(prophecyId, "other-user")).rejects.toThrow(ApiError);
+    await expect(getProphecyWithAccessCheck(prophecyId, 'other-user')).rejects.toThrow(ApiError);
 
     try {
-      await getProphecyWithAccessCheck(prophecyId, "other-user");
+      await getProphecyWithAccessCheck(prophecyId, 'other-user');
     } catch (error) {
       expect(error).toBeInstanceOf(ApiError);
       expect((error as ApiError).status).toBe(403);
     }
   });
 
-  it("skips owner check when requireOwner is false", async () => {
+  it('skips owner check when requireOwner is false', async () => {
     mockFindUnique.mockResolvedValue(mockProphecy);
 
-    const result = await getProphecyWithAccessCheck(prophecyId, "other-user", {
+    const result = await getProphecyWithAccessCheck(prophecyId, 'other-user', {
       requireOwner: false,
     });
 
     expect(result).toEqual(mockProphecy);
   });
 
-  it("throws 400 when deadline passed", async () => {
+  it('throws 400 when deadline passed', async () => {
     const expiredProphecy = {
       ...mockProphecy,
       round: {
@@ -115,7 +115,7 @@ describe("getProphecyWithAccessCheck", () => {
     }
   });
 
-  it("uses custom deadline error message", async () => {
+  it('uses custom deadline error message', async () => {
     const expiredProphecy = {
       ...mockProphecy,
       round: {
@@ -127,14 +127,14 @@ describe("getProphecyWithAccessCheck", () => {
 
     try {
       await getProphecyWithAccessCheck(prophecyId, userId, {
-        deadlineErrorMessage: "Custom deadline message",
+        deadlineErrorMessage: 'Custom deadline message',
       });
     } catch (error) {
-      expect((error as ApiError).message).toBe("Custom deadline message");
+      expect((error as ApiError).message).toBe('Custom deadline message');
     }
   });
 
-  it("skips deadline check when checkDeadline is false", async () => {
+  it('skips deadline check when checkDeadline is false', async () => {
     const expiredProphecy = {
       ...mockProphecy,
       round: {

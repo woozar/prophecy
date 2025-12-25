@@ -17,7 +17,9 @@ interface RoundsManagerProps {
   initialRounds: Round[];
 }
 
-export const RoundsManager = memo(function RoundsManager({ initialRounds }: Readonly<RoundsManagerProps>) {
+export const RoundsManager = memo(function RoundsManager({
+  initialRounds,
+}: Readonly<RoundsManagerProps>) {
   const { rounds, setRounds } = useRoundStore();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingRound, setEditingRound] = useState<Round | null>(null);
@@ -72,54 +74,57 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
     resetForm();
   }, [resetForm]);
 
-  const validateAndSubmit = useCallback(async (
-    schema: typeof createRoundSchema | typeof updateRoundSchema,
-    url: string,
-    method: 'POST' | 'PUT',
-    successMessage: string,
-    errorMessage: string
-  ) => {
-    const input = {
-      title: title.trim(),
-      submissionDeadline,
-      ratingDeadline,
-      fulfillmentDate,
-    };
+  const validateAndSubmit = useCallback(
+    async (
+      schema: typeof createRoundSchema | typeof updateRoundSchema,
+      url: string,
+      method: 'POST' | 'PUT',
+      successMessage: string,
+      errorMessage: string
+    ) => {
+      const input = {
+        title: title.trim(),
+        submissionDeadline,
+        ratingDeadline,
+        fulfillmentDate,
+      };
 
-    const parsed = schema.safeParse(input);
-    if (!parsed.success) {
-      const errors: FormErrors = {};
-      for (const err of parsed.error.errors) {
-        const field = err.path[0] as keyof FormErrors;
-        if (!errors[field]) errors[field] = err.message;
-      }
-      setFormErrors(errors);
-      return;
-    }
-
-    setFormErrors({});
-    setIsSubmitting(true);
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsed.data),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || errorMessage);
+      const parsed = schema.safeParse(input);
+      if (!parsed.success) {
+        const errors: FormErrors = {};
+        for (const err of parsed.error.errors) {
+          const field = err.path[0] as keyof FormErrors;
+          if (!errors[field]) errors[field] = err.message;
+        }
+        setFormErrors(errors);
+        return;
       }
 
-      await res.json();
-      showSuccessToast(successMessage);
-      closeModals();
-    } catch (error) {
-      showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [title, submissionDeadline, ratingDeadline, fulfillmentDate, closeModals]);
+      setFormErrors({});
+      setIsSubmitting(true);
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(parsed.data),
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || errorMessage);
+        }
+
+        await res.json();
+        showSuccessToast(successMessage);
+        closeModals();
+      } catch (error) {
+        showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [title, submissionDeadline, ratingDeadline, fulfillmentDate, closeModals]
+  );
 
   const handleCreate = useCallback(() => {
     return validateAndSubmit(
@@ -192,7 +197,7 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
           {rounds.length} Runde{rounds.length === 1 ? '' : 'n'}
         </p>
         <Button onClick={openCreateModal}>
-          <div className='flex flex-row gap-2 items-center'>
+          <div className="flex flex-row gap-2 items-center">
             <IconPlus size={18} />
             <span>Neue Runde</span>
           </div>
@@ -203,56 +208,60 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
       <div className="space-y-4">
         {rounds.length === 0 ? (
           <Card padding="p-8">
-            <p className="text-center text-(--text-muted)">Keine Runden vorhanden. Erstelle die erste Runde!</p>
+            <p className="text-center text-(--text-muted)">
+              Keine Runden vorhanden. Erstelle die erste Runde!
+            </p>
           </Card>
         ) : (
           rounds.map((round) => (
-              <Card key={round.id} padding="p-5">
-                <div className="flex flex-row items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-white truncate">{round.title}</h3>
-                      <RoundStatusBadge round={round} variant="full" />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-                      <div className="flex items-center gap-2 text-(--text-muted)">
-                        <IconCalendar size={14} className="text-cyan-400 shrink-0" />
-                        <span>Einreichung: {formatDate(round.submissionDeadline)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-(--text-muted)">
-                        <IconCalendar size={14} className="text-teal-400 shrink-0" />
-                        <span>Bewertung: {formatDate(round.ratingDeadline)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-(--text-muted)">
-                        <IconCalendar size={14} className="text-violet-400 shrink-0" />
-                        <span>Stichtag: {formatDate(round.fulfillmentDate)}</span>
-                      </div>
-                    </div>
-
-                    <p className="mt-2 text-sm text-(--text-muted)">{round._count?.prophecies || 0} Prophezeiung(en)</p>
+            <Card key={round.id} padding="p-5">
+              <div className="flex flex-row items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                    <h3 className="text-lg font-semibold text-white truncate">{round.title}</h3>
+                    <RoundStatusBadge round={round} variant="full" />
                   </div>
 
-                  <div className="flex flex-col gap-2 shrink-0">
-                    <Button
-                      variant="ghost"
-                      onClick={() => openEditModal(round)}
-                      className="p-2.5 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-cyan-400 hover:border-cyan-400/50 hover:shadow-[0_0_12px_rgba(6,182,212,0.3)]"
-                      title="Bearbeiten"
-                    >
-                      <IconEdit size={18} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() => setDeletingRoundId(round.id)}
-                      className="p-2.5 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-red-400 hover:border-red-400/50 hover:shadow-[0_0_12px_rgba(239,68,68,0.3)]"
-                      title="Löschen"
-                    >
-                      <IconTrash size={18} />
-                    </Button>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                    <div className="flex items-center gap-2 text-(--text-muted)">
+                      <IconCalendar size={14} className="text-cyan-400 shrink-0" />
+                      <span>Einreichung: {formatDate(round.submissionDeadline)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-(--text-muted)">
+                      <IconCalendar size={14} className="text-teal-400 shrink-0" />
+                      <span>Bewertung: {formatDate(round.ratingDeadline)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-(--text-muted)">
+                      <IconCalendar size={14} className="text-violet-400 shrink-0" />
+                      <span>Stichtag: {formatDate(round.fulfillmentDate)}</span>
+                    </div>
                   </div>
+
+                  <p className="mt-2 text-sm text-(--text-muted)">
+                    {round._count?.prophecies || 0} Prophezeiung(en)
+                  </p>
                 </div>
-              </Card>
+
+                <div className="flex flex-col gap-2 shrink-0">
+                  <Button
+                    variant="ghost"
+                    onClick={() => openEditModal(round)}
+                    className="p-2.5 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-cyan-400 hover:border-cyan-400/50 hover:shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+                    title="Bearbeiten"
+                  >
+                    <IconEdit size={18} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setDeletingRoundId(round.id)}
+                    className="p-2.5 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-red-400 hover:border-red-400/50 hover:shadow-[0_0_12px_rgba(239,68,68,0.3)]"
+                    title="Löschen"
+                  >
+                    <IconTrash size={18} />
+                  </Button>
+                </div>
+              </div>
+            </Card>
           ))
         )}
       </div>
@@ -281,7 +290,8 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
             value={submissionDeadline}
             onChange={(v: Date | null) => {
               setSubmissionDeadline(v);
-              if (formErrors.submissionDeadline) setFormErrors((prev) => ({ ...prev, submissionDeadline: undefined }));
+              if (formErrors.submissionDeadline)
+                setFormErrors((prev) => ({ ...prev, submissionDeadline: undefined }));
             }}
             required
             error={formErrors.submissionDeadline}
@@ -292,7 +302,8 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
             value={ratingDeadline}
             onChange={(v: Date | null) => {
               setRatingDeadline(v);
-              if (formErrors.ratingDeadline) setFormErrors((prev) => ({ ...prev, ratingDeadline: undefined }));
+              if (formErrors.ratingDeadline)
+                setFormErrors((prev) => ({ ...prev, ratingDeadline: undefined }));
             }}
             required
             error={formErrors.ratingDeadline}
@@ -303,7 +314,8 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
             value={fulfillmentDate}
             onChange={(v: Date | null) => {
               setFulfillmentDate(v);
-              if (formErrors.fulfillmentDate) setFormErrors((prev) => ({ ...prev, fulfillmentDate: undefined }));
+              if (formErrors.fulfillmentDate)
+                setFormErrors((prev) => ({ ...prev, fulfillmentDate: undefined }));
             }}
             required
             error={formErrors.fulfillmentDate}
@@ -314,7 +326,10 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
           <Button variant="outline" onClick={closeModals} disabled={isSubmitting}>
             Abbrechen
           </Button>
-          <Button onClick={editingRound ? handleUpdate : handleCreate} disabled={isSubmitting || !isFormValid}>
+          <Button
+            onClick={editingRound ? handleUpdate : handleCreate}
+            disabled={isSubmitting || !isFormValid}
+          >
             {submitButtonLabel}
           </Button>
         </div>
@@ -332,8 +347,8 @@ export const RoundsManager = memo(function RoundsManager({ initialRounds }: Read
         variant="danger"
       >
         <p>
-          Diese Aktion kann nicht rückgängig gemacht werden. Alle zugehörigen Prophezeiungen werden ebenfalls
-          gelöscht.
+          Diese Aktion kann nicht rückgängig gemacht werden. Alle zugehörigen Prophezeiungen werden
+          ebenfalls gelöscht.
         </p>
       </ConfirmModal>
     </>

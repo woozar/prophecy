@@ -168,9 +168,7 @@ describe('RatingSlider', () => {
     render(<RatingSlider value={10} />);
     // Multiple elements show '+10' (max label and value display), find the styled one
     const valueDisplays = screen.getAllByText('+10');
-    const styledValue = valueDisplays.find((el) =>
-      el.classList.contains('font-bold')
-    );
+    const styledValue = valueDisplays.find((el) => el.classList.contains('font-bold'));
     expect(styledValue).toHaveStyle({ color: '#14b8a6' });
   });
 
@@ -178,9 +176,7 @@ describe('RatingSlider', () => {
     render(<RatingSlider value={-10} />);
     // Multiple elements show '-10' (min label and value display), find the styled one
     const valueDisplays = screen.getAllByText('-10');
-    const styledValue = valueDisplays.find((el) =>
-      el.classList.contains('font-bold')
-    );
+    const styledValue = valueDisplays.find((el) => el.classList.contains('font-bold'));
     expect(styledValue).toHaveStyle({ color: '#ef4444' });
   });
 
@@ -275,7 +271,8 @@ describe('RatingSlider', () => {
       // Check that no marker is positioned at 0% or 100%
       const styles = Array.from(allElements).map((el) => el.getAttribute('style') || '');
       const hasEndpointMarker = styles.some(
-        (style) => style.includes('left: calc(10px + 0%') || style.includes('left: calc(10px + 100%')
+        (style) =>
+          style.includes('left: calc(10px + 0%') || style.includes('left: calc(10px + 100%')
       );
       expect(hasEndpointMarker).toBe(false);
     });
@@ -285,8 +282,8 @@ describe('RatingSlider', () => {
       const markers = container.querySelectorAll('.absolute.pointer-events-none');
 
       // Center marker has animation
-      const centerMarker = Array.from(markers).find(
-        (el) => el.getAttribute('style')?.includes('center-glow-pulse')
+      const centerMarker = Array.from(markers).find((el) =>
+        el.getAttribute('style')?.includes('center-glow-pulse')
       );
       expect(centerMarker).toBeInTheDocument();
     });
@@ -316,9 +313,9 @@ describe('RatingSlider', () => {
       const slider = screen.getByRole('slider');
 
       // Initially no focus indicator
-      let focusIndicator = Array.from(container.querySelectorAll('.absolute.pointer-events-none')).find(
-        (el) => el.getAttribute('style')?.includes('border: 2px solid')
-      );
+      let focusIndicator = Array.from(
+        container.querySelectorAll('.absolute.pointer-events-none')
+      ).find((el) => el.getAttribute('style')?.includes('border: 2px solid'));
       expect(focusIndicator).toBeUndefined();
 
       // Focus the slider
@@ -340,9 +337,9 @@ describe('RatingSlider', () => {
       fireEvent.blur(slider);
 
       // Focus indicator should be gone
-      const focusIndicator = Array.from(container.querySelectorAll('.absolute.pointer-events-none')).find(
-        (el) => el.getAttribute('style')?.includes('border: 2px solid')
-      );
+      const focusIndicator = Array.from(
+        container.querySelectorAll('.absolute.pointer-events-none')
+      ).find((el) => el.getAttribute('style')?.includes('border: 2px solid'));
       expect(focusIndicator).toBeUndefined();
     });
 
@@ -352,9 +349,9 @@ describe('RatingSlider', () => {
 
       fireEvent.focus(slider);
 
-      const focusIndicator = Array.from(container.querySelectorAll('.absolute.pointer-events-none')).find(
-        (el) => el.getAttribute('style')?.includes('border: 2px solid')
-      );
+      const focusIndicator = Array.from(
+        container.querySelectorAll('.absolute.pointer-events-none')
+      ).find((el) => el.getAttribute('style')?.includes('border: 2px solid'));
       expect(focusIndicator).toHaveStyle({ left: '7px', right: '7px' });
     });
   });

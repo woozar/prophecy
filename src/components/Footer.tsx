@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { memo } from "react";
+import { memo } from 'react';
 
 export const Footer = memo(function Footer() {
   const currentYear = new Date().getFullYear();
@@ -11,7 +11,7 @@ export const Footer = memo(function Footer() {
         <div className="flex items-center justify-between h-12">
           {/* Copyright */}
           <p className="text-xs text-(--text-muted)">
-            &copy; {currentYear}{" "}
+            &copy; {currentYear}{' '}
             <a
               href="https://github.com/woozar/prophecy"
               target="_blank"
@@ -24,9 +24,7 @@ export const Footer = memo(function Footer() {
 
           {/* Version / Links */}
           <div className="flex items-center gap-4">
-            <span className="text-xs text-(--text-muted)">
-              v0.1.0
-            </span>
+            <span className="text-xs text-(--text-muted)">v0.1.0</span>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 export interface Round {
   id: string;
@@ -34,21 +34,24 @@ export const useRoundStore = create<RoundState>((set, get) => ({
 
   setRounds: (rounds) => set({ rounds }),
 
-  addRound: (round) => set((state) => {
-    // Prüfen ob Runde bereits existiert (verhindert Duplikate durch API + SSE)
-    if (state.rounds.some((r) => r.id === round.id)) {
-      return { rounds: state.rounds.map((r) => r.id === round.id ? round : r) };
-    }
-    return { rounds: [round, ...state.rounds] };
-  }),
+  addRound: (round) =>
+    set((state) => {
+      // Prüfen ob Runde bereits existiert (verhindert Duplikate durch API + SSE)
+      if (state.rounds.some((r) => r.id === round.id)) {
+        return { rounds: state.rounds.map((r) => (r.id === round.id ? round : r)) };
+      }
+      return { rounds: [round, ...state.rounds] };
+    }),
 
-  updateRound: (round) => set((state) => ({
-    rounds: state.rounds.map((r) => r.id === round.id ? round : r)
-  })),
+  updateRound: (round) =>
+    set((state) => ({
+      rounds: state.rounds.map((r) => (r.id === round.id ? round : r)),
+    })),
 
-  deleteRound: (id) => set((state) => ({
-    rounds: state.rounds.filter((r) => r.id !== id)
-  })),
+  deleteRound: (id) =>
+    set((state) => ({
+      rounds: state.rounds.filter((r) => r.id !== id),
+    })),
 
   setLoading: (isLoading) => set({ isLoading }),
 
@@ -60,12 +63,12 @@ export const useRoundStore = create<RoundState>((set, get) => ({
     setError(null);
 
     try {
-      const res = await fetch("/api/rounds");
-      if (!res.ok) throw new Error("Fehler beim Laden der Runden");
+      const res = await fetch('/api/rounds');
+      if (!res.ok) throw new Error('Fehler beim Laden der Runden');
       const data = await res.json();
       setRounds(data.rounds);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Unbekannter Fehler");
+      setError(error instanceof Error ? error.message : 'Unbekannter Fehler');
     } finally {
       setLoading(false);
     }

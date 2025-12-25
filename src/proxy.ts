@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 // Routes that don't require authentication
-const publicRoutes = ["/login", "/register", "/forgot-password"];
+const publicRoutes = ['/login', '/register', '/forgot-password'];
 
 // Static files and API routes to skip
 const skipPatterns = [
@@ -27,13 +27,13 @@ export function proxy(request: NextRequest) {
   }
 
   // Session-based authentication check
-  const sessionToken = request.cookies.get("session")?.value;
+  const sessionToken = request.cookies.get('session')?.value;
 
   if (!sessionToken) {
     // Redirect to login
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = new URL('/login', request.url);
     // Store the original URL to redirect back after login
-    loginUrl.searchParams.set("callbackUrl", pathname);
+    loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -48,6 +48,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };

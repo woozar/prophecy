@@ -1,41 +1,42 @@
-"use client";
+'use client';
 
-import { useState, useCallback } from "react";
-import Link from "next/link";
-import { TextInput } from "@mantine/core";
-import { Card } from "@/components/Card";
-import { Button } from "@/components/Button";
+import { useState, useCallback } from 'react';
+import Link from 'next/link';
+import { TextInput } from '@mantine/core';
+import { Card } from '@/components/Card';
+import { Button } from '@/components/Button';
 
 export default function ForgotPasswordPage() {
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!username) return;
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!username) return;
 
-    setIsLoading(true);
-    // Password reset: Currently shows success message, API integration pending
-    console.log("Password reset for:", username);
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsSubmitted(true);
-    }, 1000);
-  }, [username]);
+      setIsLoading(true);
+      // Password reset: Currently shows success message, API integration pending
+      console.log('Password reset for:', username);
+      setTimeout(() => {
+        setIsLoading(false);
+        setIsSubmitted(true);
+      }, 1000);
+    },
+    [username]
+  );
 
   return (
     <Card padding="p-8">
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2">
-          <span className="text-white">Passwort</span>{" "}
+          <span className="text-white">Passwort</span>{' '}
           <span className="text-highlight">vergessen?</span>
         </h1>
         <p className="text-(--text-secondary)">
-          {isSubmitted
-            ? "Deine Anfrage wurde gesendet"
-            : "Gib deinen Benutzernamen ein"}
+          {isSubmitted ? 'Deine Anfrage wurde gesendet' : 'Gib deinen Benutzernamen ein'}
         </p>
       </div>
 
@@ -60,12 +61,10 @@ export default function ForgotPasswordPage() {
                 <path d="m9 12 2 2 4-4" />
               </svg>
               <div>
-                <p className="text-(--text-primary) font-medium mb-1">
-                  Anfrage gesendet
-                </p>
+                <p className="text-(--text-primary) font-medium mb-1">Anfrage gesendet</p>
                 <p className="text-sm text-(--text-secondary)">
-                  Ein Admin wurde über deine Anfrage informiert. Du wirst kontaktiert,
-                  sobald dein Passwort zurückgesetzt wurde.
+                  Ein Admin wurde über deine Anfrage informiert. Du wirst kontaktiert, sobald dein
+                  Passwort zurückgesetzt wurde.
                 </p>
               </div>
             </div>
@@ -73,9 +72,8 @@ export default function ForgotPasswordPage() {
 
           <div className="p-4 rounded-lg bg-[rgba(16,42,67,0.5)] border border-[rgba(98,125,152,0.3)]">
             <p className="text-sm text-(--text-secondary)">
-              <span className="text-cyan-400 font-medium">Tipp:</span>{" "}
-              Wenn du einen Passkey eingerichtet hast, kannst du dich damit auch
-              ohne Passwort anmelden.
+              <span className="text-cyan-400 font-medium">Tipp:</span> Wenn du einen Passkey
+              eingerichtet hast, kannst du dich damit auch ohne Passwort anmelden.
             </p>
           </div>
 
@@ -98,12 +96,8 @@ export default function ForgotPasswordPage() {
           />
 
           <div className="pt-2">
-            <Button
-              type="submit"
-              disabled={isLoading || !username}
-              className="w-full"
-            >
-              {isLoading ? "Sende Anfrage..." : "Passwort zurücksetzen"}
+            <Button type="submit" disabled={isLoading || !username} className="w-full">
+              {isLoading ? 'Sende Anfrage...' : 'Passwort zurücksetzen'}
             </Button>
           </div>
 

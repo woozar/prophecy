@@ -28,20 +28,29 @@ window.location = locationMock as unknown as Location;
 // Mock next/link to prevent jsdom navigation errors when clicking links
 // See: https://github.com/vercel/next.js/discussions/60125
 vi.mock('next/link', () => ({
-  default: ({ children, href, onClick, ...props }: {
+  default: ({
+    children,
+    href,
+    onClick,
+    ...props
+  }: {
     children: React.ReactNode;
     href: string;
     onClick?: (e: React.MouseEvent) => void;
     [key: string]: unknown;
   }) => {
-    return React.createElement('a', {
-      ...props,
-      href,
-      onClick: (e: React.MouseEvent) => {
-        e.preventDefault(); // Prevent jsdom navigation
-        onClick?.(e);
+    return React.createElement(
+      'a',
+      {
+        ...props,
+        href,
+        onClick: (e: React.MouseEvent) => {
+          e.preventDefault(); // Prevent jsdom navigation
+          onClick?.(e);
+        },
       },
-    }, children);
+      children
+    );
   },
 }));
 
@@ -88,10 +97,24 @@ vi.mock('@/lib/db/prisma', () => ({
       delete: vi.fn(),
       count: vi.fn(),
     },
-    $transaction: vi.fn((fn) => fn({
-      round: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
-      prophecy: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
-    })),
+    $transaction: vi.fn((fn) =>
+      fn({
+        round: {
+          findMany: vi.fn(),
+          findUnique: vi.fn(),
+          create: vi.fn(),
+          update: vi.fn(),
+          delete: vi.fn(),
+        },
+        prophecy: {
+          findMany: vi.fn(),
+          findUnique: vi.fn(),
+          create: vi.fn(),
+          update: vi.fn(),
+          delete: vi.fn(),
+        },
+      })
+    ),
   },
   ensureInitialized: vi.fn(),
 }));

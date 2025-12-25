@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { memo, useMemo } from "react";
-import { GlassBarContainer, FogFill, useFillGradientStyle } from "./GlassBarBase";
+import { memo, useMemo } from 'react';
+import { GlassBarContainer, FogFill, useFillGradientStyle } from './GlassBarBase';
 
 interface GlassScaleBarProps {
   /** Current value (-10 to +10) */
@@ -19,9 +19,9 @@ interface GlassScaleBarProps {
 export const GlassScaleBar = memo(function GlassScaleBar({
   value,
   thickness = 24,
-  length = "100%",
-  positiveColor = "#22d3ee",
-  negativeColor = "#a855f7",
+  length = '100%',
+  positiveColor = '#22d3ee',
+  negativeColor = '#a855f7',
 }: Readonly<GlassScaleBarProps>) {
   const clampedValue = useMemo(() => Math.max(-10, Math.min(10, value)), [value]);
   const isPositive = clampedValue >= 0;
@@ -31,16 +31,19 @@ export const GlassScaleBar = memo(function GlassScaleBar({
 
   const fillGradient = useFillGradientStyle(color);
 
-  const fillStyle = useMemo(() => ({
-    top: 0,
-    bottom: 0,
-    // Positive: starts at center (50%), goes right
-    // Negative: ends at center (50%), starts from left side of fill
-    ...(isPositive
-      ? { left: "50%", width: `${fillPercent}%` }
-      : { right: "50%", width: `${fillPercent}%` }),
-    ...fillGradient,
-  }), [isPositive, fillPercent, fillGradient]);
+  const fillStyle = useMemo(
+    () => ({
+      top: 0,
+      bottom: 0,
+      // Positive: starts at center (50%), goes right
+      // Negative: ends at center (50%), starts from left side of fill
+      ...(isPositive
+        ? { left: '50%', width: `${fillPercent}%` }
+        : { right: '50%', width: `${fillPercent}%` }),
+      ...fillGradient,
+    }),
+    [isPositive, fillPercent, fillGradient]
+  );
 
   const edgeGlowStyle = useMemo(() => {
     // Position glow at the outer edge of the fill
@@ -52,27 +55,30 @@ export const GlassScaleBar = memo(function GlassScaleBar({
       width: 4,
       marginLeft: -2,
       background: `radial-gradient(ellipse 100% 200% at center, ${color} 0%, transparent 70%)`,
-      filter: "blur(2px)",
+      filter: 'blur(2px)',
     };
   }, [isPositive, fillPercent, color]);
 
-  const centerMarkerStyle = useMemo(() => ({
-    left: "50%",
-    top: 0,
-    bottom: 0,
-    width: 3,
-    marginLeft: -1.5,
-    background: "rgba(255, 255, 255, 0.9)",
-    boxShadow: `
+  const centerMarkerStyle = useMemo(
+    () => ({
+      left: '50%',
+      top: 0,
+      bottom: 0,
+      width: 3,
+      marginLeft: -1.5,
+      background: 'rgba(255, 255, 255, 0.9)',
+      boxShadow: `
       0 0 8px rgba(255, 255, 255, 1),
       0 0 16px rgba(255, 255, 255, 0.8),
       0 0 24px rgba(255, 255, 255, 0.5),
       0 0 32px rgba(200, 220, 255, 0.4)
     `,
-    filter: "blur(1px)",
-    zIndex: 10,
-    animation: "center-glow-pulse 2s ease-in-out infinite",
-  }), []);
+      filter: 'blur(1px)',
+      zIndex: 10,
+      animation: 'center-glow-pulse 2s ease-in-out infinite',
+    }),
+    []
+  );
 
   return (
     <GlassBarContainer length={length} thickness={thickness}>
@@ -80,14 +86,10 @@ export const GlassScaleBar = memo(function GlassScaleBar({
       <div className="absolute" style={centerMarkerStyle} />
 
       {/* Fog fill */}
-      {fillPercent > 0 && (
-        <FogFill color={color} style={fillStyle} />
-      )}
+      {fillPercent > 0 && <FogFill color={color} style={fillStyle} />}
 
       {/* Inner glow at fill edge */}
-      {fillPercent > 0 && fillPercent < 50 && (
-        <div className="absolute" style={edgeGlowStyle} />
-      )}
+      {fillPercent > 0 && fillPercent < 50 && <div className="absolute" style={edgeGlowStyle} />}
     </GlassBarContainer>
   );
 });

@@ -102,7 +102,9 @@ describe('GET /api/prophecies', () => {
     vi.mocked(getSession).mockResolvedValue(mockUser);
     vi.mocked(prisma.prophecy.findMany).mockResolvedValue([]);
 
-    const request = new NextRequest('http://localhost/api/prophecies?roundId=round-1&filter=toRate');
+    const request = new NextRequest(
+      'http://localhost/api/prophecies?roundId=round-1&filter=toRate'
+    );
     await GET(request);
 
     expect(prisma.prophecy.findMany).toHaveBeenCalledWith(
@@ -202,7 +204,11 @@ describe('POST /api/prophecies', () => {
 
     const request = new NextRequest('http://localhost/api/prophecies', {
       method: 'POST',
-      body: JSON.stringify({ roundId: 'round-1', title: 'New Prophecy', description: 'Description' }),
+      body: JSON.stringify({
+        roundId: 'round-1',
+        title: 'New Prophecy',
+        description: 'Description',
+      }),
     });
     const response = await POST(request);
     const data = await response.json();

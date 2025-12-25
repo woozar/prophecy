@@ -15,42 +15,24 @@ describe('EmptyState', () => {
   });
 
   it('renders message as heading when icon is provided', () => {
-    render(
-      <EmptyState
-        message="With icon"
-        icon={<span data-testid="test-icon">Icon</span>}
-      />
-    );
+    render(<EmptyState message="With icon" icon={<span data-testid="test-icon">Icon</span>} />);
     const heading = screen.getByRole('heading', { level: 2 });
     expect(heading).toHaveTextContent('With icon');
   });
 
   it('renders icon when provided', () => {
-    render(
-      <EmptyState
-        message="Test"
-        icon={<span data-testid="custom-icon">🔍</span>}
-      />
-    );
+    render(<EmptyState message="Test" icon={<span data-testid="custom-icon">🔍</span>} />);
     expect(screen.getByTestId('custom-icon')).toBeInTheDocument();
   });
 
   it('renders description when provided', () => {
-    render(
-      <EmptyState
-        message="No results"
-        description="Try adjusting your search criteria"
-      />
-    );
+    render(<EmptyState message="No results" description="Try adjusting your search criteria" />);
     expect(screen.getByText('Try adjusting your search criteria')).toBeInTheDocument();
   });
 
   it('renders action when provided', () => {
     render(
-      <EmptyState
-        message="Empty"
-        action={<button data-testid="action-btn">Add new</button>}
-      />
+      <EmptyState message="Empty" action={<button data-testid="action-btn">Add new</button>} />
     );
     expect(screen.getByTestId('action-btn')).toBeInTheDocument();
   });
@@ -83,45 +65,25 @@ describe('EmptyState', () => {
   });
 
   it('renders heading as h2 with proper styling in full mode', () => {
-    render(
-      <EmptyState
-        message="Heading test"
-        description="Some description"
-      />
-    );
+    render(<EmptyState message="Heading test" description="Some description" />);
     const heading = screen.getByRole('heading', { level: 2 });
     expect(heading).toHaveClass('text-xl', 'font-semibold', 'text-white');
   });
 
   it('centers content in full mode', () => {
-    const { container } = render(
-      <EmptyState
-        message="Centered"
-        icon={<span>Icon</span>}
-      />
-    );
+    const { container } = render(<EmptyState message="Centered" icon={<span>Icon</span>} />);
     expect(container.querySelector('.text-center')).toBeInTheDocument();
   });
 
   it('renders icon container with proper styling', () => {
-    const { container } = render(
-      <EmptyState
-        message="Test"
-        icon={<span>Icon</span>}
-      />
-    );
+    const { container } = render(<EmptyState message="Test" icon={<span>Icon</span>} />);
     const iconContainer = container.querySelector('.w-16.h-16');
     expect(iconContainer).toBeInTheDocument();
     expect(iconContainer).toHaveClass('rounded-full', 'mx-auto', 'mb-4');
   });
 
   it('wraps action in div with margin-top', () => {
-    const { container } = render(
-      <EmptyState
-        message="Test"
-        action={<button>Action</button>}
-      />
-    );
+    const { container } = render(<EmptyState message="Test" action={<button>Action</button>} />);
     const actionWrapper = container.querySelector('.mt-4');
     expect(actionWrapper).toBeInTheDocument();
   });

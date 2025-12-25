@@ -1,13 +1,13 @@
-import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/db/prisma";
-import { redirect } from "next/navigation";
-import { RoundsManager } from "@/components/admin/RoundsManager";
+import { getSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
+import { redirect } from 'next/navigation';
+import { RoundsManager } from '@/components/admin/RoundsManager';
 
 export default async function AdminRoundsPage() {
   const session = await getSession();
 
   if (!session) {
-    redirect("/login");
+    redirect('/login');
   }
 
   const user = await prisma.user.findUnique({
@@ -15,12 +15,12 @@ export default async function AdminRoundsPage() {
     select: { role: true },
   });
 
-  if (user?.role !== "ADMIN") {
-    redirect("/");
+  if (user?.role !== 'ADMIN') {
+    redirect('/');
   }
 
   const rounds = await prisma.round.findMany({
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
     include: {
       _count: {
         select: { prophecies: true },

@@ -206,8 +206,8 @@ describe('PasskeyManager', () => {
 
     // Find the confirm button in the modal (the red "Löschen" button)
     const allButtons = screen.getAllByRole('button');
-    const confirmButton = allButtons.find(btn =>
-      btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
+    const confirmButton = allButtons.find(
+      (btn) => btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
     );
     fireEvent.click(confirmButton!);
 
@@ -235,8 +235,8 @@ describe('PasskeyManager', () => {
 
     // Confirm delete
     const allButtons = screen.getAllByRole('button');
-    const confirmButton = allButtons.find(btn =>
-      btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
+    const confirmButton = allButtons.find(
+      (btn) => btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
     );
     fireEvent.click(confirmButton!);
 
@@ -250,7 +250,7 @@ describe('PasskeyManager', () => {
   it('shows error toast when delete fails', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
-      json: () => Promise.resolve({ error: 'Deletion forbidden' })
+      json: () => Promise.resolve({ error: 'Deletion forbidden' }),
     });
     globalThis.fetch = mockFetch;
 
@@ -264,8 +264,8 @@ describe('PasskeyManager', () => {
     });
 
     const allButtons = screen.getAllByRole('button');
-    const confirmButton = allButtons.find(btn =>
-      btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
+    const confirmButton = allButtons.find(
+      (btn) => btn.textContent?.includes('Löschen') && !btn.hasAttribute('title')
     );
     fireEvent.click(confirmButton!);
 
@@ -314,7 +314,7 @@ describe('PasskeyManager', () => {
   it('shows error toast when rename fails', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
-      json: () => Promise.resolve({ error: 'Name already exists' })
+      json: () => Promise.resolve({ error: 'Name already exists' }),
     });
     globalThis.fetch = mockFetch;
 
@@ -340,16 +340,18 @@ describe('PasskeyManager', () => {
     const mockCredential = { id: 'cred123', type: 'public-key' };
     mockStartRegistration.mockResolvedValue(mockCredential as never);
 
-    const mockFetch = vi.fn()
+    const mockFetch = vi
+      .fn()
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ options: { challenge: 'test' } })
+        json: () => Promise.resolve({ options: { challenge: 'test' } }),
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({
-          passkey: { id: '3', name: 'New Device', createdAt: '2025-06-20T10:00:00Z' }
-        })
+        json: () =>
+          Promise.resolve({
+            passkey: { id: '3', name: 'New Device', createdAt: '2025-06-20T10:00:00Z' },
+          }),
       });
     globalThis.fetch = mockFetch;
 
@@ -397,7 +399,7 @@ describe('PasskeyManager', () => {
   it('shows error when registration options fetch fails', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
-      json: () => Promise.resolve({ error: 'Server error' })
+      json: () => Promise.resolve({ error: 'Server error' }),
     });
     globalThis.fetch = mockFetch;
 
@@ -423,7 +425,7 @@ describe('PasskeyManager', () => {
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ options: { challenge: 'test' } })
+      json: () => Promise.resolve({ options: { challenge: 'test' } }),
     });
     globalThis.fetch = mockFetch;
 
@@ -438,7 +440,10 @@ describe('PasskeyManager', () => {
     fireEvent.click(screen.getByText('Passkey erstellen'));
 
     await waitFor(() => {
-      expect(mockErrorToast).toHaveBeenCalledWith('Abgebrochen', 'Passkey-Registrierung wurde abgebrochen');
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        'Abgebrochen',
+        'Passkey-Registrierung wurde abgebrochen'
+      );
     });
   });
 
@@ -446,14 +451,15 @@ describe('PasskeyManager', () => {
     const mockCredential = { id: 'cred123', type: 'public-key' };
     mockStartRegistration.mockResolvedValue(mockCredential as never);
 
-    const mockFetch = vi.fn()
+    const mockFetch = vi
+      .fn()
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ options: { challenge: 'test' } })
+        json: () => Promise.resolve({ options: { challenge: 'test' } }),
       })
       .mockResolvedValueOnce({
         ok: false,
-        json: () => Promise.resolve({ error: 'Verification failed' })
+        json: () => Promise.resolve({ error: 'Verification failed' }),
       });
     globalThis.fetch = mockFetch;
 
@@ -474,19 +480,23 @@ describe('PasskeyManager', () => {
 
   it('shows loading state during registration', async () => {
     let resolveRegistration: (value: unknown) => void;
-    const registrationPromise = new Promise(resolve => {
+    const registrationPromise = new Promise((resolve) => {
       resolveRegistration = resolve;
     });
     mockStartRegistration.mockReturnValue(registrationPromise as never);
 
-    const mockFetch = vi.fn()
+    const mockFetch = vi
+      .fn()
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ options: { challenge: 'test' } })
+        json: () => Promise.resolve({ options: { challenge: 'test' } }),
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ passkey: { id: 'test', name: 'Test', createdAt: new Date().toISOString() } })
+        json: () =>
+          Promise.resolve({
+            passkey: { id: 'test', name: 'Test', createdAt: new Date().toISOString() },
+          }),
       });
     globalThis.fetch = mockFetch;
 
@@ -514,16 +524,18 @@ describe('PasskeyManager', () => {
     const mockCredential = { id: 'cred123', type: 'public-key' };
     mockStartRegistration.mockResolvedValue(mockCredential as never);
 
-    const mockFetch = vi.fn()
+    const mockFetch = vi
+      .fn()
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ options: { challenge: 'test' } })
+        json: () => Promise.resolve({ options: { challenge: 'test' } }),
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({
-          passkey: { id: '3', name: 'Unnamed Passkey', createdAt: '2025-06-20T10:00:00Z' }
-        })
+        json: () =>
+          Promise.resolve({
+            passkey: { id: '3', name: 'Unnamed Passkey', createdAt: '2025-06-20T10:00:00Z' },
+          }),
       });
     globalThis.fetch = mockFetch;
 
@@ -627,7 +639,7 @@ describe('PasskeyManager', () => {
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ options: { challenge: 'test' } })
+      json: () => Promise.resolve({ options: { challenge: 'test' } }),
     });
     globalThis.fetch = mockFetch;
 

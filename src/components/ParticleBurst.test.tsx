@@ -59,7 +59,9 @@ describe('ParticleBurst', () => {
   });
 
   it('does not create particles if mouse has not moved from origin', () => {
-    const { container } = render(<ParticleBurst desktopMinInterval={100} desktopMaxInterval={100} />);
+    const { container } = render(
+      <ParticleBurst desktopMinInterval={100} desktopMaxInterval={100} />
+    );
 
     // Wait for burst interval - but mouse is still at 0,0
     act(() => {
@@ -71,7 +73,9 @@ describe('ParticleBurst', () => {
   });
 
   it('creates particles after mouse movement and interval', () => {
-    const { container } = render(<ParticleBurst particleCount={5} desktopMinInterval={100} desktopMaxInterval={100} />);
+    const { container } = render(
+      <ParticleBurst particleCount={5} desktopMinInterval={100} desktopMaxInterval={100} />
+    );
 
     // Simulate mouse move
     act(() => {
@@ -88,7 +92,9 @@ describe('ParticleBurst', () => {
   });
 
   it('respects custom particle count', () => {
-    const { container } = render(<ParticleBurst particleCount={3} desktopMinInterval={100} desktopMaxInterval={100} />);
+    const { container } = render(
+      <ParticleBurst particleCount={3} desktopMinInterval={100} desktopMaxInterval={100} />
+    );
 
     // Simulate mouse move
     act(() => {
@@ -146,17 +152,13 @@ describe('ParticleBurst', () => {
     });
 
     const { container } = render(
-      <ParticleBurst
-        particleCount={3}
-        mobileMinInterval={100}
-        mobileMaxInterval={100}
-      />
+      <ParticleBurst particleCount={3} mobileMinInterval={100} mobileMaxInterval={100} />
     );
 
     // Simulate touch start
     act(() => {
       fireEvent.touchStart(window, {
-        touches: [{ clientX: 100, clientY: 100 }]
+        touches: [{ clientX: 100, clientY: 100 }],
       });
     });
 
@@ -196,7 +198,7 @@ describe('ParticleBurst', () => {
     // Simulate touch start and move
     act(() => {
       fireEvent.touchStart(window, {
-        touches: [{ clientX: 100, clientY: 100 }]
+        touches: [{ clientX: 100, clientY: 100 }],
       });
     });
 
@@ -245,9 +247,11 @@ describe('ParticleBurst', () => {
 
     const particles = container.querySelectorAll('.absolute.rounded-full');
     // Check that at least one particle uses one of the custom colors
-    const particleColors = Array.from(particles).map(p => (p as HTMLElement).style.backgroundColor);
-    const usesCustomColors = particleColors.every(color =>
-      color === 'rgb(255, 0, 0)' || color === 'rgb(0, 255, 0)'
+    const particleColors = Array.from(particles).map(
+      (p) => (p as HTMLElement).style.backgroundColor
+    );
+    const usesCustomColors = particleColors.every(
+      (color) => color === 'rgb(255, 0, 0)' || color === 'rgb(0, 255, 0)'
     );
     expect(usesCustomColors).toBe(true);
   });

@@ -87,17 +87,20 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const [confirmEditProphecy, setConfirmEditProphecy] = useState<Prophecy | null>(null);
 
   // Subscribe to real-time rating updates from other users
-  const handleProphecyRated = useCallback((event: ProphecyRatedEvent) => {
-    if (event.roundId !== round.id) return;
+  const handleProphecyRated = useCallback(
+    (event: ProphecyRatedEvent) => {
+      if (event.roundId !== round.id) return;
 
-    setProphecies((prev) =>
-      prev.map((p) =>
-        p.id === event.id
-          ? { ...p, averageRating: event.averageRating, ratingCount: event.ratingCount }
-          : p
-      )
-    );
-  }, [round.id]);
+      setProphecies((prev) =>
+        prev.map((p) =>
+          p.id === event.id
+            ? { ...p, averageRating: event.averageRating, ratingCount: event.ratingCount }
+            : p
+        )
+      );
+    },
+    [round.id]
+  );
 
   useEffect(() => {
     const unsubscribe = onProphecyRated(handleProphecyRated);
@@ -105,7 +108,10 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   }, [handleProphecyRated]);
 
   const now = useMemo(() => new Date(), []);
-  const submissionDeadline = useMemo(() => new Date(round.submissionDeadline), [round.submissionDeadline]);
+  const submissionDeadline = useMemo(
+    () => new Date(round.submissionDeadline),
+    [round.submissionDeadline]
+  );
   const ratingDeadline = useMemo(() => new Date(round.ratingDeadline), [round.ratingDeadline]);
 
   const isSubmissionOpen = now < submissionDeadline;
@@ -121,7 +127,6 @@ export const RoundDetailClient = memo(function RoundDetailClient({
         return prophecies;
     }
   }, [prophecies, filter]);
-
 
   const handleCreateProphecy = useCallback(async () => {
     const input = {
@@ -190,12 +195,15 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     }
   }, [confirmDeleteProphecy]);
 
-  const handleConfirmDelete = useCallback((id: string) => {
-    const prophecy = prophecies.find((p) => p.id === id);
-    if (prophecy) {
-      setConfirmDeleteProphecy(prophecy);
-    }
-  }, [prophecies]);
+  const handleConfirmDelete = useCallback(
+    (id: string) => {
+      const prophecy = prophecies.find((p) => p.id === id);
+      if (prophecy) {
+        setConfirmDeleteProphecy(prophecy);
+      }
+    },
+    [prophecies]
+  );
 
   const openEditModal = useCallback((prophecy: Prophecy) => {
     setEditingProphecy(prophecy);
@@ -204,13 +212,16 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     setEditTitleError(undefined);
   }, []);
 
-  const handleStartEdit = useCallback((prophecy: Prophecy) => {
-    if (prophecy.ratingCount > 0) {
-      setConfirmEditProphecy(prophecy);
-    } else {
-      openEditModal(prophecy);
-    }
-  }, [openEditModal]);
+  const handleStartEdit = useCallback(
+    (prophecy: Prophecy) => {
+      if (prophecy.ratingCount > 0) {
+        setConfirmEditProphecy(prophecy);
+      } else {
+        openEditModal(prophecy);
+      }
+    },
+    [openEditModal]
+  );
 
   const handleConfirmEdit = useCallback(() => {
     if (confirmEditProphecy) {
@@ -296,7 +307,10 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     }
   }, []);
 
-  const toRateCount = useMemo(() => prophecies.filter((p) => !p.isOwn && p.userRating === null).length, [prophecies]);
+  const toRateCount = useMemo(
+    () => prophecies.filter((p) => !p.isOwn && p.userRating === null).length,
+    [prophecies]
+  );
 
   const myCount = useMemo(() => prophecies.filter((p) => p.isOwn).length, [prophecies]);
 
@@ -440,9 +454,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
       >
         <p className="mb-2">Möchtest du diese Prophezeiung wirklich löschen?</p>
         {confirmDeleteProphecy && (
-          <p className="text-white font-medium mb-4">
-            &quot;{confirmDeleteProphecy.title}&quot;
-          </p>
+          <p className="text-white font-medium mb-4">&quot;{confirmDeleteProphecy.title}&quot;</p>
         )}
         <p className="text-sm">Diese Aktion kann nicht rückgängig gemacht werden.</p>
       </ConfirmModal>
@@ -459,7 +471,8 @@ export const RoundDetailClient = memo(function RoundDetailClient({
         <p className="mb-2">Diese Prophezeiung hat bereits Bewertungen erhalten.</p>
         {confirmEditProphecy && (
           <p className="text-white font-medium mb-4">
-            {confirmEditProphecy.ratingCount} {confirmEditProphecy.ratingCount === 1 ? 'Bewertung' : 'Bewertungen'}
+            {confirmEditProphecy.ratingCount}{' '}
+            {confirmEditProphecy.ratingCount === 1 ? 'Bewertung' : 'Bewertungen'}
           </p>
         )}
         <p className="text-sm">Beim Speichern werden alle Bewertungen gelöscht.</p>
@@ -605,7 +618,8 @@ const ProphecyCard = memo(function ProphecyCard({
           <div className="flex flex-col md:flex-row md:items-end gap-3 md:gap-4">
             <div className="flex-1">
               <h3 className="text-sm font-medium mb-3 text-(--text-secondary)">
-                Durchschnitt ({prophecy.ratingCount} {prophecy.ratingCount === 1 ? 'Bewertung' : 'Bewertungen'})
+                Durchschnitt ({prophecy.ratingCount}{' '}
+                {prophecy.ratingCount === 1 ? 'Bewertung' : 'Bewertungen'})
               </h3>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-(--text-muted) w-6">-10</span>
@@ -620,7 +634,8 @@ const ProphecyCard = memo(function ProphecyCard({
                     textShadow: `0 0 15px ${prophecy.averageRating >= 0 ? '#22d3ee40' : '#a855f740'}`,
                   }}
                 >
-                  {prophecy.averageRating > 0 ? '+' : ''}{prophecy.averageRating.toFixed(1)}
+                  {prophecy.averageRating > 0 ? '+' : ''}
+                  {prophecy.averageRating.toFixed(1)}
                 </span>
               </div>
             </div>
@@ -636,13 +651,18 @@ const ProphecyCard = memo(function ProphecyCard({
               <RatingSlider
                 value={localRating}
                 onChange={handleRatingChange}
-                label={prophecy.userRating === null ? 'Bewerte diese Prophezeiung' : 'Deine Bewertung'}
+                label={
+                  prophecy.userRating === null ? 'Bewerte diese Prophezeiung' : 'Deine Bewertung'
+                }
                 min={-10}
                 max={10}
               />
             </div>
             {hasChanged && (
-              <Button onClick={handleSaveRating} className="text-sm px-3 py-1.5 md:mb-1 w-full md:w-auto">
+              <Button
+                onClick={handleSaveRating}
+                className="text-sm px-3 py-1.5 md:mb-1 w-full md:w-auto"
+              >
                 Speichern
               </Button>
             )}

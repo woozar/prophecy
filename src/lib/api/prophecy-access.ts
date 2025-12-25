@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/db/prisma";
-import { ApiError, Errors } from "./errors";
-import { Prophecy, Round } from "@prisma/client";
+import { prisma } from '@/lib/db/prisma';
+import { ApiError, Errors } from './errors';
+import { Prophecy, Round } from '@prisma/client';
 
 export type ProphecyWithRound = Prophecy & { round: Round };
 
@@ -29,7 +29,7 @@ export async function getProphecyWithAccessCheck(
   const {
     requireOwner = true,
     checkDeadline = true,
-    deadlineErrorMessage = "Einreichungsfrist ist abgelaufen",
+    deadlineErrorMessage = 'Einreichungsfrist ist abgelaufen',
   } = options;
 
   const prophecy = await prisma.prophecy.findUnique({
@@ -38,7 +38,7 @@ export async function getProphecyWithAccessCheck(
   });
 
   if (!prophecy) {
-    throw Errors.notFound("Prophezeiung");
+    throw Errors.notFound('Prophezeiung');
   }
 
   if (requireOwner && prophecy.creatorId !== userId) {

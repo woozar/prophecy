@@ -22,11 +22,7 @@ beforeAll(() => {
 
 // Wrapper component for Mantine context
 function renderWithMantine(ui: React.ReactElement) {
-  return render(
-    <MantineProvider>
-      {ui}
-    </MantineProvider>
-  );
+  return render(<MantineProvider>{ui}</MantineProvider>);
 }
 
 describe('DateTimePicker', () => {

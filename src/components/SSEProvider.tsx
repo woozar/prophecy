@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useSSE } from "@/hooks/useSSE";
+import { useSSE } from '@/hooks/useSSE';
 
 export function SSEProvider() {
   useSSE();

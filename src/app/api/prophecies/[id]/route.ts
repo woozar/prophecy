@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/db/prisma";
-import { sseEmitter } from "@/lib/sse/event-emitter";
-import { updateProphecySchema } from "@/lib/schemas/prophecy";
-import { Errors, handleApiError, getProphecyWithAccessCheck } from "@/lib/api";
+import { NextRequest, NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
+import { sseEmitter } from '@/lib/sse/event-emitter';
+import { updateProphecySchema } from '@/lib/schemas/prophecy';
+import { Errors, handleApiError, getProphecyWithAccessCheck } from '@/lib/api';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -21,7 +21,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Access check - validates ownership and deadline (result not needed after ratings reset)
     await getProphecyWithAccessCheck(id, session.userId, {
-      deadlineErrorMessage: "Einreichungsfrist ist abgelaufen, Bearbeiten nicht mehr möglich",
+      deadlineErrorMessage: 'Einreichungsfrist ist abgelaufen, Bearbeiten nicht mehr möglich',
     });
 
     const body = await request.json();
@@ -59,7 +59,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Broadcast to all connected clients
     sseEmitter.broadcast({
-      type: "prophecy:updated",
+      type: 'prophecy:updated',
       data: {
         ...updatedProphecy,
         averageRating: null,
@@ -78,7 +78,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         isOwn: true,
       },
     });
-  }, "Error updating prophecy:");
+  }, 'Error updating prophecy:');
 }
 
 // DELETE /api/prophecies/[id] - Delete own prophecy (only before submission deadline)
@@ -92,7 +92,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     const prophecy = await getProphecyWithAccessCheck(id, session.userId, {
-      deadlineErrorMessage: "Einreichungsfrist ist abgelaufen, Löschen nicht mehr möglich",
+      deadlineErrorMessage: 'Einreichungsfrist ist abgelaufen, Löschen nicht mehr möglich',
     });
 
     await prisma.prophecy.delete({
@@ -101,10 +101,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // Broadcast to all connected clients
     sseEmitter.broadcast({
-      type: "prophecy:deleted",
+      type: 'prophecy:deleted',
       data: { id, roundId: prophecy.roundId },
     });
 
     return NextResponse.json({ success: true });
-  }, "Error deleting prophecy:");
+  }, 'Error deleting prophecy:');
 }

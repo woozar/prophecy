@@ -9,19 +9,16 @@ const mockGet = vi.fn();
 const mockSet = vi.fn();
 
 vi.mock('next/headers', () => ({
-  cookies: vi.fn(() => Promise.resolve({
-    get: mockGet,
-    set: mockSet,
-  })),
+  cookies: vi.fn(() =>
+    Promise.resolve({
+      get: mockGet,
+      set: mockSet,
+    })
+  ),
 }));
 
 // Import after mock setup
-import {
-  getSession,
-  requireSession,
-  loginSuccessResponse,
-  loginErrorResponse,
-} from './session';
+import { getSession, requireSession, loginSuccessResponse, loginErrorResponse } from './session';
 
 describe('session utilities', () => {
   beforeEach(() => {

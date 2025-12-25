@@ -16,7 +16,10 @@ vi.mock('@/lib/auth/registration', () => ({
   normalizeUsername: vi.fn((u) => u.toLowerCase().replaceAll(/[^a-z0-9_-]/g, '')),
   duplicateUsernameResponse: vi.fn().mockImplementation(() => {
     const { NextResponse } = require('next/server');
-    return NextResponse.json({ error: 'Dieser Benutzername ist bereits vergeben' }, { status: 409 });
+    return NextResponse.json(
+      { error: 'Dieser Benutzername ist bereits vergeben' },
+      { status: 409 }
+    );
   }),
   setPendingUserCookie: vi.fn(),
   registrationSuccessResponse: vi.fn().mockImplementation((user) => {
@@ -112,7 +115,11 @@ describe('POST /api/auth/register/password', () => {
 
     const request = new NextRequest('http://localhost/api/auth/register/password', {
       method: 'POST',
-      body: JSON.stringify({ username: 'newuser', password: 'password123', displayName: 'New User' }),
+      body: JSON.stringify({
+        username: 'newuser',
+        password: 'password123',
+        displayName: 'New User',
+      }),
     });
     const response = await POST(request);
     const data = await response.json();

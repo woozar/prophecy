@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/db/prisma";
-import { sseEmitter } from "@/lib/sse/event-emitter";
+import { NextRequest, NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
+import { sseEmitter } from '@/lib/sse/event-emitter';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -10,17 +10,17 @@ interface RouteParams {
 async function validateAdminSession() {
   const session = await getSession();
   if (!session) {
-    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   }
-  if (session.role !== "ADMIN") {
-    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  if (session.role !== 'ADMIN') {
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
   const currentUser = await prisma.user.findUnique({
     where: { id: session.userId },
     select: { status: true },
   });
-  if (currentUser?.status !== "APPROVED") {
-    return { error: NextResponse.json({ error: "Dein Account ist gesperrt" }, { status: 403 }) };
+  if (currentUser?.status !== 'APPROVED') {
+    return { error: NextResponse.json({ error: 'Dein Account ist gesperrt' }, { status: 403 }) };
   }
   return { session };
 }
@@ -30,8 +30,8 @@ async function canModifyAdmin(targetId: string): Promise<boolean> {
     where: { id: targetId },
     select: { role: true },
   });
-  if (targetUser?.role !== "ADMIN") return true;
-  const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
+  if (targetUser?.role !== 'ADMIN') return true;
+  const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
   return adminCount > 1;
 }
 
@@ -47,23 +47,20 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const body = await request.json();
     const { status, role } = body;
 
-    if (id === session.userId && status === "SUSPENDED") {
+    if (id === session.userId && status === 'SUSPENDED') {
+      return NextResponse.json({ error: 'Du kannst dich nicht selbst sperren' }, { status: 400 });
+    }
+
+    if (id === session.userId && role && role !== 'ADMIN') {
       return NextResponse.json(
-        { error: "Du kannst dich nicht selbst sperren" },
+        { error: 'Du kannst deine eigene Rolle nicht ändern' },
         { status: 400 }
       );
     }
 
-    if (id === session.userId && role && role !== "ADMIN") {
+    if (role && role !== 'ADMIN' && !(await canModifyAdmin(id))) {
       return NextResponse.json(
-        { error: "Du kannst deine eigene Rolle nicht ändern" },
-        { status: 400 }
-      );
-    }
-
-    if (role && role !== "ADMIN" && !(await canModifyAdmin(id))) {
-      return NextResponse.json(
-        { error: "Der letzte Admin kann nicht degradiert werden" },
+        { error: 'Der letzte Admin kann nicht degradiert werden' },
         { status: 400 }
       );
     }
@@ -92,17 +89,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Broadcast to all connected clients
     sseEmitter.broadcast({
-      type: "user:updated",
+      type: 'user:updated',
       data: user,
     });
 
     return NextResponse.json({ user });
   } catch (error) {
-    console.error("Error updating user:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Aktualisieren des Benutzers" },
-      { status: 500 }
-    );
+    console.error('Error updating user:', error);
+    return NextResponse.json({ error: 'Fehler beim Aktualisieren des Benutzers' }, { status: 500 });
   }
 }
 
@@ -115,16 +109,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   if (id === session.userId) {
-    return NextResponse.json(
-      { error: "Du kannst dich nicht selbst löschen" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Du kannst dich nicht selbst löschen' }, { status: 400 });
   }
 
   try {
     if (!(await canModifyAdmin(id))) {
       return NextResponse.json(
-        { error: "Der letzte Admin kann nicht gelöscht werden" },
+        { error: 'Der letzte Admin kann nicht gelöscht werden' },
         { status: 400 }
       );
     }
@@ -134,16 +125,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     sseEmitter.broadcast({
-      type: "user:deleted",
+      type: 'user:deleted',
       data: { id },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting user:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Löschen des Benutzers" },
-      { status: 500 }
-    );
+    console.error('Error deleting user:', error);
+    return NextResponse.json({ error: 'Fehler beim Löschen des Benutzers' }, { status: 500 });
   }
 }

@@ -29,7 +29,7 @@ $2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYWWHLmW2m6a
 Der Cost-Faktor `12` bedeutet 2^12 = 4096 Iterationen. Das macht Brute-Force-Angriffe zeitaufwändig:
 
 | Cost | Iterationen | ca. Zeit/Hash |
-|------|-------------|---------------|
+| ---- | ----------- | ------------- |
 | 10   | 1.024       | ~100ms        |
 | 12   | 4.096       | ~300ms        |
 | 14   | 16.384      | ~1s           |
@@ -37,7 +37,7 @@ Der Cost-Faktor `12` bedeutet 2^12 = 4096 Iterationen. Das macht Brute-Force-Ang
 ## Verwendung im Code
 
 ```typescript
-import bcrypt from "bcrypt";
+import bcrypt from 'bcrypt';
 
 // Passwort hashen (Salt wird automatisch generiert)
 const hash = await bcrypt.hash(password, 12);

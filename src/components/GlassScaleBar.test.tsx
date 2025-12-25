@@ -91,8 +91,8 @@ describe('GlassScaleBar', () => {
   it('renders center marker', () => {
     const { container } = render(<GlassScaleBar value={0} />);
     // Center marker has animation style
-    const centerMarker = Array.from(container.querySelectorAll('.absolute')).find(
-      (el) => el.getAttribute('style')?.includes('center-glow-pulse')
+    const centerMarker = Array.from(container.querySelectorAll('.absolute')).find((el) =>
+      el.getAttribute('style')?.includes('center-glow-pulse')
     );
     expect(centerMarker).toBeInTheDocument();
   });

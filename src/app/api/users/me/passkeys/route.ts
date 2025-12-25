@@ -1,20 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
-import { generateRegistrationOptions, verifyRegistrationResponse, type RegistrationResponseJSON } from "@simplewebauthn/server";
-import { prisma, ensureInitialized } from "@/lib/db/prisma";
-import { webauthnConfig, storeChallenge, getChallenge, clearChallenge } from "@/lib/auth/webauthn";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from 'next/server';
+import {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+  type RegistrationResponseJSON,
+} from '@simplewebauthn/server';
+import { prisma, ensureInitialized } from '@/lib/db/prisma';
+import { webauthnConfig, storeChallenge, getChallenge, clearChallenge } from '@/lib/auth/webauthn';
+import { cookies } from 'next/headers';
 
 // Session-Helper
 async function getCurrentUser() {
   const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get("session");
+  const sessionCookie = cookieStore.get('session');
 
   if (!sessionCookie?.value) {
     return null;
   }
 
   try {
-    const session = JSON.parse(Buffer.from(sessionCookie.value, "base64").toString());
+    const session = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString());
     return session;
   } catch {
     return null;
@@ -27,7 +31,7 @@ export async function GET() {
 
   const session = await getCurrentUser();
   if (!session) {
-    return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+    return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
   }
 
   const authenticators = await prisma.authenticator.findMany({
@@ -40,7 +44,7 @@ export async function GET() {
       createdAt: true,
       lastUsedAt: true,
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
   });
 
   return NextResponse.json({ passkeys: authenticators });
@@ -52,26 +56,26 @@ export async function POST(request: NextRequest) {
 
   const session = await getCurrentUser();
   if (!session) {
-    return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+    return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
   }
 
   const body = await request.json();
 
   // Step 1: Generate Options
-  if (body.action === "options") {
+  if (body.action === 'options') {
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
       include: { authenticators: true },
     });
 
     if (!user) {
-      return NextResponse.json({ error: "Benutzer nicht gefunden" }, { status: 404 });
+      return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 });
     }
 
     // Existierende Credentials ausschließen
     const excludeCredentials = user.authenticators.map((auth) => ({
       id: auth.credentialID,
-      transports: auth.transports?.split(",") as AuthenticatorTransport[] | undefined,
+      transports: auth.transports?.split(',') as AuthenticatorTransport[] | undefined,
     }));
 
     const options = await generateRegistrationOptions({
@@ -81,8 +85,8 @@ export async function POST(request: NextRequest) {
       userDisplayName: user.displayName || user.username,
       excludeCredentials,
       authenticatorSelection: {
-        residentKey: "preferred",
-        userVerification: "preferred",
+        residentKey: 'preferred',
+        userVerification: 'preferred',
       },
       supportedAlgorithmIDs: [-7, -257],
       timeout: webauthnConfig.timeout,
@@ -94,20 +98,20 @@ export async function POST(request: NextRequest) {
   }
 
   // Step 2: Verify and store
-  if (body.action === "verify") {
+  if (body.action === 'verify') {
     const { credential, name } = body as {
       credential: RegistrationResponseJSON;
       name?: string;
     };
 
     if (!credential) {
-      return NextResponse.json({ error: "Ungültige Anfrage" }, { status: 400 });
+      return NextResponse.json({ error: 'Ungültige Anfrage' }, { status: 400 });
     }
 
     const expectedChallenge = getChallenge(`passkey_${session.userId}`);
     if (!expectedChallenge) {
       return NextResponse.json(
-        { error: "Registrierung abgelaufen. Bitte erneut versuchen." },
+        { error: 'Registrierung abgelaufen. Bitte erneut versuchen.' },
         { status: 400 }
       );
     }
@@ -121,15 +125,16 @@ export async function POST(request: NextRequest) {
     });
 
     if (!verification.verified || !verification.registrationInfo) {
-      return NextResponse.json(
-        { error: "Passkey-Verifizierung fehlgeschlagen" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Passkey-Verifizierung fehlgeschlagen' }, { status: 400 });
     }
 
     clearChallenge(`passkey_${session.userId}`);
 
-    const { credential: credentialInfo, credentialDeviceType, credentialBackedUp } = verification.registrationInfo;
+    const {
+      credential: credentialInfo,
+      credentialDeviceType,
+      credentialBackedUp,
+    } = verification.registrationInfo;
 
     // Zähle existierende Passkeys für automatischen Namen
     const existingCount = await prisma.authenticator.count({
@@ -140,11 +145,11 @@ export async function POST(request: NextRequest) {
       data: {
         userId: session.userId,
         credentialID: credential.id, // Already base64url encoded from browser
-        credentialPublicKey: Buffer.from(credentialInfo.publicKey).toString("base64"),
+        credentialPublicKey: Buffer.from(credentialInfo.publicKey).toString('base64'),
         counter: credentialInfo.counter,
         credentialDeviceType,
         credentialBackedUp,
-        transports: credential.response.transports?.join(",") || null,
+        transports: credential.response.transports?.join(',') || null,
         name: name || `Passkey ${existingCount + 1}`,
       },
     });
@@ -159,7 +164,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  return NextResponse.json({ error: "Ungültige Aktion" }, { status: 400 });
+  return NextResponse.json({ error: 'Ungültige Aktion' }, { status: 400 });
 }
 
 // DELETE: Passkey löschen
@@ -168,14 +173,14 @@ export async function DELETE(request: NextRequest) {
 
   const session = await getCurrentUser();
   if (!session) {
-    return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+    return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
   }
 
   const { searchParams } = new URL(request.url);
-  const passkeyId = searchParams.get("id");
+  const passkeyId = searchParams.get('id');
 
   if (!passkeyId) {
-    return NextResponse.json({ error: "Passkey-ID erforderlich" }, { status: 400 });
+    return NextResponse.json({ error: 'Passkey-ID erforderlich' }, { status: 400 });
   }
 
   // Prüfen ob Passkey zum User gehört
@@ -187,7 +192,7 @@ export async function DELETE(request: NextRequest) {
   });
 
   if (!authenticator) {
-    return NextResponse.json({ error: "Passkey nicht gefunden" }, { status: 404 });
+    return NextResponse.json({ error: 'Passkey nicht gefunden' }, { status: 404 });
   }
 
   // Prüfen ob es der letzte Passkey ist UND kein Passwort gesetzt ist
@@ -198,7 +203,7 @@ export async function DELETE(request: NextRequest) {
 
   if (user && user.authenticators.length === 1 && !user.passwordHash) {
     return NextResponse.json(
-      { error: "Du kannst deinen letzten Passkey nicht löschen, wenn kein Passwort gesetzt ist." },
+      { error: 'Du kannst deinen letzten Passkey nicht löschen, wenn kein Passwort gesetzt ist.' },
       { status: 400 }
     );
   }
@@ -216,14 +221,14 @@ export async function PATCH(request: NextRequest) {
 
   const session = await getCurrentUser();
   if (!session) {
-    return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+    return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
   }
 
   const body = await request.json();
   const { id, name } = body as { id: string; name: string };
 
   if (!id || !name) {
-    return NextResponse.json({ error: "ID und Name erforderlich" }, { status: 400 });
+    return NextResponse.json({ error: 'ID und Name erforderlich' }, { status: 400 });
   }
 
   // Prüfen ob Passkey zum User gehört
@@ -235,7 +240,7 @@ export async function PATCH(request: NextRequest) {
   });
 
   if (!authenticator) {
-    return NextResponse.json({ error: "Passkey nicht gefunden" }, { status: 404 });
+    return NextResponse.json({ error: 'Passkey nicht gefunden' }, { status: 404 });
   }
 
   await prisma.authenticator.update({

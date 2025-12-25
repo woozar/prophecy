@@ -166,10 +166,7 @@ describe('useSSE', () => {
     ];
 
     expectedEventTypes.forEach((type) => {
-      expect(instance.addEventListener).toHaveBeenCalledWith(
-        type,
-        expect.any(Function)
-      );
+      expect(instance.addEventListener).toHaveBeenCalledWith(type, expect.any(Function));
     });
   });
 

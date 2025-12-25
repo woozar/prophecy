@@ -1,34 +1,31 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/db/prisma";
-import { sseEmitter } from "@/lib/sse/event-emitter";
-import { createProphecySchema } from "@/lib/schemas/prophecy";
+import { NextRequest, NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
+import { sseEmitter } from '@/lib/sse/event-emitter';
+import { createProphecySchema } from '@/lib/schemas/prophecy';
 
 // GET /api/prophecies - Get prophecies for a round
 export async function GET(request: NextRequest) {
   const session = await getSession();
 
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const { searchParams } = new URL(request.url);
-  const roundId = searchParams.get("roundId");
-  const filter = searchParams.get("filter"); // "mine" | "toRate" | null
+  const roundId = searchParams.get('roundId');
+  const filter = searchParams.get('filter'); // "mine" | "toRate" | null
 
   if (!roundId) {
-    return NextResponse.json(
-      { error: "roundId ist erforderlich" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'roundId ist erforderlich' }, { status: 400 });
   }
 
   try {
     let whereClause: Record<string, unknown> = { roundId };
 
-    if (filter === "mine") {
+    if (filter === 'mine') {
       whereClause = { ...whereClause, creatorId: session.userId };
-    } else if (filter === "toRate") {
+    } else if (filter === 'toRate') {
       // Prophecies not created by user and not yet rated by user
       whereClause = {
         ...whereClause,
@@ -41,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     const prophecies = await prisma.prophecy.findMany({
       where: whereClause,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
       include: {
         creator: {
           select: {
@@ -77,11 +74,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ prophecies: transformedProphecies });
   } catch (error) {
-    console.error("Error fetching prophecies:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Laden der Prophezeiungen" },
-      { status: 500 }
-    );
+    console.error('Error fetching prophecies:', error);
+    return NextResponse.json({ error: 'Fehler beim Laden der Prophezeiungen' }, { status: 500 });
   }
 }
 
@@ -90,7 +84,7 @@ export async function POST(request: NextRequest) {
   const session = await getSession();
 
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -99,10 +93,7 @@ export async function POST(request: NextRequest) {
 
     if (!parsed.success) {
       const firstError = parsed.error.errors[0];
-      return NextResponse.json(
-        { error: firstError.message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: firstError.message }, { status: 400 });
     }
 
     const { roundId, title, description } = parsed.data;
@@ -113,17 +104,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!round) {
-      return NextResponse.json(
-        { error: "Runde nicht gefunden" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Runde nicht gefunden' }, { status: 404 });
     }
 
     if (new Date() > round.submissionDeadline) {
-      return NextResponse.json(
-        { error: "Einreichungsfrist ist abgelaufen" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Einreichungsfrist ist abgelaufen' }, { status: 400 });
     }
 
     const prophecy = await prisma.prophecy.create({
@@ -146,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     // Broadcast to all connected clients
     sseEmitter.broadcast({
-      type: "prophecy:created",
+      type: 'prophecy:created',
       data: {
         ...prophecy,
         averageRating: null,
@@ -166,11 +151,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error creating prophecy:", error);
-    return NextResponse.json(
-      { error: "Fehler beim Erstellen der Prophezeiung" },
-      { status: 500 }
-    );
+    console.error('Error creating prophecy:', error);
+    return NextResponse.json({ error: 'Fehler beim Erstellen der Prophezeiung' }, { status: 500 });
   }
 }
-

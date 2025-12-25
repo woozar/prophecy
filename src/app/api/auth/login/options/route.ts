@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { generateAuthenticationOptions } from "@simplewebauthn/server";
-import { prisma } from "@/lib/db/prisma";
-import { webauthnConfig, storeChallenge } from "@/lib/auth/webauthn";
+import { NextRequest, NextResponse } from 'next/server';
+import { generateAuthenticationOptions } from '@simplewebauthn/server';
+import { prisma } from '@/lib/db/prisma';
+import { webauthnConfig, storeChallenge } from '@/lib/auth/webauthn';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,22 +19,19 @@ export async function POST(request: NextRequest) {
       });
 
       if (!user) {
-        return NextResponse.json(
-          { error: "Benutzer nicht gefunden" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 });
       }
 
-      if (user.status !== "APPROVED") {
+      if (user.status !== 'APPROVED') {
         return NextResponse.json(
-          { error: "Dein Konto wurde noch nicht freigegeben" },
+          { error: 'Dein Konto wurde noch nicht freigegeben' },
           { status: 403 }
         );
       }
 
       if (user.authenticators.length === 0) {
         return NextResponse.json(
-          { error: "Kein Passkey für diesen Benutzer registriert" },
+          { error: 'Kein Passkey für diesen Benutzer registriert' },
           { status: 400 }
         );
       }
@@ -42,7 +39,7 @@ export async function POST(request: NextRequest) {
       userId = user.id;
       allowCredentials = user.authenticators.map((auth) => ({
         id: auth.credentialID,
-        transports: auth.transports?.split(",") as AuthenticatorTransport[] | undefined,
+        transports: auth.transports?.split(',') as AuthenticatorTransport[] | undefined,
       }));
     }
 
@@ -51,7 +48,7 @@ export async function POST(request: NextRequest) {
       rpID: webauthnConfig.rpID,
       timeout: webauthnConfig.timeout,
       allowCredentials,
-      userVerification: "preferred",
+      userVerification: 'preferred',
     });
 
     // Challenge speichern
@@ -64,9 +61,9 @@ export async function POST(request: NextRequest) {
       challengeKey,
     });
   } catch (error) {
-    console.error("Login options error:", error);
+    console.error('Login options error:', error);
     return NextResponse.json(
-      { error: "Fehler beim Erstellen der Anmeldeoptionen" },
+      { error: 'Fehler beim Erstellen der Anmeldeoptionen' },
       { status: 500 }
     );
   }

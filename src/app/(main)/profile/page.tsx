@@ -1,8 +1,8 @@
-import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/db/prisma";
-import { Card } from "@/components/Card";
-import { GlowBadge } from "@/components/GlowBadge";
-import { PasskeyManager } from "@/components/PasskeyManager";
+import { getSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
+import { Card } from '@/components/Card';
+import { GlowBadge } from '@/components/GlowBadge';
+import { PasskeyManager } from '@/components/PasskeyManager';
 
 export default async function ProfilePage() {
   const session = await getSession();
@@ -18,7 +18,7 @@ export default async function ProfilePage() {
           lastUsedAt: true,
           credentialDeviceType: true,
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       },
       _count: {
         select: {
@@ -50,7 +50,7 @@ export default async function ProfilePage() {
             <p className="text-(--text-muted)">@{user.username}</p>
             <div className="mt-1">
               <GlowBadge size="sm">
-                {user.role === "ADMIN" ? "Administrator" : "Benutzer"}
+                {user.role === 'ADMIN' ? 'Administrator' : 'Benutzer'}
               </GlowBadge>
             </div>
           </div>
@@ -58,15 +58,11 @@ export default async function ProfilePage() {
 
         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
           <div className="text-center">
-            <p className="text-2xl font-bold text-cyan-400">
-              {user._count.prophecies}
-            </p>
+            <p className="text-2xl font-bold text-cyan-400">{user._count.prophecies}</p>
             <p className="text-sm text-(--text-muted)">Prophezeiungen</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-cyan-400">
-              {user._count.ratings}
-            </p>
+            <p className="text-2xl font-bold text-cyan-400">{user._count.ratings}</p>
             <p className="text-sm text-(--text-muted)">Bewertungen</p>
           </div>
         </div>
@@ -79,7 +75,7 @@ export default async function ProfilePage() {
           name: p.name,
           createdAt: p.createdAt.toISOString(),
           lastUsedAt: p.lastUsedAt?.toISOString() || null,
-          credentialDeviceType: p.credentialDeviceType || "singleDevice",
+          credentialDeviceType: p.credentialDeviceType || 'singleDevice',
         }))}
       />
 
@@ -90,10 +86,10 @@ export default async function ProfilePage() {
           <div className="flex justify-between">
             <span className="text-(--text-muted)">Mitglied seit</span>
             <span className="text-(--text-secondary)">
-              {user.createdAt.toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
+              {user.createdAt.toLocaleDateString('de-DE', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
               })}
             </span>
           </div>

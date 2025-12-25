@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState, useRef, useCallback, memo, useMemo } from "react";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { type AngularParticle } from "@/types/particle";
+import { useState, useRef, useCallback, memo, useMemo } from 'react';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { type AngularParticle } from '@/types/particle';
 
 interface RatingSliderProps {
   value?: number;
@@ -13,14 +13,14 @@ interface RatingSliderProps {
   disabled?: boolean;
 }
 
-const SLIDER_BURST_COLORS = ["#22d3ee", "#14b8a6", "#8b5cf6", "#a855f7"];
+const SLIDER_BURST_COLORS = ['#22d3ee', '#14b8a6', '#8b5cf6', '#a855f7'];
 
 function getSliderColor(value: number): string {
-  if (value <= -5) return "#ef4444"; // red
-  if (value < 0) return "#f97316"; // orange
-  if (value === 0) return "#eab308"; // yellow
-  if (value <= 5) return "#22d3ee"; // cyan
-  return "#14b8a6"; // teal
+  if (value <= -5) return '#ef4444'; // red
+  if (value < 0) return '#f97316'; // orange
+  if (value === 0) return '#eab308'; // yellow
+  if (value <= 5) return '#22d3ee'; // cyan
+  return '#14b8a6'; // teal
 }
 
 export const RatingSlider = memo(function RatingSlider({
@@ -77,8 +77,7 @@ export const RatingSlider = memo(function RatingSlider({
     const updateParticles = (prev: AngularParticle[], progress: number) =>
       prev.map((p) => (particleIds.has(p.id) ? updateParticle(p, progress) : p));
 
-    const removeParticles = (prev: AngularParticle[]) =>
-      prev.filter((p) => !particleIds.has(p.id));
+    const removeParticles = (prev: AngularParticle[]) => prev.filter((p) => !particleIds.has(p.id));
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
@@ -95,53 +94,70 @@ export const RatingSlider = memo(function RatingSlider({
     requestAnimationFrame(animate);
   }, []);
 
-  const handleChange = useCallback((newValue: number) => {
-    // Only burst if value actually changed and reduced motion is not enabled
-    if (!reducedMotion && lastValueRef.current !== null && lastValueRef.current !== newValue && sliderRef.current) {
-      const rect = sliderRef.current.getBoundingClientRect();
-      const percentage = (newValue - min) / (max - min);
-      const thumbX = percentage * rect.width;
-      const thumbY = rect.height / 2;
-      createBurst(thumbX, thumbY);
-    }
-    lastValueRef.current = newValue;
+  const handleChange = useCallback(
+    (newValue: number) => {
+      // Only burst if value actually changed and reduced motion is not enabled
+      if (
+        !reducedMotion &&
+        lastValueRef.current !== null &&
+        lastValueRef.current !== newValue &&
+        sliderRef.current
+      ) {
+        const rect = sliderRef.current.getBoundingClientRect();
+        const percentage = (newValue - min) / (max - min);
+        const thumbX = percentage * rect.width;
+        const thumbY = rect.height / 2;
+        createBurst(thumbX, thumbY);
+      }
+      lastValueRef.current = newValue;
 
-    if (controlledValue === undefined) {
-      setInternalValue(newValue);
-    }
-    onChange?.(newValue);
-  }, [reducedMotion, min, max, createBurst, controlledValue, onChange]);
+      if (controlledValue === undefined) {
+        setInternalValue(newValue);
+      }
+      onChange?.(newValue);
+    },
+    [reducedMotion, min, max, createBurst, controlledValue, onChange]
+  );
 
   const color = useMemo(() => getSliderColor(value), [value]);
 
-  const valueStyle = useMemo(() => ({
-    color,
-    textShadow: `0 0 15px ${color}40`,
-  }), [color]);
+  const valueStyle = useMemo(
+    () => ({
+      color,
+      textShadow: `0 0 15px ${color}40`,
+    }),
+    [color]
+  );
 
-  const getMarkerPosition = useCallback((value: number) => {
-    const percentage = ((value - min) / (max - min)) * 100;
-    // Track goes from 10px to calc(100% - 10px)
-    return `calc(10px + ${percentage}% - ${percentage * 0.2}px)`;
-  }, [min, max]);
+  const getMarkerPosition = useCallback(
+    (value: number) => {
+      const percentage = ((value - min) / (max - min)) * 100;
+      // Track goes from 10px to calc(100% - 10px)
+      return `calc(10px + ${percentage}% - ${percentage * 0.2}px)`;
+    },
+    [min, max]
+  );
 
-  const centerMarkerStyle = useMemo(() => ({
-    left: getMarkerPosition(0),
-    top: "50%",
-    height: 14,
-    width: 3,
-    transform: "translate(-50%, -50%)",
-    background: "rgba(255, 255, 255, 0.9)",
-    boxShadow: `
+  const centerMarkerStyle = useMemo(
+    () => ({
+      left: getMarkerPosition(0),
+      top: '50%',
+      height: 14,
+      width: 3,
+      transform: 'translate(-50%, -50%)',
+      background: 'rgba(255, 255, 255, 0.9)',
+      boxShadow: `
       0 0 8px rgba(255, 255, 255, 1),
       0 0 16px rgba(255, 255, 255, 0.8),
       0 0 24px rgba(255, 255, 255, 0.5),
       0 0 32px rgba(200, 220, 255, 0.4)
     `,
-    filter: "blur(1px)",
-    zIndex: 20,
-    animation: "center-glow-pulse 2s ease-in-out infinite",
-  }), [getMarkerPosition]);
+      filter: 'blur(1px)',
+      zIndex: 20,
+      animation: 'center-glow-pulse 2s ease-in-out infinite',
+    }),
+    [getMarkerPosition]
+  );
 
   const tickMarkers = useMemo(() => {
     const markers = [];
@@ -153,59 +169,68 @@ export const RatingSlider = memo(function RatingSlider({
     return markers;
   }, [min, max, getMarkerPosition]);
 
-  const tickMarkerStyle = useMemo(() => ({
-    top: "50%",
-    height: 8,
-    width: 2,
-    transform: "translate(-50%, -50%)",
-    background: "rgba(255, 255, 255, 0.5)",
-    boxShadow: `
+  const tickMarkerStyle = useMemo(
+    () => ({
+      top: '50%',
+      height: 8,
+      width: 2,
+      transform: 'translate(-50%, -50%)',
+      background: 'rgba(255, 255, 255, 0.5)',
+      boxShadow: `
       0 0 4px rgba(255, 255, 255, 0.6),
       0 0 8px rgba(255, 255, 255, 0.3)
     `,
-    filter: "blur(0.5px)",
-    zIndex: 20,
-  }), []);
+      filter: 'blur(0.5px)',
+      zIndex: 20,
+    }),
+    []
+  );
 
-  const trackStyle = useMemo(() => ({
-    left: 10,
-    right: 10,
-    top: "50%",
-    height: 8,
-    transform: "translateY(-50%)",
-    background: "linear-gradient(90deg, #ef4444, #eab308 40%, #22d3ee 60%, #14b8a6)",
-    borderRadius: 4,
-    zIndex: 0,
-  }), []);
+  const trackStyle = useMemo(
+    () => ({
+      left: 10,
+      right: 10,
+      top: '50%',
+      height: 8,
+      transform: 'translateY(-50%)',
+      background: 'linear-gradient(90deg, #ef4444, #eab308 40%, #22d3ee 60%, #14b8a6)',
+      borderRadius: 4,
+      zIndex: 0,
+    }),
+    []
+  );
 
-  const focusIndicatorStyle = useMemo(() => ({
-    left: 7,
-    right: 7,
-    top: "50%",
-    height: 14,
-    transform: "translateY(-50%)",
-    border: "2px solid rgba(6, 182, 212, 0.9)",
-    borderRadius: 7,
-    boxShadow: `
+  const focusIndicatorStyle = useMemo(
+    () => ({
+      left: 7,
+      right: 7,
+      top: '50%',
+      height: 14,
+      transform: 'translateY(-50%)',
+      border: '2px solid rgba(6, 182, 212, 0.9)',
+      borderRadius: 7,
+      boxShadow: `
       0 0 8px rgba(6, 182, 212, 0.8),
       0 0 16px rgba(6, 182, 212, 0.5),
       0 0 24px rgba(6, 182, 212, 0.3)
     `,
-    zIndex: 1,
-  }), []);
+      zIndex: 1,
+    }),
+    []
+  );
 
   return (
-    <div className={disabled ? "opacity-50" : ""}>
-      {label && (
-        <h3 className="text-sm font-medium mb-3 text-(--text-secondary)">{label}</h3>
-      )}
+    <div className={disabled ? 'opacity-50' : ''}>
+      {label && <h3 className="text-sm font-medium mb-3 text-(--text-secondary)">{label}</h3>}
       <div className="flex items-center gap-3">
         <span className="text-xs text-(--text-muted) w-6">{min}</span>
         <div className="relative flex-1">
           {/* Custom track */}
           <div className="absolute pointer-events-none" style={trackStyle} />
           {/* Focus indicator */}
-          {isFocused && <div className="absolute pointer-events-none" style={focusIndicatorStyle} />}
+          {isFocused && (
+            <div className="absolute pointer-events-none" style={focusIndicatorStyle} />
+          )}
           {/* Tick markers for all values */}
           {tickMarkers.map((marker) => (
             <div
@@ -242,7 +267,7 @@ export const RatingSlider = memo(function RatingSlider({
                 backgroundColor: particle.color,
                 opacity: particle.opacity,
                 boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`,
-                transform: "translate(-50%, -50%)",
+                transform: 'translate(-50%, -50%)',
               }}
             />
           ))}

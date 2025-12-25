@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { prisma } from "@/lib/db/prisma";
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { prisma } from '@/lib/db/prisma';
 
 interface UserResponse {
   id: string;
@@ -14,7 +14,7 @@ interface UserResponse {
  * @returns The existing user if found, null otherwise
  */
 export async function findExistingUser(username: string) {
-  const normalizedUsername = username.toLowerCase().replaceAll(/[^a-z0-9_-]/g, "");
+  const normalizedUsername = username.toLowerCase().replaceAll(/[^a-z0-9_-]/g, '');
   return prisma.user.findUnique({
     where: { username: normalizedUsername },
   });
@@ -24,17 +24,14 @@ export async function findExistingUser(username: string) {
  * Normalize a username (lowercase, remove special characters)
  */
 export function normalizeUsername(username: string): string {
-  return username.toLowerCase().replaceAll(/[^a-z0-9_-]/g, "");
+  return username.toLowerCase().replaceAll(/[^a-z0-9_-]/g, '');
 }
 
 /**
  * Return a 409 response for duplicate username
  */
 export function duplicateUsernameResponse() {
-  return NextResponse.json(
-    { error: "Dieser Benutzername ist bereits vergeben" },
-    { status: 409 }
-  );
+  return NextResponse.json({ error: 'Dieser Benutzername ist bereits vergeben' }, { status: 409 });
 }
 
 /**
@@ -42,12 +39,12 @@ export function duplicateUsernameResponse() {
  */
 export async function setPendingUserCookie(userId: string) {
   const cookieStore = await cookies();
-  cookieStore.set("pendingUser", userId, {
+  cookieStore.set('pendingUser', userId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
     maxAge: 60 * 60, // 1 hour
-    path: "/",
+    path: '/',
   });
 }
 
@@ -71,8 +68,5 @@ export function registrationSuccessResponse(user: UserResponse) {
  */
 export function registrationErrorResponse(error: unknown, context: string) {
   console.error(`${context}:`, error);
-  return NextResponse.json(
-    { error: "Fehler bei der Registrierung" },
-    { status: 500 }
-  );
+  return NextResponse.json({ error: 'Fehler bei der Registrierung' }, { status: 500 });
 }

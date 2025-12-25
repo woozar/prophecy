@@ -15,7 +15,11 @@ describe('Card', () => {
   });
 
   it('applies custom padding class when specified', () => {
-    render(<Card padding="p-8" data-testid="card">Content</Card>);
+    render(
+      <Card padding="p-8" data-testid="card">
+        Content
+      </Card>
+    );
     const card = screen.getByTestId('card');
     expect(card).toHaveClass('p-8');
   });
@@ -27,26 +31,42 @@ describe('Card', () => {
   });
 
   it('applies col-span-2 class when colSpan is 2', () => {
-    render(<Card colSpan={2} data-testid="card">Content</Card>);
+    render(
+      <Card colSpan={2} data-testid="card">
+        Content
+      </Card>
+    );
     const card = screen.getByTestId('card');
     expect(card).toHaveClass('md:col-span-2');
   });
 
   it('does not apply col-span class when colSpan is 1', () => {
-    render(<Card colSpan={1} data-testid="card">Content</Card>);
+    render(
+      <Card colSpan={1} data-testid="card">
+        Content
+      </Card>
+    );
     const card = screen.getByTestId('card');
     expect(card).not.toHaveClass('md:col-span-2');
   });
 
   it('merges custom className', () => {
-    render(<Card className="custom-class" data-testid="card">Content</Card>);
+    render(
+      <Card className="custom-class" data-testid="card">
+        Content
+      </Card>
+    );
     const card = screen.getByTestId('card');
     expect(card).toHaveClass('custom-class');
     expect(card).toHaveClass('card-dark');
   });
 
   it('passes through additional HTML attributes', () => {
-    render(<Card data-testid="card" id="my-card">Content</Card>);
+    render(
+      <Card data-testid="card" id="my-card">
+        Content
+      </Card>
+    );
     const card = screen.getByTestId('card');
     expect(card).toHaveAttribute('id', 'my-card');
   });

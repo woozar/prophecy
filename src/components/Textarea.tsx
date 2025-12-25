@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { memo, useMemo, TextareaHTMLAttributes, ReactNode } from "react";
-import { RequiredAsterisk } from "./RequiredAsterisk";
+import { memo, useMemo, TextareaHTMLAttributes, ReactNode } from 'react';
+import { RequiredAsterisk } from './RequiredAsterisk';
 
-interface TextareaProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "className"> {
+interface TextareaProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'className'> {
   /** Label for the textarea */
   label?: string;
   /** Whether the field is required */
@@ -30,10 +30,11 @@ export const Textarea = memo(function Textarea({
   }, [label, required, id]);
 
   const textareaClassName = useMemo(() => {
-    const baseClasses = "w-full px-4 py-3 rounded-lg bg-[rgba(10,25,41,0.8)] border text-white placeholder:text-(--text-muted) focus:outline-none transition-all resize-none";
+    const baseClasses =
+      'w-full px-4 py-3 rounded-lg bg-[rgba(10,25,41,0.8)] border text-white placeholder:text-(--text-muted) focus:outline-none transition-all resize-none';
     const borderClasses = error
-      ? "border-red-500/50 focus:border-red-400/50 focus:shadow-[0_0_20px_rgba(239,68,68,0.15)]"
-      : "border-[rgba(98,125,152,0.3)] focus:border-cyan-400/50 focus:shadow-[0_0_20px_rgba(6,182,212,0.15)]";
+      ? 'border-red-500/50 focus:border-red-400/50 focus:shadow-[0_0_20px_rgba(239,68,68,0.15)]'
+      : 'border-[rgba(98,125,152,0.3)] focus:border-cyan-400/50 focus:shadow-[0_0_20px_rgba(6,182,212,0.15)]';
     return `${baseClasses} ${borderClasses}`;
   }, [error]);
 

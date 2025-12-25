@@ -2,18 +2,18 @@
 // This is a singleton that manages all SSE connections
 
 export type SSEEventType =
-  | "round:created"
-  | "round:updated"
-  | "round:deleted"
-  | "user:created"
-  | "user:updated"
-  | "user:deleted"
-  | "prophecy:created"
-  | "prophecy:updated"
-  | "prophecy:deleted"
-  | "prophecy:rated"
-  | "rating:created"
-  | "rating:updated";
+  | 'round:created'
+  | 'round:updated'
+  | 'round:deleted'
+  | 'user:created'
+  | 'user:updated'
+  | 'user:deleted'
+  | 'prophecy:created'
+  | 'prophecy:updated'
+  | 'prophecy:deleted'
+  | 'prophecy:rated'
+  | 'rating:created'
+  | 'rating:updated';
 
 export interface SSEEvent {
   type: SSEEventType;

@@ -275,7 +275,7 @@ describe('Header', () => {
     render(<Header user={adminUser} />);
 
     const benutzerLinks = screen.getAllByText('Benutzer');
-    const activeLink = benutzerLinks.find(link =>
+    const activeLink = benutzerLinks.find((link) =>
       link.classList.contains('link-underline-active')
     );
     expect(activeLink).toBeDefined();
@@ -335,7 +335,7 @@ describe('Header', () => {
 
     // Find the mobile menu profile link (the one in the mobile menu section)
     // It should be an anchor/link element, not a button
-    const mobileProfileLink = profileLinks.find(link => {
+    const mobileProfileLink = profileLinks.find((link) => {
       const parent = link.closest('a');
       return parent && parent.getAttribute('href') === '/profile';
     });

@@ -1,13 +1,13 @@
-import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/db/prisma";
-import { redirect } from "next/navigation";
-import { UsersManager } from "@/components/admin/UsersManager";
+import { getSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
+import { redirect } from 'next/navigation';
+import { UsersManager } from '@/components/admin/UsersManager';
 
 export default async function AdminUsersPage() {
   const session = await getSession();
 
   if (!session) {
-    redirect("/login");
+    redirect('/login');
   }
 
   const user = await prisma.user.findUnique({
@@ -15,12 +15,12 @@ export default async function AdminUsersPage() {
     select: { role: true },
   });
 
-  if (user?.role !== "ADMIN") {
-    redirect("/");
+  if (user?.role !== 'ADMIN') {
+    redirect('/');
   }
 
   const users = await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
     select: {
       id: true,
       username: true,

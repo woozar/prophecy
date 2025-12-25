@@ -53,9 +53,7 @@ const mockShowErrorToast = vi.mocked(showErrorToast);
 function renderWithMantine(ui: React.ReactElement) {
   return render(
     <MantineProvider>
-      <DatesProvider settings={{ locale: 'de' }}>
-        {ui}
-      </DatesProvider>
+      <DatesProvider settings={{ locale: 'de' }}>{ui}</DatesProvider>
     </MantineProvider>
   );
 }
@@ -226,8 +224,8 @@ describe('RoundsManager', () => {
 
     // Find the confirm button by role - it's the danger button in the modal
     const allButtons = screen.getAllByRole('button');
-    const confirmButton = allButtons.find(btn =>
-      btn.textContent === 'Löschen' && !btn.hasAttribute('title')
+    const confirmButton = allButtons.find(
+      (btn) => btn.textContent === 'Löschen' && !btn.hasAttribute('title')
     );
     fireEvent.click(confirmButton!);
 
@@ -245,7 +243,7 @@ describe('RoundsManager', () => {
     mockRounds = mockRoundsData;
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
-      json: () => Promise.resolve({ error: 'Cannot delete' })
+      json: () => Promise.resolve({ error: 'Cannot delete' }),
     });
     globalThis.fetch = mockFetch;
 
@@ -259,8 +257,8 @@ describe('RoundsManager', () => {
     });
 
     const allButtons = screen.getAllByRole('button');
-    const confirmButton = allButtons.find(btn =>
-      btn.textContent === 'Löschen' && !btn.hasAttribute('title')
+    const confirmButton = allButtons.find(
+      (btn) => btn.textContent === 'Löschen' && !btn.hasAttribute('title')
     );
     fireEvent.click(confirmButton!);
 
@@ -284,8 +282,8 @@ describe('RoundsManager', () => {
     });
 
     const allButtons = screen.getAllByRole('button');
-    const confirmButton = allButtons.find(btn =>
-      btn.textContent === 'Löschen' && !btn.hasAttribute('title')
+    const confirmButton = allButtons.find(
+      (btn) => btn.textContent === 'Löschen' && !btn.hasAttribute('title')
     );
     fireEvent.click(confirmButton!);
 
@@ -387,7 +385,7 @@ describe('RoundsManager', () => {
   it('calls create API and shows success toast', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ id: 'new-round' })
+      json: () => Promise.resolve({ id: 'new-round' }),
     });
     globalThis.fetch = mockFetch;
 
@@ -411,7 +409,7 @@ describe('RoundsManager', () => {
     mockRounds = mockRoundsData;
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({})
+      json: () => Promise.resolve({}),
     });
     globalThis.fetch = mockFetch;
 
@@ -436,7 +434,7 @@ describe('RoundsManager', () => {
     mockRounds = mockRoundsData;
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
-      json: () => Promise.resolve({ error: 'Update failed' })
+      json: () => Promise.resolve({ error: 'Update failed' }),
     });
     globalThis.fetch = mockFetch;
 
@@ -541,7 +539,7 @@ describe('RoundsManager', () => {
     mockRounds = mockRoundsData;
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ success: true })
+      json: () => Promise.resolve({ success: true }),
     });
     globalThis.fetch = mockFetch;
 
@@ -569,7 +567,7 @@ describe('RoundsManager', () => {
     mockRounds = mockRoundsData;
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
-      json: () => Promise.resolve({ error: 'Delete failed' })
+      json: () => Promise.resolve({ error: 'Delete failed' }),
     });
     globalThis.fetch = mockFetch;
 
@@ -614,7 +612,7 @@ describe('RoundsManager', () => {
     mockRounds = mockRoundsData;
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
-      json: () => Promise.resolve({})
+      json: () => Promise.resolve({}),
     });
     globalThis.fetch = mockFetch;
 
@@ -747,8 +745,8 @@ describe('RoundsManager', () => {
 
     // DateTimePicker uses buttons, find them
     const dateButtons = screen.getAllByRole('button');
-    const submissionButton = dateButtons.find(btn =>
-      btn.textContent?.includes('Datum') || btn.querySelector('input')
+    const submissionButton = dateButtons.find(
+      (btn) => btn.textContent?.includes('Datum') || btn.querySelector('input')
     );
 
     // Verify date picker elements exist
@@ -812,9 +810,14 @@ describe('RoundsManager', () => {
 
   it('shows Speichern... when submitting in edit mode', async () => {
     mockRounds = mockRoundsData;
-    const mockFetch = vi.fn().mockImplementation(() =>
-      new Promise((resolve) => setTimeout(() => resolve({ ok: true, json: () => Promise.resolve({}) }), 100))
-    );
+    const mockFetch = vi
+      .fn()
+      .mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ ok: true, json: () => Promise.resolve({}) }), 100)
+          )
+      );
     globalThis.fetch = mockFetch;
 
     renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
@@ -890,7 +893,7 @@ describe('RoundsManager', () => {
       mockRounds = mockRoundsData;
       const mockFetch = vi.fn().mockResolvedValue({
         ok: false,
-        json: () => Promise.resolve({})
+        json: () => Promise.resolve({}),
       });
       globalThis.fetch = mockFetch;
 

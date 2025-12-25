@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { generateRegistrationOptions } from "@simplewebauthn/server";
-import { prisma, ensureInitialized } from "@/lib/db/prisma";
-import { webauthnConfig, storeChallenge } from "@/lib/auth/webauthn";
+import { NextRequest, NextResponse } from 'next/server';
+import { generateRegistrationOptions } from '@simplewebauthn/server';
+import { prisma, ensureInitialized } from '@/lib/db/prisma';
+import { webauthnConfig, storeChallenge } from '@/lib/auth/webauthn';
 
 export async function POST(request: NextRequest) {
   await ensureInitialized();
@@ -11,9 +11,9 @@ export async function POST(request: NextRequest) {
     const { username, displayName } = body;
 
     // Validierung
-    if (!username || typeof username !== "string" || username.length < 3) {
+    if (!username || typeof username !== 'string' || username.length < 3) {
       return NextResponse.json(
-        { error: "Benutzername muss mindestens 3 Zeichen haben" },
+        { error: 'Benutzername muss mindestens 3 Zeichen haben' },
         { status: 400 }
       );
     }
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "Dieser Benutzername ist bereits vergeben" },
+        { error: 'Dieser Benutzername ist bereits vergeben' },
         { status: 409 }
       );
     }
@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
       // Keine existierenden Authenticators - ist ja ein neuer User
       excludeCredentials: [],
       authenticatorSelection: {
-        residentKey: "preferred",
-        userVerification: "preferred",
+        residentKey: 'preferred',
+        userVerification: 'preferred',
       },
       supportedAlgorithmIDs: [-7, -257],
       timeout: webauthnConfig.timeout,
@@ -59,9 +59,9 @@ export async function POST(request: NextRequest) {
       displayName: displayName || username,
     });
   } catch (error) {
-    console.error("Registration options error:", error);
+    console.error('Registration options error:', error);
     return NextResponse.json(
-      { error: "Fehler beim Erstellen der Registrierungsoptionen" },
+      { error: 'Fehler beim Erstellen der Registrierungsoptionen' },
       { status: 500 }
     );
   }

@@ -1,8 +1,13 @@
-"use client";
+'use client';
 
-import { useState, useRef, useCallback, useEffect } from "react";
-import { useIsMobile } from "@/hooks/useIsMobile";
-import { type VelocityParticle, BURST_COLORS, updateVelocityParticle, isParticleActive } from "@/types/particle";
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import {
+  type VelocityParticle,
+  BURST_COLORS,
+  updateVelocityParticle,
+  isParticleActive,
+} from '@/types/particle';
 
 interface UseClickParticlesOptions {
   /** Number of particles to create per burst (default: 8) */

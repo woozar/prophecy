@@ -1,2 +1,2 @@
-export * from "./prophecy";
-export * from "./round";
+export * from './prophecy';
+export * from './round';

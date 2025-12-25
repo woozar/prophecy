@@ -24,7 +24,9 @@ export const Footer = memo(function Footer() {
 
           {/* Version / Links */}
           <div className="flex items-center gap-4">
-            <span className="text-xs text-(--text-muted)">v0.1.0</span>
+            <span className="text-xs text-(--text-muted)">
+              v{process.env.NEXT_PUBLIC_APP_VERSION}
+            </span>
           </div>
         </div>
       </div>

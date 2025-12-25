@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Footer } from './Footer';
+import packageJson from '../../package.json';
 
 describe('Footer', () => {
   const originalDate = globalThis.Date;
@@ -27,9 +28,9 @@ describe('Footer', () => {
     expect(link).toHaveAttribute('href', 'https://github.com/woozar/prophecy');
   });
 
-  it('displays version number', () => {
+  it('displays version number from package.json', () => {
     render(<Footer />);
-    expect(screen.getByText('v0.1.0')).toBeInTheDocument();
+    expect(screen.getByText(`v${packageJson.version}`)).toBeInTheDocument();
   });
 
   it('has fixed positioning', () => {

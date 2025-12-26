@@ -1,5 +1,11 @@
 // Server-side SSE event emitter for real-time updates
 // This is a singleton that manages all SSE connections
+// Uses globalThis to persist across Hot Module Replacement in development
+
+declare global {
+  // eslint-disable-next-line no-var
+  var sseEmitterInstance: SSEEventEmitter | undefined;
+}
 
 export type SSEEventType =
   | 'round:created'
@@ -73,5 +79,9 @@ class SSEEventEmitter {
   }
 }
 
-// Singleton instance
-export const sseEmitter = new SSEEventEmitter();
+// Singleton instance - persisted in globalThis to survive HMR
+export const sseEmitter = globalThis.sseEmitterInstance ?? new SSEEventEmitter();
+
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.sseEmitterInstance = sseEmitter;
+}

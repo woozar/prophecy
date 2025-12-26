@@ -1382,6 +1382,49 @@ body {
   color: var(--color-cyan-400) !important;
 }
 
+/* Ghost fly-towards animation */
+@keyframes ghost-fly-towards {
+  0% {
+    transform: scale(0.05) translate(0, 0);
+    opacity: 0;
+  }
+  7% {
+    opacity: 0.35;
+  }
+  12% {
+    transform: scale(0.4) translate(45px, -12px);
+    opacity: 0.33;
+  }
+  23% {
+    transform: scale(0.9) translate(-18px, 35px);
+    opacity: 0.3;
+  }
+  38% {
+    transform: scale(1.8) translate(55px, -45px);
+    opacity: 0.27;
+  }
+  47% {
+    transform: scale(2.4) translate(-60px, 8px);
+    opacity: 0.22;
+  }
+  58% {
+    transform: scale(3.5) translate(25px, 50px);
+    opacity: 0.17;
+  }
+  71% {
+    transform: scale(5.5) translate(-40px, -35px);
+    opacity: 0.11;
+  }
+  84% {
+    transform: scale(9) translate(30px, 20px);
+    opacity: 0.06;
+  }
+  100% {
+    transform: scale(15) translate(-15px, -25px);
+    opacity: 0;
+  }
+}
+
 /* Reduced Motion - Disable animations when user prefers reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

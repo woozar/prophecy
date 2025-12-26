@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { ColorSchemeScript, MantineProvider } from '@mantine/core';
 import { DatesProvider } from '@mantine/dates';
 import { Notifications } from '@mantine/notifications';
+import { GhostAnimation } from '@/components/GhostAnimation';
 import 'dayjs/locale/de';
 import './globals.css';
 
@@ -27,6 +28,7 @@ export default function RootLayout({
         <MantineProvider>
           <DatesProvider settings={{ locale: 'de', firstDayOfWeek: 1 }}>
             <Notifications position="top-right" />
+            <GhostAnimation />
             {children}
           </DatesProvider>
         </MantineProvider>

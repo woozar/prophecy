@@ -23,7 +23,7 @@ const locationMock = {
 // Delete and replace window.location to prevent jsdom navigation errors
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (window as any).location;
-window.location = locationMock as unknown as Location;
+window.location = locationMock as unknown as string & Location;
 
 // Mock next/link to prevent jsdom navigation errors when clicking links
 // See: https://github.com/vercel/next.js/discussions/60125

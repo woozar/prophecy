@@ -14,9 +14,9 @@ const baseRoundSchema = z.object({
 const dateOrderRefinements = <T extends z.ZodTypeAny>(schema: T) =>
   schema
     .refine(
-      (data: z.infer<typeof baseRoundSchema>) => data.submissionDeadline < data.ratingDeadline,
+      (data: z.infer<typeof baseRoundSchema>) => data.submissionDeadline <= data.ratingDeadline,
       {
-        message: 'Einreichungs-Deadline muss vor der Bewertungs-Deadline liegen',
+        message: 'Einreichungs-Deadline darf nicht nach der Bewertungs-Deadline liegen',
         path: ['submissionDeadline'],
       }
     )

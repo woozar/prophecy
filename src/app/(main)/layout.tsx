@@ -19,12 +19,16 @@ export default async function MainLayout({ children }: MainLayoutProps) {
     redirect('/login');
   }
 
-  // User-Daten aus der Datenbank holen
+  // User-Daten aus der Datenbank holen (inkl. Avatar-Felder)
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
     select: {
+      id: true,
       username: true,
       displayName: true,
+      avatarUrl: true,
+      avatarEffect: true,
+      avatarEffectColors: true,
       role: true,
       status: true,
     },
@@ -33,6 +37,14 @@ export default async function MainLayout({ children }: MainLayoutProps) {
   if (user?.status !== 'APPROVED') {
     redirect('/login');
   }
+
+  // Parse avatarEffectColors from JSON string to array
+  const headerUser = {
+    ...user,
+    avatarEffectColors: user.avatarEffectColors
+      ? (JSON.parse(user.avatarEffectColors) as string[])
+      : undefined,
+  };
 
   return (
     <>
@@ -47,7 +59,7 @@ export default async function MainLayout({ children }: MainLayoutProps) {
         fadeDuration={1200}
       />
       <FogBackground />
-      <Header user={user} />
+      <Header user={headerUser} />
       <main className="relative z-10 pt-20 pb-16 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">{children}</div>
       </main>

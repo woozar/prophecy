@@ -4,16 +4,24 @@ import { memo, useCallback, useState, useEffect, useRef } from 'react';
 import { IconChevronDown, IconUser, IconLogout, IconMenu2, IconX } from '@tabler/icons-react';
 import { Link } from '@/components/Link';
 import { Button } from '@/components/Button';
+import { UserAvatar } from '@/components/UserAvatar';
 import { useRouter, usePathname } from 'next/navigation';
 import { notifications } from '@mantine/notifications';
 import { successToast, errorToast } from '@/lib/toast/toast-styles';
 
+interface User {
+  id: string;
+  username: string;
+  displayName: string | null;
+  avatarUrl?: string | null;
+  avatarEffect?: string | null;
+  avatarEffectColors?: string[];
+  role: string;
+}
+
 interface HeaderProps {
-  user: {
-    username: string;
-    displayName?: string | null;
-    role: string;
-  };
+  /** User data from server */
+  user: User;
 }
 
 const navItems = [{ href: '/', label: 'Runden', icon: 'home' }];
@@ -112,9 +120,7 @@ export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
                     {user.role === 'ADMIN' ? 'Administrator' : 'Benutzer'}
                   </p>
                 </div>
-                <div className="w-9 h-9 rounded-full bg-linear-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-sm font-bold text-white shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-                  {(user.displayName || user.username).charAt(0).toUpperCase()}
-                </div>
+                <UserAvatar user={user} size="md" />
                 <IconChevronDown
                   size={16}
                   className={`text-(--text-muted) transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`}
@@ -164,9 +170,7 @@ export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
           <div className="px-4 py-4 space-y-2">
             {/* User Info (Mobile) */}
             <div className="flex items-center gap-3 pb-4 border-b border-[rgba(98,125,152,0.2)]">
-              <div className="w-10 h-10 rounded-full bg-linear-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-sm font-bold text-white">
-                {(user.displayName || user.username).charAt(0).toUpperCase()}
-              </div>
+              <UserAvatar user={user} size="md" />
               <div>
                 <p className="text-sm font-medium text-white">
                   {user.displayName || user.username}

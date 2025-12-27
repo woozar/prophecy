@@ -52,8 +52,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Bewertungsphase ist beendet' }, { status: 400 });
     }
 
+    // Check if rating already exists
+    const existingRating = await prisma.rating.findUnique({
+      where: {
+        prophecyId_userId: {
+          prophecyId: id,
+          userId: session.userId,
+        },
+      },
+    });
+
+    const isUpdate = !!existingRating;
+
     // Upsert rating (create or update)
-    await prisma.rating.upsert({
+    const rating = await prisma.rating.upsert({
       where: {
         prophecyId_userId: {
           prophecyId: id,
@@ -87,34 +99,43 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         averageRating,
         ratingCount,
       },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            username: true,
-            displayName: true,
-          },
-        },
-      },
     });
+
+    const prophecyData = {
+      id: updatedProphecy.id,
+      title: updatedProphecy.title,
+      description: updatedProphecy.description,
+      creatorId: updatedProphecy.creatorId,
+      roundId: updatedProphecy.roundId,
+      createdAt: updatedProphecy.createdAt.toISOString(),
+      fulfilled: updatedProphecy.fulfilled,
+      resolvedAt: updatedProphecy.resolvedAt?.toISOString() ?? null,
+      averageRating: updatedProphecy.averageRating,
+      ratingCount: updatedProphecy.ratingCount,
+    };
+
+    const ratingData = {
+      id: rating.id,
+      value: rating.value,
+      prophecyId: rating.prophecyId,
+      userId: rating.userId,
+      createdAt: rating.createdAt.toISOString(),
+    };
 
     // Broadcast to all connected clients
     sseEmitter.broadcast({
-      type: 'prophecy:rated',
-      data: {
-        id: updatedProphecy.id,
-        roundId: updatedProphecy.roundId,
-        averageRating: updatedProphecy.averageRating,
-        ratingCount: updatedProphecy.ratingCount,
-      },
+      type: 'prophecy:updated',
+      data: prophecyData,
+    });
+
+    sseEmitter.broadcast({
+      type: isUpdate ? 'rating:updated' : 'rating:created',
+      data: ratingData,
     });
 
     return NextResponse.json({
-      prophecy: {
-        ...updatedProphecy,
-        userRating: value,
-        isOwn: false,
-      },
+      prophecy: prophecyData,
+      rating: ratingData,
     });
   } catch (error) {
     console.error('Error rating prophecy:', error);

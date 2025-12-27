@@ -3,7 +3,6 @@
 // Uses globalThis to persist across Hot Module Replacement in development
 
 declare global {
-  // eslint-disable-next-line no-var
   var sseEmitterInstance: SSEEventEmitter | undefined;
 }
 

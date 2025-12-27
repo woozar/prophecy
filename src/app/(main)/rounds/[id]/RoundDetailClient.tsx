@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback, useMemo, memo, useEffect } from 'react';
-import { onProphecyRated, type ProphecyRatedEvent } from '@/hooks/useSSE';
+import { useState, useCallback, useMemo, memo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal';
@@ -21,26 +21,9 @@ import { IconActionButton } from '@/components/IconActionButton';
 import { FilterButton } from '@/components/FilterButton';
 import { UserAvatar } from '@/components/UserAvatar';
 import { formatDate } from '@/lib/formatting/date';
-
-interface Creator {
-  id: string;
-  username: string;
-  displayName: string | null;
-}
-
-interface Prophecy {
-  id: string;
-  title: string;
-  description: string;
-  createdAt: string;
-  creator: Creator;
-  averageRating: number | null;
-  ratingCount: number;
-  userRating: number | null;
-  isOwn: boolean;
-  fulfilled: boolean | null;
-  resolvedAt: string | null;
-}
+import { useUser, useCurrentUser } from '@/hooks/useUser';
+import { useProphecyStore, type Prophecy } from '@/store/useProphecyStore';
+import { useRatingStore, selectUserRatingForProphecy } from '@/store/useRatingStore';
 
 interface Round {
   id: string;
@@ -52,7 +35,6 @@ interface Round {
 
 interface RoundDetailClientProps {
   round: Round;
-  initialProphecies: Prophecy[];
 }
 
 type FilterType = 'all' | 'mine' | 'toRate';
@@ -69,9 +51,24 @@ function getEmptyStateMessage(filter: FilterType): string {
 
 export const RoundDetailClient = memo(function RoundDetailClient({
   round,
-  initialProphecies,
 }: Readonly<RoundDetailClientProps>) {
-  const [prophecies, setProphecies] = useState<Prophecy[]>(initialProphecies);
+  const currentUser = useCurrentUser();
+  const currentUserId = currentUser?.id;
+
+  // Get prophecies for this round from store
+  const prophecies = useProphecyStore(
+    useShallow((state) => Object.values(state.prophecies).filter((p) => p.roundId === round.id))
+  );
+
+  // Sort prophecies by createdAt descending
+  const sortedProphecies = useMemo(
+    () =>
+      [...prophecies].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    [prophecies]
+  );
+
   const [filter, setFilter] = useState<FilterType>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,27 +83,6 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const [editTitleError, setEditTitleError] = useState<string | undefined>(undefined);
   const [confirmEditProphecy, setConfirmEditProphecy] = useState<Prophecy | null>(null);
 
-  // Subscribe to real-time rating updates from other users
-  const handleProphecyRated = useCallback(
-    (event: ProphecyRatedEvent) => {
-      if (event.roundId !== round.id) return;
-
-      setProphecies((prev) =>
-        prev.map((p) =>
-          p.id === event.id
-            ? { ...p, averageRating: event.averageRating, ratingCount: event.ratingCount }
-            : p
-        )
-      );
-    },
-    [round.id]
-  );
-
-  useEffect(() => {
-    const unsubscribe = onProphecyRated(handleProphecyRated);
-    return unsubscribe;
-  }, [handleProphecyRated]);
-
   const now = useMemo(() => new Date(), []);
   const submissionDeadline = useMemo(
     () => new Date(round.submissionDeadline),
@@ -117,16 +93,33 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const isSubmissionOpen = now < submissionDeadline;
   const isRatingOpen = now >= submissionDeadline && now < ratingDeadline;
 
+  // Get user's ratings from store
+  const getUserRating = useCallback(
+    (prophecyId: string) => {
+      if (!currentUserId) return null;
+      const rating = useRatingStore
+        .getState()
+        .ratingsByProphecy[prophecyId]?.find((r) => r.userId === currentUserId);
+      return rating?.value ?? null;
+    },
+    [currentUserId]
+  );
+
   const filteredProphecies = useMemo(() => {
     switch (filter) {
       case 'mine':
-        return prophecies.filter((p) => p.isOwn);
+        return sortedProphecies.filter((p) => p.creatorId === currentUserId);
       case 'toRate':
-        return prophecies.filter((p) => !p.isOwn && p.userRating === null);
+        return sortedProphecies.filter(
+          (p) => p.creatorId !== currentUserId && getUserRating(p.id) === null
+        );
       default:
-        return prophecies;
+        return sortedProphecies;
     }
-  }, [prophecies, filter]);
+  }, [sortedProphecies, filter, currentUserId, getUserRating]);
+
+  const { setProphecy, removeProphecy } = useProphecyStore();
+  const { setRating } = useRatingStore();
 
   const handleCreateProphecy = useCallback(async () => {
     const input = {
@@ -157,7 +150,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
       }
 
       const { prophecy } = await res.json();
-      setProphecies((prev) => [prophecy, ...prev]);
+      setProphecy(prophecy);
       showSuccessToast('Prophezeiung erstellt');
       setIsCreateModalOpen(false);
       setNewTitle('');
@@ -168,7 +161,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     } finally {
       setIsSubmitting(false);
     }
-  }, [round.id, newTitle, newDescription]);
+  }, [round.id, newTitle, newDescription, setProphecy]);
 
   const handleDeleteProphecy = useCallback(async () => {
     if (!confirmDeleteProphecy) return;
@@ -185,7 +178,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
         throw new Error(data.error || 'Fehler beim Löschen');
       }
 
-      setProphecies((prev) => prev.filter((p) => p.id !== id));
+      removeProphecy(id);
       showSuccessToast('Prophezeiung gelöscht');
       setConfirmDeleteProphecy(null);
     } catch (error) {
@@ -193,16 +186,16 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     } finally {
       setDeletingId(null);
     }
-  }, [confirmDeleteProphecy]);
+  }, [confirmDeleteProphecy, removeProphecy]);
 
   const handleConfirmDelete = useCallback(
     (id: string) => {
-      const prophecy = prophecies.find((p) => p.id === id);
+      const prophecy = sortedProphecies.find((p) => p.id === id);
       if (prophecy) {
         setConfirmDeleteProphecy(prophecy);
       }
     },
-    [prophecies]
+    [sortedProphecies]
   );
 
   const openEditModal = useCallback((prophecy: Prophecy) => {
@@ -260,9 +253,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
       }
 
       const { prophecy } = await res.json();
-      setProphecies((prev) =>
-        prev.map((p) => (p.id === editingProphecy.id ? { ...p, ...prophecy } : p))
-      );
+      setProphecy(prophecy);
       showSuccessToast('Prophezeiung aktualisiert');
       setEditingProphecy(null);
       setEditTitle('');
@@ -273,46 +264,48 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     } finally {
       setIsSubmitting(false);
     }
-  }, [editingProphecy, editTitle, editDescription]);
+  }, [editingProphecy, editTitle, editDescription, setProphecy]);
 
-  const handleRateProphecy = useCallback(async (prophecyId: string, value: number) => {
-    try {
-      const res = await fetch(`/api/prophecies/${prophecyId}/rate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ value }),
-      });
+  const handleRateProphecy = useCallback(
+    async (prophecyId: string, value: number) => {
+      try {
+        const res = await fetch(`/api/prophecies/${prophecyId}/rate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value }),
+        });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Fehler beim Bewerten');
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Fehler beim Bewerten');
+        }
+
+        const { prophecy, rating } = await res.json();
+        // Update prophecy with new average
+        setProphecy(prophecy);
+        // Update rating in store
+        if (rating) {
+          setRating(rating);
+        }
+        showSuccessToast('Bewertung gespeichert');
+      } catch (error) {
+        showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
       }
-
-      const { prophecy } = await res.json();
-      setProphecies((prev) =>
-        prev.map((p) =>
-          p.id === prophecyId
-            ? {
-                ...p,
-                averageRating: prophecy.averageRating,
-                ratingCount: prophecy.ratingCount,
-                userRating: value,
-              }
-            : p
-        )
-      );
-      showSuccessToast('Bewertung gespeichert');
-    } catch (error) {
-      showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
-    }
-  }, []);
-
-  const toRateCount = useMemo(
-    () => prophecies.filter((p) => !p.isOwn && p.userRating === null).length,
-    [prophecies]
+    },
+    [setProphecy, setRating]
   );
 
-  const myCount = useMemo(() => prophecies.filter((p) => p.isOwn).length, [prophecies]);
+  const toRateCount = useMemo(
+    () =>
+      sortedProphecies.filter((p) => p.creatorId !== currentUserId && getUserRating(p.id) === null)
+        .length,
+    [sortedProphecies, currentUserId, getUserRating]
+  );
+
+  const myCount = useMemo(
+    () => sortedProphecies.filter((p) => p.creatorId === currentUserId).length,
+    [sortedProphecies, currentUserId]
+  );
 
   return (
     <div className="space-y-6">
@@ -360,7 +353,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
       <div className="flex items-center gap-2 flex-wrap">
         <IconFilter size={18} className="text-(--text-muted)" />
         <FilterButton active={filter === 'all'} onClick={() => setFilter('all')}>
-          Alle ({prophecies.length})
+          Alle ({sortedProphecies.length})
         </FilterButton>
         <FilterButton active={filter === 'mine'} onClick={() => setFilter('mine')}>
           Meine ({myCount})
@@ -381,6 +374,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
             <ProphecyCard
               key={prophecy.id}
               prophecy={prophecy}
+              currentUserId={currentUserId}
               isSubmissionOpen={isSubmissionOpen}
               isRatingOpen={isRatingOpen}
               onEdit={handleStartEdit}
@@ -532,6 +526,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
 
 interface ProphecyCardProps {
   prophecy: Prophecy;
+  currentUserId: string | undefined;
   isSubmissionOpen: boolean;
   isRatingOpen: boolean;
   onEdit: (prophecy: Prophecy) => void;
@@ -542,6 +537,7 @@ interface ProphecyCardProps {
 
 const ProphecyCard = memo(function ProphecyCard({
   prophecy,
+  currentUserId,
   isSubmissionOpen,
   isRatingOpen,
   onEdit,
@@ -549,20 +545,36 @@ const ProphecyCard = memo(function ProphecyCard({
   onRate,
   isDeleting,
 }: Readonly<ProphecyCardProps>) {
-  const [localRating, setLocalRating] = useState<number>(prophecy.userRating ?? 0);
-  const [hasChanged, setHasChanged] = useState(false);
+  // Get user's rating for this prophecy from store
+  const userRatingSelector = useMemo(
+    () =>
+      currentUserId ? selectUserRatingForProphecy(prophecy.id, currentUserId) : () => undefined,
+    [prophecy.id, currentUserId]
+  );
+  const userRating = useRatingStore(userRatingSelector);
+
+  const [localRating, setLocalRating] = useState<number | null>(null);
+
+  // Compute displayed rating: use local if changed, otherwise store value
+  const displayedRating = localRating ?? userRating?.value ?? 0;
+  const hasChanged = localRating !== null && localRating !== (userRating?.value ?? 0);
 
   const handleRatingChange = useCallback((value: number) => {
     setLocalRating(value);
-    setHasChanged(true);
   }, []);
 
   const handleSaveRating = useCallback(() => {
-    onRate(prophecy.id, localRating);
-    setHasChanged(false);
+    if (localRating !== null) {
+      onRate(prophecy.id, localRating);
+      setLocalRating(null); // Reset to sync with store
+    }
   }, [onRate, prophecy.id, localRating]);
 
-  const creatorName = prophecy.creator.displayName || prophecy.creator.username;
+  // Get creator from user store
+  const creator = useUser(prophecy.creatorId);
+  const creatorName = creator?.displayName || creator?.username || 'Unbekannt';
+
+  const isOwn = prophecy.creatorId === currentUserId;
 
   return (
     <Card padding="p-5">
@@ -570,7 +582,7 @@ const ProphecyCard = memo(function ProphecyCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h3 className="text-lg font-semibold text-white">{prophecy.title}</h3>
-            {prophecy.isOwn && (
+            {isOwn && (
               <GlowBadge size="sm" color="violet">
                 Meine
               </GlowBadge>
@@ -579,11 +591,7 @@ const ProphecyCard = memo(function ProphecyCard({
           <p className="text-sm text-(--text-secondary) mb-3">{prophecy.description}</p>
           <div className="flex items-center gap-4 text-xs text-(--text-muted)">
             <span className="flex items-center gap-1.5">
-              <UserAvatar
-                username={prophecy.creator.username}
-                displayName={prophecy.creator.displayName}
-                size="sm"
-              />
+              <UserAvatar userId={prophecy.creatorId} size="sm" />
               <span>von {creatorName}</span>
             </span>
             <span>{formatDate(prophecy.createdAt, 'date')}</span>
@@ -592,7 +600,7 @@ const ProphecyCard = memo(function ProphecyCard({
 
         {/* Actions */}
         <div className="flex flex-col gap-2 shrink-0">
-          {prophecy.isOwn && isSubmissionOpen && (
+          {isOwn && isSubmissionOpen && (
             <>
               <IconActionButton
                 variant="edit"
@@ -644,16 +652,14 @@ const ProphecyCard = memo(function ProphecyCard({
       )}
 
       {/* Rating Section */}
-      {(isSubmissionOpen || isRatingOpen) && !prophecy.isOwn && (
+      {(isSubmissionOpen || isRatingOpen) && !isOwn && (
         <div className="mt-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
           <div className="flex flex-col md:flex-row md:items-end gap-3 md:gap-4">
             <div className="flex-1">
               <RatingSlider
-                value={localRating}
+                value={displayedRating}
                 onChange={handleRatingChange}
-                label={
-                  prophecy.userRating === null ? 'Bewerte diese Prophezeiung' : 'Deine Bewertung'
-                }
+                label={userRating ? 'Deine Bewertung' : 'Bewerte diese Prophezeiung'}
                 min={-10}
                 max={10}
               />
@@ -671,12 +677,12 @@ const ProphecyCard = memo(function ProphecyCard({
       )}
 
       {/* Show user's rating when rating is closed */}
-      {!isSubmissionOpen && !isRatingOpen && prophecy.userRating !== null && (
+      {!isSubmissionOpen && !isRatingOpen && userRating && (
         <div className="mt-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
           <p className="text-sm text-(--text-muted)">
             Deine Bewertung:{' '}
             <span className="text-cyan-400 font-medium">
-              {prophecy.userRating > 0 ? `+${prophecy.userRating}` : prophecy.userRating}
+              {userRating.value > 0 ? `+${userRating.value}` : userRating.value}
             </span>
           </p>
         </div>

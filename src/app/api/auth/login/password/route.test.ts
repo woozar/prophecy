@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { POST } from './route';
 import { prisma } from '@/lib/db/prisma';
 import bcrypt from 'bcrypt';
@@ -11,32 +11,42 @@ vi.mock('bcrypt', () => ({
   },
 }));
 
+const { mockLoginSuccessResponse, mockLoginErrorResponse } = vi.hoisted(() => ({
+  mockLoginSuccessResponse: vi.fn(),
+  mockLoginErrorResponse: vi.fn(),
+}));
+
 // Mock session utilities
 vi.mock('@/lib/auth/session', () => ({
   setSessionCookie: vi.fn(),
-  loginSuccessResponse: vi.fn().mockImplementation((user) => {
-    const { NextResponse } = require('next/server');
-    return NextResponse.json({ success: true, user });
-  }),
-  loginErrorResponse: vi.fn().mockImplementation(() => {
-    const { NextResponse } = require('next/server');
-    return NextResponse.json({ error: 'Fehler bei der Anmeldung' }, { status: 500 });
-  }),
+  loginSuccessResponse: mockLoginSuccessResponse,
+  loginErrorResponse: mockLoginErrorResponse,
 }));
 
 const createMockUser = (overrides = {}) => ({
   id: 'user-1',
   username: 'testuser',
   displayName: 'Test User',
+  passwordHash: 'hashed-password',
+  avatarUrl: null,
+  avatarEffect: null,
+  avatarEffectColors: null,
   role: 'USER',
   status: 'APPROVED',
-  passwordHash: 'hashed-password',
+  createdAt: new Date(),
+  updatedAt: new Date(),
   ...overrides,
 });
 
 describe('POST /api/auth/login/password', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockLoginSuccessResponse.mockImplementation((user) =>
+      NextResponse.json({ success: true, user })
+    );
+    mockLoginErrorResponse.mockImplementation(() =>
+      NextResponse.json({ error: 'Fehler bei der Anmeldung' }, { status: 500 })
+    );
   });
 
   it('returns 400 when username is missing', async () => {

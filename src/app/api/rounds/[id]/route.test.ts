@@ -119,7 +119,6 @@ describe('PUT /api/rounds/[id]', () => {
     });
 
     const response = await PUT(request, createParams('1'));
-    const data = await response.json();
 
     expect(response.status).toBe(400);
   });

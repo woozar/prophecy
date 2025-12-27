@@ -23,7 +23,14 @@ const createMockUser = (overrides = {}) => ({
   id: 'user-1',
   username: 'testuser',
   displayName: 'Test User',
+  passwordHash: null,
+  avatarUrl: null,
+  avatarEffect: null,
+  avatarEffectColors: null,
+  role: 'USER',
   status: 'APPROVED',
+  createdAt: new Date(),
+  updatedAt: new Date(),
   authenticators: [
     {
       credentialID: 'cred-1',

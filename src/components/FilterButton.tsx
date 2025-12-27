@@ -17,7 +17,7 @@ export const FilterButton = memo(function FilterButton({
 }: Readonly<FilterButtonProps>) {
   const className = useMemo(
     () =>
-      `px-3 py-1.5 text-sm rounded-lg ${
+      `px-3 py-1.5 text-sm rounded-lg select-none ${
         active
           ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-400/50'
           : 'bg-[rgba(98,125,152,0.15)] text-(--text-muted) border border-transparent hover:border-[rgba(98,125,152,0.3)]'

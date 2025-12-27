@@ -62,7 +62,6 @@ describe('PUT /api/prophecies/[id]', () => {
       body: JSON.stringify({ title: 'Updated', description: 'Updated' }),
     });
     const response = await PUT(request, createRouteParams('prophecy-1'));
-    const data = await response.json();
 
     expect(response.status).toBe(404);
   });
@@ -78,7 +77,6 @@ describe('PUT /api/prophecies/[id]', () => {
       body: JSON.stringify({ title: 'Updated', description: 'Updated' }),
     });
     const response = await PUT(request, createRouteParams('prophecy-1'));
-    const data = await response.json();
 
     expect(response.status).toBe(403);
   });
@@ -136,7 +134,6 @@ describe('PUT /api/prophecies/[id]', () => {
       body: JSON.stringify({ title: '', description: 'Updated' }),
     });
     const response = await PUT(request, createRouteParams('prophecy-1'));
-    const data = await response.json();
 
     expect(response.status).toBe(400);
   });
@@ -168,7 +165,6 @@ describe('DELETE /api/prophecies/[id]', () => {
       method: 'DELETE',
     });
     const response = await DELETE(request, createRouteParams('prophecy-1'));
-    const data = await response.json();
 
     expect(response.status).toBe(404);
   });
@@ -183,7 +179,6 @@ describe('DELETE /api/prophecies/[id]', () => {
       method: 'DELETE',
     });
     const response = await DELETE(request, createRouteParams('prophecy-1'));
-    const data = await response.json();
 
     expect(response.status).toBe(403);
   });

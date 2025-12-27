@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { PasskeyManager } from './PasskeyManager';
 import { MantineProvider } from '@mantine/core';
 import { startRegistration } from '@simplewebauthn/browser';
-import { notifications } from '@mantine/notifications';
 import { successToast, errorToast } from '@/lib/toast/toast-styles';
 
 function renderWithMantine(ui: React.ReactElement) {
@@ -44,7 +43,6 @@ vi.mock('@/lib/toast/toast-styles', () => ({
 }));
 
 const mockStartRegistration = vi.mocked(startRegistration);
-const mockNotifications = vi.mocked(notifications);
 const mockSuccessToast = vi.mocked(successToast);
 const mockErrorToast = vi.mocked(errorToast);
 

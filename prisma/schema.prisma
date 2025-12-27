@@ -9,13 +9,15 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  username      String   @unique
-  passwordHash  String?
-  displayName   String?
-  avatarUrl     String?
-  role          String   @default("USER")     // UserRole: USER, ADMIN
-  status        String   @default("PENDING")  // UserStatus: PENDING, APPROVED, REJECTED, SUSPENDED
+  id                 String   @id @default(cuid())
+  username           String   @unique
+  passwordHash       String?
+  displayName        String?
+  avatarUrl          String?
+  avatarEffect       String?  // 'glow' | 'particles' | 'lightning' | 'none'
+  avatarEffectColors String?  // JSON-Array: ["cyan", "violet", "teal"]
+  role               String   @default("USER")     // UserRole: USER, ADMIN
+  status             String   @default("PENDING")  // UserStatus: PENDING, APPROVED, REJECTED, SUSPENDED
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

@@ -13,6 +13,8 @@ services:
       NODE_ENV: production
       WEBAUTHN_RP_ID: prophecy.12-of-spades.com
       WEBAUTHN_ORIGIN: https://prophecy.12-of-spades.com
+    volumes:
+      - avatar_uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -37,3 +39,4 @@ services:
 
 volumes:
   postgres_data:
+  avatar_uploads:

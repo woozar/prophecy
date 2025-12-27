@@ -10,7 +10,7 @@ describe('ClickParticles', () => {
   ];
 
   it('renders nothing when particles array is empty', () => {
-    const { container } = render(<ClickParticles particles={[]} />);
+    render(<ClickParticles particles={[]} />);
     // Check that no particles are rendered to body
     const particles = document.body.querySelectorAll('.fixed.rounded-full');
     expect(particles.length).toBe(0);

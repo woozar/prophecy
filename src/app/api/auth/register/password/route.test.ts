@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { POST } from './route';
 import { prisma } from '@/lib/db/prisma';
 
@@ -10,26 +10,20 @@ vi.mock('bcrypt', () => ({
   },
 }));
 
+const { mockDuplicateResponse, mockSuccessResponse, mockErrorResponse } = vi.hoisted(() => ({
+  mockDuplicateResponse: vi.fn(),
+  mockSuccessResponse: vi.fn(),
+  mockErrorResponse: vi.fn(),
+}));
+
 // Mock registration utilities
 vi.mock('@/lib/auth/registration', () => ({
   findExistingUser: vi.fn(),
-  normalizeUsername: vi.fn((u) => u.toLowerCase().replaceAll(/[^a-z0-9_-]/g, '')),
-  duplicateUsernameResponse: vi.fn().mockImplementation(() => {
-    const { NextResponse } = require('next/server');
-    return NextResponse.json(
-      { error: 'Dieser Benutzername ist bereits vergeben' },
-      { status: 409 }
-    );
-  }),
+  normalizeUsername: vi.fn((u: string) => u.toLowerCase().replaceAll(/[^a-z0-9_-]/g, '')),
+  duplicateUsernameResponse: mockDuplicateResponse,
   setPendingUserCookie: vi.fn(),
-  registrationSuccessResponse: vi.fn().mockImplementation((user) => {
-    const { NextResponse } = require('next/server');
-    return NextResponse.json({ success: true, user });
-  }),
-  registrationErrorResponse: vi.fn().mockImplementation(() => {
-    const { NextResponse } = require('next/server');
-    return NextResponse.json({ error: 'Fehler bei der Registrierung' }, { status: 500 });
-  }),
+  registrationSuccessResponse: mockSuccessResponse,
+  registrationErrorResponse: mockErrorResponse,
 }));
 
 import { findExistingUser } from '@/lib/auth/registration';
@@ -38,13 +32,27 @@ const createMockUser = (overrides = {}) => ({
   id: 'user-1',
   username: 'testuser',
   displayName: 'Test User',
+  passwordHash: 'hashed-password',
+  avatarUrl: null,
+  avatarEffect: null,
+  avatarEffectColors: null,
+  role: 'USER',
   status: 'PENDING',
+  createdAt: new Date(),
+  updatedAt: new Date(),
   ...overrides,
 });
 
 describe('POST /api/auth/register/password', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockDuplicateResponse.mockImplementation(() =>
+      NextResponse.json({ error: 'Dieser Benutzername ist bereits vergeben' }, { status: 409 })
+    );
+    mockSuccessResponse.mockImplementation((user) => NextResponse.json({ success: true, user }));
+    mockErrorResponse.mockImplementation(() =>
+      NextResponse.json({ error: 'Fehler bei der Registrierung' }, { status: 500 })
+    );
   });
 
   it('returns 400 when username is missing', async () => {

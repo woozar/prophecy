@@ -17,13 +17,13 @@ describe('POST /api/auth/logout', () => {
   });
 
   it('deletes session cookie', async () => {
-    const response = await POST();
+    await POST();
 
     expect(mockDelete).toHaveBeenCalledWith('session');
   });
 
   it('deletes pendingUser cookie', async () => {
-    const response = await POST();
+    await POST();
 
     expect(mockDelete).toHaveBeenCalledWith('pendingUser');
   });

@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useRoundStore, type Round } from '@/store/useRoundStore';
-import { useUserStore } from '@/store/useUserStore';
+import { useUserStore, type User } from '@/store/useUserStore';
+import { useProphecyStore, type Prophecy } from '@/store/useProphecyStore';
+import { useRatingStore, type Rating } from '@/store/useRatingStore';
 
 type SSEEventType =
   | 'round:created'
@@ -14,68 +16,108 @@ type SSEEventType =
   | 'prophecy:created'
   | 'prophecy:updated'
   | 'prophecy:deleted'
-  | 'prophecy:rated';
-
-// Custom event for prophecy updates that components can subscribe to
-export interface ProphecyRatedEvent {
-  id: string;
-  roundId: string;
-  averageRating: number | null;
-  ratingCount: number;
-}
-
-// Event emitter for prophecy events
-type ProphecyEventHandler = (data: ProphecyRatedEvent) => void;
-const prophecyRatedHandlers = new Set<ProphecyEventHandler>();
-
-export function onProphecyRated(handler: ProphecyEventHandler): () => void {
-  prophecyRatedHandlers.add(handler);
-  return () => prophecyRatedHandlers.delete(handler);
-}
+  | 'rating:created'
+  | 'rating:updated'
+  | 'rating:deleted';
 
 export function useSSE() {
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttempts = useRef(0);
   const connectRef = useRef<() => void>(() => {});
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Zustand store actions
-  const { addRound, updateRound, deleteRound } = useRoundStore();
+  // Store actions
+  const { setRound, removeRound } = useRoundStore();
+  const { setUser, removeUser } = useUserStore();
+  const { setProphecy, removeProphecy } = useProphecyStore();
+  const { setRating, removeRating } = useRatingStore();
+
+  // Load initial data
+  useEffect(() => {
+    // Skip if already initialized (e.g., after client-side navigation)
+    if (useUserStore.getState().isInitialized) {
+      setIsInitialized(true);
+      return;
+    }
+
+    async function loadInitialData() {
+      try {
+        const res = await fetch('/api/initial-data');
+        if (!res.ok) throw new Error('Failed to load initial data');
+
+        const data = await res.json();
+
+        // Populate stores
+        useUserStore.getState().setUsers(data.users);
+        useUserStore.getState().setCurrentUserId(data.currentUserId);
+        useUserStore.getState().setInitialized(true);
+        useRoundStore.getState().setRounds(data.rounds);
+        useProphecyStore.getState().setProphecies(data.prophecies);
+        useRatingStore.getState().setRatings(data.ratings);
+
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('[SSE] Error loading initial data:', error);
+      }
+    }
+
+    loadInitialData();
+  }, []);
 
   const handleEvent = useCallback(
     (type: SSEEventType, data: unknown) => {
       switch (type) {
+        // Round events
         case 'round:created':
-          addRound(data as Round);
-          break;
         case 'round:updated':
-          updateRound(data as Round);
+          setRound(data as Round);
           break;
         case 'round:deleted':
-          deleteRound((data as { id: string }).id);
+          removeRound((data as { id: string }).id);
           break;
-        case 'user:updated':
+
+        // User events
         case 'user:created':
+        case 'user:updated':
+          setUser(data as User);
+          break;
         case 'user:deleted':
-          useUserStore.getState().fetchUsers();
+          removeUser((data as { id: string }).id);
           break;
-        case 'prophecy:rated':
-          // Notify all subscribed components about the rating update
-          prophecyRatedHandlers.forEach((handler) => {
-            handler(data as ProphecyRatedEvent);
-          });
-          break;
+
+        // Prophecy events
         case 'prophecy:created':
         case 'prophecy:updated':
-        case 'prophecy:deleted':
-          // These events could be handled by a prophecy store if needed
-          console.log(`[SSE] Prophecy event: ${type}`, data);
+          setProphecy(data as Prophecy);
           break;
+        case 'prophecy:deleted':
+          removeProphecy((data as { id: string }).id);
+          break;
+
+        // Rating events
+        case 'rating:created':
+        case 'rating:updated':
+          setRating(data as Rating);
+          break;
+        case 'rating:deleted':
+          removeRating((data as { id: string }).id);
+          break;
+
         default:
           console.log(`[SSE] Unhandled event: ${type}`, data);
       }
     },
-    [addRound, updateRound, deleteRound]
+    [
+      setRound,
+      removeRound,
+      setUser,
+      removeUser,
+      setProphecy,
+      removeProphecy,
+      setRating,
+      removeRating,
+    ]
   );
 
   const connect = useCallback(() => {
@@ -116,7 +158,9 @@ export function useSSE() {
       'prophecy:created',
       'prophecy:updated',
       'prophecy:deleted',
-      'prophecy:rated',
+      'rating:created',
+      'rating:updated',
+      'rating:deleted',
     ];
 
     eventTypes.forEach((type) => {
@@ -136,8 +180,10 @@ export function useSSE() {
     connectRef.current = connect;
   }, [connect]);
 
+  // Connect to SSE after initial data is loaded
   useEffect(() => {
-    // Connect on mount - SSE endpoint handles auth
+    if (!isInitialized) return;
+
     connect();
 
     return () => {
@@ -149,5 +195,7 @@ export function useSSE() {
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [connect]);
+  }, [connect, isInitialized]);
+
+  return { isInitialized };
 }

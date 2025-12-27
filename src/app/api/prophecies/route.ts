@@ -45,6 +45,9 @@ export async function GET(request: NextRequest) {
             id: true,
             username: true,
             displayName: true,
+            avatarUrl: true,
+            avatarEffect: true,
+            avatarEffectColors: true,
           },
         },
         ratings: {
@@ -118,38 +121,28 @@ export async function POST(request: NextRequest) {
         roundId,
         creatorId: session.userId,
       },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            username: true,
-            displayName: true,
-          },
-        },
-      },
     });
+
+    const prophecyData = {
+      id: prophecy.id,
+      title: prophecy.title,
+      description: prophecy.description,
+      creatorId: prophecy.creatorId,
+      roundId: prophecy.roundId,
+      createdAt: prophecy.createdAt.toISOString(),
+      fulfilled: prophecy.fulfilled,
+      resolvedAt: prophecy.resolvedAt?.toISOString() ?? null,
+      averageRating: prophecy.averageRating,
+      ratingCount: prophecy.ratingCount,
+    };
 
     // Broadcast to all connected clients
     sseEmitter.broadcast({
       type: 'prophecy:created',
-      data: {
-        ...prophecy,
-        averageRating: null,
-        ratingCount: 0,
-        userRating: null,
-        isOwn: true,
-      },
+      data: prophecyData,
     });
 
-    return NextResponse.json({
-      prophecy: {
-        ...prophecy,
-        averageRating: null,
-        ratingCount: 0,
-        userRating: null,
-        isOwn: true,
-      },
-    });
+    return NextResponse.json({ prophecy: prophecyData });
   } catch (error) {
     console.error('Error creating prophecy:', error);
     return NextResponse.json({ error: 'Fehler beim Erstellen der Prophezeiung' }, { status: 500 });

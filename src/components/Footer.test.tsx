@@ -4,8 +4,6 @@ import { Footer } from './Footer';
 import packageJson from '../../package.json';
 
 describe('Footer', () => {
-  const originalDate = globalThis.Date;
-
   beforeEach(() => {
     // Mock Date to return a fixed year
     vi.useFakeTimers();

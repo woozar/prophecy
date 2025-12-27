@@ -20,7 +20,7 @@ export const TextInput = memo(
     return (
       <div className="flex flex-col gap-1">
         {label && (
-          <label htmlFor={inputId} className="text-sm font-medium text-(--text-primary)">
+          <label htmlFor={inputId} className="text-sm font-medium text-foreground">
             {label}
             {props.required && <RequiredAsterisk />}
           </label>
@@ -33,7 +33,7 @@ export const TextInput = memo(
             w-full px-4 py-3 rounded-lg
             bg-[rgba(16,42,67,0.5)]
             border border-[rgba(98,125,152,0.3)]
-            text-(--text-primary) text-sm
+            text-foreground text-sm
             placeholder:text-(--text-muted)
             transition-all duration-300
             hover:border-[rgba(98,125,152,0.5)]

@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Header } from './Header';
-import { notifications } from '@mantine/notifications';
 import { successToast, errorToast } from '@/lib/toast/toast-styles';
 
 const mockPush = vi.fn();
@@ -15,7 +14,6 @@ vi.mock('next/navigation', () => ({
   usePathname: () => mockPathname,
 }));
 
-const mockNotifications = vi.mocked(notifications);
 const mockSuccessToast = vi.mocked(successToast);
 const mockErrorToast = vi.mocked(errorToast);
 
@@ -32,21 +30,106 @@ vi.mock('@/lib/toast/toast-styles', () => ({
   errorToast: vi.fn((title, message) => ({ title, message })),
 }));
 
+// Mock UserAvatar component
+vi.mock('@/components/UserAvatar', () => ({
+  UserAvatar: ({ user }: { user: { username: string; displayName: string | null } }) => {
+    const name = user.displayName || user.username;
+    const initials = name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+    return <div data-testid="user-avatar">{initials}</div>;
+  },
+}));
+
+// Mock user store
+let mockUsers: Record<
+  string,
+  {
+    id: string;
+    username: string;
+    displayName: string | null;
+    avatarUrl?: string | null;
+    avatarEffect?: string | null;
+    avatarEffectColors?: string[];
+    role: string;
+    status: string;
+  }
+> = {};
+let mockCurrentUserId: string | null = null;
+
+vi.mock('@/store/useUserStore', () => ({
+  useUserStore: Object.assign(
+    (
+      selector?: (state: {
+        users: typeof mockUsers;
+        currentUserId: typeof mockCurrentUserId;
+      }) => unknown
+    ) => {
+      const state = {
+        users: mockUsers,
+        currentUserId: mockCurrentUserId,
+        setUsers: vi.fn(),
+        setUser: vi.fn(),
+        removeUser: vi.fn(),
+        setCurrentUserId: vi.fn(),
+        setInitialized: vi.fn(),
+        setLoading: vi.fn(),
+        setError: vi.fn(),
+        isInitialized: false,
+        isLoading: false,
+        error: null,
+      };
+      return selector ? selector(state) : state;
+    },
+    {
+      getState: () => ({
+        users: mockUsers,
+        currentUserId: mockCurrentUserId,
+        setUsers: vi.fn(),
+        setUser: vi.fn(),
+        removeUser: vi.fn(),
+        setCurrentUserId: vi.fn(),
+        setInitialized: vi.fn(),
+        setLoading: vi.fn(),
+        setError: vi.fn(),
+        isInitialized: false,
+        isLoading: false,
+        error: null,
+      }),
+    }
+  ),
+}));
+
 describe('Header', () => {
   const defaultUser = {
+    id: 'user-1',
     username: 'testuser',
     displayName: 'Test User',
+    avatarUrl: null,
+    avatarEffect: null,
+    avatarEffectColors: [],
     role: 'USER',
+    status: 'APPROVED',
   };
 
   const adminUser = {
+    id: 'admin-1',
     username: 'admin',
     displayName: 'Admin User',
+    avatarUrl: null,
+    avatarEffect: null,
+    avatarEffectColors: [],
     role: 'ADMIN',
+    status: 'APPROVED',
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUsers = { [defaultUser.id]: defaultUser };
+    mockCurrentUserId = defaultUser.id;
   });
 
   it('renders header element', () => {
@@ -66,7 +149,18 @@ describe('Header', () => {
   });
 
   it('displays username if no displayName', () => {
-    const user = { username: 'johndoe', displayName: null, role: 'USER' };
+    const user = {
+      id: 'user-2',
+      username: 'johndoe',
+      displayName: null,
+      avatarUrl: null,
+      avatarEffect: null,
+      avatarEffectColors: [],
+      role: 'USER',
+      status: 'APPROVED',
+    };
+    mockUsers = { [user.id]: user };
+    mockCurrentUserId = user.id;
     render(<Header user={user} />);
     expect(screen.getByText('johndoe')).toBeInTheDocument();
   });
@@ -77,11 +171,15 @@ describe('Header', () => {
   });
 
   it('displays Administrator role for admin', () => {
+    mockUsers = { [adminUser.id]: adminUser };
+    mockCurrentUserId = adminUser.id;
     render(<Header user={adminUser} />);
     expect(screen.getByText('Administrator')).toBeInTheDocument();
   });
 
   it('shows admin navigation items for admin users', () => {
+    mockUsers = { [adminUser.id]: adminUser };
+    mockCurrentUserId = adminUser.id;
     render(<Header user={adminUser} />);
     expect(screen.getByText('Benutzer')).toBeInTheDocument();
     expect(screen.getByText('Runden verwalten')).toBeInTheDocument();
@@ -92,10 +190,10 @@ describe('Header', () => {
     expect(screen.queryByText('Runden verwalten')).not.toBeInTheDocument();
   });
 
-  it('displays user initial in avatar', () => {
+  it('displays user initials in avatar', () => {
     render(<Header user={defaultUser} />);
-    // Multiple T's because of mobile and desktop views
-    const avatars = screen.getAllByText('T');
+    // Multiple TU's because of mobile and desktop views - initials from "Test User"
+    const avatars = screen.getAllByText('TU');
     expect(avatars.length).toBeGreaterThan(0);
   });
 
@@ -227,6 +325,8 @@ describe('Header', () => {
   });
 
   it('closes mobile menu when nav item is clicked', async () => {
+    mockUsers = { [adminUser.id]: adminUser };
+    mockCurrentUserId = adminUser.id;
     render(<Header user={adminUser} />);
 
     // Open mobile menu
@@ -272,6 +372,8 @@ describe('Header', () => {
 
   it('applies active style to current route', () => {
     mockPathname = '/admin/users';
+    mockUsers = { [adminUser.id]: adminUser };
+    mockCurrentUserId = adminUser.id;
     render(<Header user={adminUser} />);
 
     const benutzerLinks = screen.getAllByText('Benutzer');
@@ -349,6 +451,8 @@ describe('Header', () => {
   });
 
   it('closes mobile menu when clicking admin navigation link', async () => {
+    mockUsers = { [adminUser.id]: adminUser };
+    mockCurrentUserId = adminUser.id;
     render(<Header user={adminUser} />);
 
     // Open mobile menu

@@ -13,64 +13,52 @@ export interface Round {
 }
 
 interface RoundState {
-  rounds: Round[];
+  rounds: Record<string, Round>;
   isLoading: boolean;
   error: string | null;
 
   // Actions
   setRounds: (rounds: Round[]) => void;
-  addRound: (round: Round) => void;
-  updateRound: (round: Round) => void;
-  deleteRound: (id: string) => void;
+  setRound: (round: Round) => void;
+  removeRound: (id: string) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  fetchRounds: () => Promise<void>;
 }
 
-export const useRoundStore = create<RoundState>((set, get) => ({
-  rounds: [],
+export const useRoundStore = create<RoundState>((set) => ({
+  rounds: {},
   isLoading: false,
   error: null,
 
-  setRounds: (rounds) => set({ rounds }),
-
-  addRound: (round) =>
-    set((state) => {
-      // Prüfen ob Runde bereits existiert (verhindert Duplikate durch API + SSE)
-      if (state.rounds.some((r) => r.id === round.id)) {
-        return { rounds: state.rounds.map((r) => (r.id === round.id ? round : r)) };
-      }
-      return { rounds: [round, ...state.rounds] };
+  setRounds: (rounds) =>
+    set({
+      rounds: rounds.reduce(
+        (acc, round) => {
+          acc[round.id] = round;
+          return acc;
+        },
+        {} as Record<string, Round>
+      ),
     }),
 
-  updateRound: (round) =>
-    set((state) => ({
-      rounds: state.rounds.map((r) => (r.id === round.id ? round : r)),
-    })),
+  setRound: (round) => set((state) => ({ rounds: { ...state.rounds, [round.id]: round } })),
 
-  deleteRound: (id) =>
-    set((state) => ({
-      rounds: state.rounds.filter((r) => r.id !== id),
-    })),
+  removeRound: (id) =>
+    set((state) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [id]: _removed, ...rest } = state.rounds;
+      return { rounds: rest };
+    }),
 
   setLoading: (isLoading) => set({ isLoading }),
 
   setError: (error) => set({ error }),
-
-  fetchRounds: async () => {
-    const { setLoading, setError, setRounds } = get();
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch('/api/rounds');
-      if (!res.ok) throw new Error('Fehler beim Laden der Runden');
-      const data = await res.json();
-      setRounds(data.rounds);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Unbekannter Fehler');
-    } finally {
-      setLoading(false);
-    }
-  },
 }));
+
+// Selectors
+export const selectRoundById = (id: string) => (state: RoundState) => state.rounds[id];
+export const selectAllRounds = (state: RoundState) => Object.values(state.rounds);
+export const selectRoundsSortedByDate = (state: RoundState) =>
+  Object.values(state.rounds).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );

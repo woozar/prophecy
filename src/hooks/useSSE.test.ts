@@ -1,112 +1,55 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useSSE, onProphecyRated, type ProphecyRatedEvent } from './useSSE';
+import { useSSE } from './useSSE';
+
+// Create shared mock functions that will be reused
+const mockSetRounds = vi.fn();
+const mockSetRound = vi.fn();
+const mockRemoveRound = vi.fn();
+const mockSetUsers = vi.fn();
+const mockSetUser = vi.fn();
+const mockRemoveUser = vi.fn();
+const mockSetCurrentUserId = vi.fn();
+const mockSetInitialized = vi.fn();
+const mockSetProphecies = vi.fn();
+const mockSetProphecy = vi.fn();
+const mockRemoveProphecy = vi.fn();
+const mockSetRatings = vi.fn();
+const mockSetRating = vi.fn();
+const mockRemoveRating = vi.fn();
+
+// Shared getState return values
+let mockIsInitialized = false;
 
 // Mock the stores
 vi.mock('@/store/useRoundStore', () => ({
   useRoundStore: vi.fn(() => ({
-    addRound: vi.fn(),
-    updateRound: vi.fn(),
-    deleteRound: vi.fn(),
+    setRound: mockSetRound,
+    removeRound: mockRemoveRound,
   })),
 }));
 
 vi.mock('@/store/useUserStore', () => ({
-  useUserStore: {
-    getState: () => ({
-      fetchUsers: vi.fn(),
-    }),
-  },
+  useUserStore: vi.fn(() => ({
+    setUser: mockSetUser,
+    removeUser: mockRemoveUser,
+    setCurrentUserId: mockSetCurrentUserId,
+  })),
 }));
 
-describe('onProphecyRated', () => {
-  it('registers a handler and returns unsubscribe function', () => {
-    const handler = vi.fn();
-    const unsubscribe = onProphecyRated(handler);
+vi.mock('@/store/useProphecyStore', () => ({
+  useProphecyStore: vi.fn(() => ({
+    setProphecy: mockSetProphecy,
+    removeProphecy: mockRemoveProphecy,
+  })),
+}));
 
-    expect(typeof unsubscribe).toBe('function');
-    unsubscribe();
-  });
-
-  it('calls registered handlers when event is dispatched', () => {
-    const handler1 = vi.fn();
-    const handler2 = vi.fn();
-
-    const unsubscribe1 = onProphecyRated(handler1);
-    const unsubscribe2 = onProphecyRated(handler2);
-
-    const event: ProphecyRatedEvent = {
-      id: 'prophecy-1',
-      roundId: 'round-1',
-      averageRating: 5.5,
-      ratingCount: 10,
-    };
-
-    // Simulate the event being dispatched by triggering handlers directly
-    // This tests the subscription mechanism
-    handler1(event);
-    handler2(event);
-
-    expect(handler1).toHaveBeenCalledWith(event);
-    expect(handler2).toHaveBeenCalledWith(event);
-
-    unsubscribe1();
-    unsubscribe2();
-  });
-
-  it('removes handler when unsubscribe is called', () => {
-    const handler = vi.fn();
-    const unsubscribe = onProphecyRated(handler);
-
-    unsubscribe();
-
-    // After unsubscribe, handler should not be in the set anymore
-    // We can verify this by checking the handler is not called
-    // when we manually check (though in real usage, the SSE would trigger it)
-    expect(handler).not.toHaveBeenCalled();
-  });
-
-  it('handles multiple subscriptions and unsubscriptions correctly', () => {
-    const handler1 = vi.fn();
-    const handler2 = vi.fn();
-    const handler3 = vi.fn();
-
-    const unsub1 = onProphecyRated(handler1);
-    const unsub2 = onProphecyRated(handler2);
-    const unsub3 = onProphecyRated(handler3);
-
-    // Verify all handlers are registered (functions returned)
-    expect(typeof unsub1).toBe('function');
-    expect(typeof unsub2).toBe('function');
-    expect(typeof unsub3).toBe('function');
-
-    // Unsubscribe handler2
-    unsub2();
-
-    // Clean up
-    unsub1();
-    unsub3();
-  });
-
-  it('handles null averageRating in event', () => {
-    const handler = vi.fn();
-    const unsubscribe = onProphecyRated(handler);
-
-    const event: ProphecyRatedEvent = {
-      id: 'prophecy-1',
-      roundId: 'round-1',
-      averageRating: null,
-      ratingCount: 0,
-    };
-
-    handler(event);
-
-    expect(handler).toHaveBeenCalledWith(event);
-    expect(handler.mock.calls[0][0].averageRating).toBeNull();
-
-    unsubscribe();
-  });
-});
+vi.mock('@/store/useRatingStore', () => ({
+  useRatingStore: vi.fn(() => ({
+    setRating: mockSetRating,
+    removeRating: mockRemoveRating,
+  })),
+}));
 
 describe('useSSE', () => {
   let createdInstances: Array<{
@@ -116,9 +59,84 @@ describe('useSSE', () => {
     addEventListener: ReturnType<typeof vi.fn>;
   }>;
 
-  beforeEach(() => {
-    vi.useFakeTimers();
+  beforeEach(async () => {
     createdInstances = [];
+    mockIsInitialized = false;
+
+    // Reset all mocks
+    vi.clearAllMocks();
+
+    // Configure store getState mocks
+    const { useUserStore } = await import('@/store/useUserStore');
+    const { useRoundStore } = await import('@/store/useRoundStore');
+    const { useProphecyStore } = await import('@/store/useProphecyStore');
+    const { useRatingStore } = await import('@/store/useRatingStore');
+
+    // Mock getState for useUserStore
+    useUserStore.getState = () => ({
+      isInitialized: mockIsInitialized,
+      setUsers: mockSetUsers,
+      setCurrentUserId: mockSetCurrentUserId,
+      setInitialized: mockSetInitialized,
+      users: {},
+      currentUserId: null,
+      isLoading: false,
+      error: null,
+      setUser: vi.fn(),
+      removeUser: vi.fn(),
+      setLoading: vi.fn(),
+      setError: vi.fn(),
+    });
+
+    // Mock getState for other stores
+    useRoundStore.getState = () => ({
+      setRounds: mockSetRounds,
+      rounds: {},
+      isLoading: false,
+      error: null,
+      setRound: vi.fn(),
+      removeRound: vi.fn(),
+      setLoading: vi.fn(),
+      setError: vi.fn(),
+    });
+
+    useProphecyStore.getState = () => ({
+      setProphecies: mockSetProphecies,
+      prophecies: {},
+      isLoading: false,
+      error: null,
+      setProphecy: vi.fn(),
+      removeProphecy: vi.fn(),
+      setLoading: vi.fn(),
+      setError: vi.fn(),
+    });
+
+    useRatingStore.getState = () => ({
+      setRatings: mockSetRatings,
+      ratings: {},
+      ratingsByProphecy: {},
+      isLoading: false,
+      error: null,
+      setRating: vi.fn(),
+      removeRating: vi.fn(),
+      setLoading: vi.fn(),
+      setError: vi.fn(),
+    });
+
+    // Mock fetch for initial data loading
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            users: [{ id: 'user-1', username: 'test' }],
+            currentUserId: 'user-1',
+            rounds: [{ id: 'round-1', title: 'Test Round' }],
+            prophecies: [{ id: 'prophecy-1', title: 'Test Prophecy' }],
+            ratings: [{ id: 'rating-1', value: 5 }],
+          }),
+      } as Response)
+    );
 
     // Use a proper constructor function for EventSource mock
     const MockEventSource = vi.fn(function (this: {
@@ -138,18 +156,67 @@ describe('useSSE', () => {
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     vi.unstubAllGlobals();
+    vi.useRealTimers(); // In case any test used fake timers
   });
 
-  it('creates EventSource connection on mount', () => {
+  it('loads initial data when not initialized', async () => {
     renderHook(() => useSSE());
 
-    expect(EventSource).toHaveBeenCalledWith('/api/sse');
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/initial-data');
+    });
+
+    await waitFor(() => {
+      expect(mockSetUsers).toHaveBeenCalledWith([{ id: 'user-1', username: 'test' }]);
+      expect(mockSetCurrentUserId).toHaveBeenCalledWith('user-1');
+      expect(mockSetInitialized).toHaveBeenCalledWith(true);
+      expect(mockSetRounds).toHaveBeenCalledWith([{ id: 'round-1', title: 'Test Round' }]);
+      expect(mockSetProphecies).toHaveBeenCalledWith([
+        { id: 'prophecy-1', title: 'Test Prophecy' },
+      ]);
+      expect(mockSetRatings).toHaveBeenCalledWith([{ id: 'rating-1', value: 5 }]);
+    });
   });
 
-  it('registers event listeners for all event types', () => {
+  it('skips loading initial data when already initialized', async () => {
+    mockIsInitialized = true;
+
+    const { result } = renderHook(() => useSSE());
+
+    // Wait for state to update
+    await waitFor(() => {
+      expect(result.current.isInitialized).toBe(true);
+    });
+
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('creates EventSource connection after initial data is loaded', async () => {
     renderHook(() => useSSE());
+
+    // Wait for fetch to complete
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/initial-data');
+    });
+
+    // Then EventSource should be created
+    await waitFor(() => {
+      expect(EventSource).toHaveBeenCalledWith('/api/sse');
+    });
+  });
+
+  it('registers event listeners for all event types', async () => {
+    renderHook(() => useSSE());
+
+    // Wait for EventSource to be created
+    await waitFor(() => {
+      expect(EventSource).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
 
     const instance = createdInstances[0];
     const expectedEventTypes = [
@@ -162,7 +229,9 @@ describe('useSSE', () => {
       'prophecy:created',
       'prophecy:updated',
       'prophecy:deleted',
-      'prophecy:rated',
+      'rating:created',
+      'rating:updated',
+      'rating:deleted',
     ];
 
     expectedEventTypes.forEach((type) => {
@@ -170,8 +239,16 @@ describe('useSSE', () => {
     });
   });
 
-  it('closes EventSource on unmount', () => {
+  it('closes EventSource on unmount', async () => {
     const { unmount } = renderHook(() => useSSE());
+
+    await waitFor(() => {
+      expect(EventSource).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
 
     const instance = createdInstances[0];
     unmount();
@@ -180,7 +257,16 @@ describe('useSSE', () => {
   });
 
   it('attempts to reconnect on error with exponential backoff', async () => {
+    vi.useFakeTimers();
+
     renderHook(() => useSSE());
+
+    // Wait for fetch to resolve and state to update
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(createdInstances.length).toBeGreaterThan(0);
 
     const firstInstance = createdInstances[0];
 
@@ -192,23 +278,25 @@ describe('useSSE', () => {
     expect(firstInstance.close).toHaveBeenCalled();
 
     // Fast-forward past reconnect delay
-    act(() => {
-      vi.advanceTimersByTime(1000);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
     });
 
     // Should have created a new EventSource
     expect(EventSource).toHaveBeenCalledTimes(2);
     expect(createdInstances).toHaveLength(2);
+
+    vi.useRealTimers();
   });
 
-  it('resets reconnect attempts on successful connection', () => {
+  it('resets reconnect attempts on successful connection', async () => {
     renderHook(() => useSSE());
 
-    const instance = createdInstances[0];
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
 
-    // Verify instance was created
-    expect(instance).toBeDefined();
-    expect(instance.onopen).toBeDefined();
+    const instance = createdInstances[0];
 
     // Simulate successful connection
     act(() => {
@@ -219,208 +307,291 @@ describe('useSSE', () => {
     expect(instance.close).not.toHaveBeenCalled();
   });
 
-  it('handles prophecy:rated event and notifies subscribers', () => {
-    const handler = vi.fn();
-    onProphecyRated(handler);
-
+  it('handles round:created event', async () => {
     renderHook(() => useSSE());
 
-    const instance = createdInstances[0];
-
-    // Get the event listener for prophecy:rated
-    const addEventListenerCalls = instance.addEventListener.mock.calls;
-    const prophecyRatedListener = addEventListenerCalls.find(
-      (call) => (call as [string, unknown])[0] === 'prophecy:rated'
-    )?.[1];
-
-    expect(prophecyRatedListener).toBeDefined();
-
-    // Simulate receiving a prophecy:rated event
-    const eventData = {
-      id: 'prophecy-123',
-      roundId: 'round-456',
-      averageRating: 7.5,
-      ratingCount: 15,
-    };
-
-    act(() => {
-      prophecyRatedListener?.({ data: JSON.stringify(eventData) });
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
     });
 
-    expect(handler).toHaveBeenCalledWith(eventData);
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const roundCreatedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'round:created'
+    )?.[1] as (event: { data: string }) => void;
 
-    // Clean up
-    handler.mockClear();
+    expect(roundCreatedListener).toBeDefined();
+
+    const roundData = { id: 'round-1', title: 'New Round' };
+    act(() => {
+      roundCreatedListener({ data: JSON.stringify(roundData) });
+    });
+
+    expect(mockSetRound).toHaveBeenCalledWith(roundData);
   });
 
-  it('handles JSON parse errors gracefully', () => {
+  it('handles round:updated event', async () => {
+    renderHook(() => useSSE());
+
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const roundUpdatedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'round:updated'
+    )?.[1] as (event: { data: string }) => void;
+
+    const roundData = { id: 'round-1', title: 'Updated Round' };
+    act(() => {
+      roundUpdatedListener({ data: JSON.stringify(roundData) });
+    });
+
+    expect(mockSetRound).toHaveBeenCalledWith(roundData);
+  });
+
+  it('handles round:deleted event', async () => {
+    renderHook(() => useSSE());
+
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const roundDeletedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'round:deleted'
+    )?.[1] as (event: { data: string }) => void;
+
+    act(() => {
+      roundDeletedListener({ data: JSON.stringify({ id: 'round-1' }) });
+    });
+
+    expect(mockRemoveRound).toHaveBeenCalledWith('round-1');
+  });
+
+  it('handles user:created event', async () => {
+    renderHook(() => useSSE());
+
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const userCreatedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'user:created'
+    )?.[1] as (event: { data: string }) => void;
+
+    const userData = { id: 'user-1', username: 'testuser' };
+    act(() => {
+      userCreatedListener({ data: JSON.stringify(userData) });
+    });
+
+    expect(mockSetUser).toHaveBeenCalledWith(userData);
+  });
+
+  it('handles user:updated event', async () => {
+    renderHook(() => useSSE());
+
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const userUpdatedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'user:updated'
+    )?.[1] as (event: { data: string }) => void;
+
+    const userData = { id: 'user-1', username: 'testuser', avatarUrl: '/new-avatar.webp' };
+    act(() => {
+      userUpdatedListener({ data: JSON.stringify(userData) });
+    });
+
+    expect(mockSetUser).toHaveBeenCalledWith(userData);
+  });
+
+  it('handles user:deleted event', async () => {
+    renderHook(() => useSSE());
+
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const userDeletedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'user:deleted'
+    )?.[1] as (event: { data: string }) => void;
+
+    act(() => {
+      userDeletedListener({ data: JSON.stringify({ id: 'user-1' }) });
+    });
+
+    expect(mockRemoveUser).toHaveBeenCalledWith('user-1');
+  });
+
+  it('handles prophecy:created event', async () => {
+    renderHook(() => useSSE());
+
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const prophecyCreatedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'prophecy:created'
+    )?.[1] as (event: { data: string }) => void;
+
+    const prophecyData = { id: 'prophecy-1', title: 'New Prophecy' };
+    act(() => {
+      prophecyCreatedListener({ data: JSON.stringify(prophecyData) });
+    });
+
+    expect(mockSetProphecy).toHaveBeenCalledWith(prophecyData);
+  });
+
+  it('handles prophecy:updated event', async () => {
+    renderHook(() => useSSE());
+
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const prophecyUpdatedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'prophecy:updated'
+    )?.[1] as (event: { data: string }) => void;
+
+    const prophecyData = { id: 'prophecy-1', title: 'Updated Prophecy' };
+    act(() => {
+      prophecyUpdatedListener({ data: JSON.stringify(prophecyData) });
+    });
+
+    expect(mockSetProphecy).toHaveBeenCalledWith(prophecyData);
+  });
+
+  it('handles prophecy:deleted event', async () => {
+    renderHook(() => useSSE());
+
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const prophecyDeletedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'prophecy:deleted'
+    )?.[1] as (event: { data: string }) => void;
+
+    act(() => {
+      prophecyDeletedListener({ data: JSON.stringify({ id: 'prophecy-1' }) });
+    });
+
+    expect(mockRemoveProphecy).toHaveBeenCalledWith('prophecy-1');
+  });
+
+  it('handles rating:created event', async () => {
+    renderHook(() => useSSE());
+
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const ratingCreatedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'rating:created'
+    )?.[1] as (event: { data: string }) => void;
+
+    const ratingData = { id: 'rating-1', value: 8, prophecyId: 'prophecy-1', userId: 'user-1' };
+    act(() => {
+      ratingCreatedListener({ data: JSON.stringify(ratingData) });
+    });
+
+    expect(mockSetRating).toHaveBeenCalledWith(ratingData);
+  });
+
+  it('handles rating:updated event', async () => {
+    renderHook(() => useSSE());
+
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const ratingUpdatedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'rating:updated'
+    )?.[1] as (event: { data: string }) => void;
+
+    const ratingData = { id: 'rating-1', value: 9, prophecyId: 'prophecy-1', userId: 'user-1' };
+    act(() => {
+      ratingUpdatedListener({ data: JSON.stringify(ratingData) });
+    });
+
+    expect(mockSetRating).toHaveBeenCalledWith(ratingData);
+  });
+
+  it('handles rating:deleted event', async () => {
+    renderHook(() => useSSE());
+
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
+
+    const instance = createdInstances[0];
+    const addEventListenerCalls = instance.addEventListener.mock.calls;
+    const ratingDeletedListener = addEventListenerCalls.find(
+      (call) => (call as [string, unknown])[0] === 'rating:deleted'
+    )?.[1] as (event: { data: string }) => void;
+
+    act(() => {
+      ratingDeletedListener({ data: JSON.stringify({ id: 'rating-1' }) });
+    });
+
+    expect(mockRemoveRating).toHaveBeenCalledWith('rating-1');
+  });
+
+  it('handles JSON parse errors gracefully', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     renderHook(() => useSSE());
 
-    const instance = createdInstances[0];
+    await waitFor(() => {
+      expect(createdInstances.length).toBeGreaterThan(0);
+    });
 
-    // Get the event listener for any event type
+    const instance = createdInstances[0];
     const addEventListenerCalls = instance.addEventListener.mock.calls;
     const roundCreatedListener = addEventListenerCalls.find(
       (call) => (call as [string, unknown])[0] === 'round:created'
-    )?.[1];
+    )?.[1] as (event: { data: string }) => void;
 
     // Simulate receiving invalid JSON
     act(() => {
-      roundCreatedListener?.({ data: 'invalid json' });
+      roundCreatedListener({ data: 'invalid json' });
     });
 
     expect(consoleSpy).toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
 
-  it('handles round:created event and adds round to store', async () => {
-    const mockAddRound = vi.fn();
-    const { useRoundStore } = await import('@/store/useRoundStore');
-    vi.mocked(useRoundStore).mockReturnValue({
-      addRound: mockAddRound,
-      updateRound: vi.fn(),
-      deleteRound: vi.fn(),
-      rounds: [],
-      setRounds: vi.fn(),
-      isLoading: false,
-      error: null,
-      setLoading: vi.fn(),
-      setError: vi.fn(),
-      fetchRounds: vi.fn(),
-    });
-
-    renderHook(() => useSSE());
-
-    const instance = createdInstances[0];
-    const addEventListenerCalls = instance.addEventListener.mock.calls;
-    const roundCreatedListener = addEventListenerCalls.find(
-      (call) => (call as [string, unknown])[0] === 'round:created'
-    )?.[1];
-
-    const roundData = { id: 'round-1', title: 'New Round' };
-    act(() => {
-      roundCreatedListener?.({ data: JSON.stringify(roundData) });
-    });
-
-    expect(mockAddRound).toHaveBeenCalledWith(roundData);
-  });
-
-  it('handles round:updated event and updates round in store', async () => {
-    const mockUpdateRound = vi.fn();
-    const { useRoundStore } = await import('@/store/useRoundStore');
-    vi.mocked(useRoundStore).mockReturnValue({
-      addRound: vi.fn(),
-      updateRound: mockUpdateRound,
-      deleteRound: vi.fn(),
-      rounds: [],
-      setRounds: vi.fn(),
-      isLoading: false,
-      error: null,
-      setLoading: vi.fn(),
-      setError: vi.fn(),
-      fetchRounds: vi.fn(),
-    });
-
-    renderHook(() => useSSE());
-
-    const instance = createdInstances[0];
-    const addEventListenerCalls = instance.addEventListener.mock.calls;
-    const roundUpdatedListener = addEventListenerCalls.find(
-      (call) => (call as [string, unknown])[0] === 'round:updated'
-    )?.[1];
-
-    const roundData = { id: 'round-1', title: 'Updated Round' };
-    act(() => {
-      roundUpdatedListener?.({ data: JSON.stringify(roundData) });
-    });
-
-    expect(mockUpdateRound).toHaveBeenCalledWith(roundData);
-  });
-
-  it('handles round:deleted event and deletes round from store', async () => {
-    const mockDeleteRound = vi.fn();
-    const { useRoundStore } = await import('@/store/useRoundStore');
-    vi.mocked(useRoundStore).mockReturnValue({
-      addRound: vi.fn(),
-      updateRound: vi.fn(),
-      deleteRound: mockDeleteRound,
-      rounds: [],
-      setRounds: vi.fn(),
-      isLoading: false,
-      error: null,
-      setLoading: vi.fn(),
-      setError: vi.fn(),
-      fetchRounds: vi.fn(),
-    });
-
-    renderHook(() => useSSE());
-
-    const instance = createdInstances[0];
-    const addEventListenerCalls = instance.addEventListener.mock.calls;
-    const roundDeletedListener = addEventListenerCalls.find(
-      (call) => (call as [string, unknown])[0] === 'round:deleted'
-    )?.[1];
-
-    act(() => {
-      roundDeletedListener?.({ data: JSON.stringify({ id: 'round-1' }) });
-    });
-
-    expect(mockDeleteRound).toHaveBeenCalledWith('round-1');
-  });
-
-  it('handles user:updated event and fetches users', async () => {
-    const mockFetchUsers = vi.fn();
-    const { useUserStore } = await import('@/store/useUserStore');
-    vi.mocked(useUserStore).getState = () => ({
-      fetchUsers: mockFetchUsers,
-      users: [],
-      setUsers: vi.fn(),
-      isLoading: false,
-      setLoading: vi.fn(),
-      error: null,
-      updateUser: vi.fn(),
-      setError: vi.fn(),
-    });
-
-    renderHook(() => useSSE());
-
-    const instance = createdInstances[0];
-    const addEventListenerCalls = instance.addEventListener.mock.calls;
-    const userUpdatedListener = addEventListenerCalls.find(
-      (call) => (call as [string, unknown])[0] === 'user:updated'
-    )?.[1];
-
-    act(() => {
-      userUpdatedListener?.({ data: JSON.stringify({ id: 'user-1' }) });
-    });
-
-    expect(mockFetchUsers).toHaveBeenCalled();
-  });
-
-  it('handles prophecy:created event and logs to console', () => {
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-    renderHook(() => useSSE());
-
-    const instance = createdInstances[0];
-    const addEventListenerCalls = instance.addEventListener.mock.calls;
-    const prophecyCreatedListener = addEventListenerCalls.find(
-      (call) => (call as [string, unknown])[0] === 'prophecy:created'
-    )?.[1];
-
-    const prophecyData = { id: 'prophecy-1', title: 'New Prophecy' };
-    act(() => {
-      prophecyCreatedListener?.({ data: JSON.stringify(prophecyData) });
-    });
-
-    expect(consoleSpy).toHaveBeenCalledWith('[SSE] Prophecy event: prophecy:created', prophecyData);
-    consoleSpy.mockRestore();
-  });
-
   it('closes existing connection before creating new one on reconnect', async () => {
+    vi.useFakeTimers();
+
     renderHook(() => useSSE());
+
+    // Wait for fetch to resolve and state to update
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(createdInstances.length).toBeGreaterThan(0);
 
     const firstInstance = createdInstances[0];
 
@@ -429,31 +600,31 @@ describe('useSSE', () => {
       firstInstance.onerror?.();
     });
 
+    // First instance should be closed
+    expect(firstInstance.close).toHaveBeenCalled();
+
     // Fast-forward past reconnect delay
-    act(() => {
-      vi.advanceTimersByTime(1000);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
     });
 
     // Second instance should be created
     expect(createdInstances).toHaveLength(2);
 
-    // Trigger error on second instance
-    const secondInstance = createdInstances[1];
-    act(() => {
-      secondInstance.onerror?.();
-    });
-
-    // Fast-forward with exponential backoff (2000ms this time)
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
-
-    // Third instance
-    expect(createdInstances).toHaveLength(3);
+    vi.useRealTimers();
   });
 
-  it('clears reconnect timeout on unmount', () => {
+  it('clears reconnect timeout on unmount', async () => {
+    vi.useFakeTimers();
+
     const { unmount } = renderHook(() => useSSE());
+
+    // Wait for fetch to resolve and state to update
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    expect(createdInstances.length).toBeGreaterThan(0);
 
     const firstInstance = createdInstances[0];
 
@@ -466,138 +637,99 @@ describe('useSSE', () => {
     unmount();
 
     // Advance timers - should not create new connection
-    act(() => {
-      vi.advanceTimersByTime(5000);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
     });
 
     // Should still only have 1 instance (initial)
     expect(createdInstances).toHaveLength(1);
+
+    vi.useRealTimers();
   });
 
-  it('logs unhandled event types to console', () => {
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  it('handles fetch error gracefully during initial data load', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    global.fetch = vi.fn(() => Promise.reject(new Error('Network error')));
 
     renderHook(() => useSSE());
 
-    const instance = createdInstances[0];
-    const addEventListenerCalls = instance.addEventListener.mock.calls;
-
-    // Find any event listener and trigger it with an unknown event type
-    // We'll use the prophecy:updated listener since it should go to the default case
-    const prophecyUpdatedListener = addEventListenerCalls.find(
-      (call) => (call as [string, unknown])[0] === 'prophecy:updated'
-    )?.[1];
-
-    const eventData = { id: 'prophecy-1', title: 'Updated' };
-    act(() => {
-      prophecyUpdatedListener?.({ data: JSON.stringify(eventData) });
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[SSE] Error loading initial data:',
+        expect.any(Error)
+      );
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith('[SSE] Prophecy event: prophecy:updated', eventData);
     consoleSpy.mockRestore();
   });
 
-  it('closes existing EventSource before creating new one in connect', async () => {
-    const { unmount, rerender } = renderHook(() => useSSE());
+  it('handles non-ok fetch response during initial data load', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const firstInstance = createdInstances[0];
-    expect(firstInstance.close).not.toHaveBeenCalled();
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+      } as Response)
+    );
 
-    // Trigger error to force reconnect
-    act(() => {
-      firstInstance.onerror?.();
+    renderHook(() => useSSE());
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[SSE] Error loading initial data:',
+        expect.any(Error)
+      );
     });
 
-    // First instance should be closed
-    expect(firstInstance.close).toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
 
-    // Fast-forward to trigger reconnect
-    act(() => {
-      vi.advanceTimersByTime(1000);
+  it('uses exponential backoff with max delay on multiple reconnect attempts', async () => {
+    vi.useFakeTimers();
+
+    renderHook(() => useSSE());
+
+    // Wait for fetch to resolve and state to update
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
 
-    // New instance should be created
+    expect(createdInstances.length).toBeGreaterThan(0);
+
+    // First error - 1000ms delay
+    act(() => {
+      createdInstances[0].onerror?.();
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+
     expect(createdInstances).toHaveLength(2);
 
-    // Clean up
-    unmount();
-  });
-
-  it('handles prophecy:deleted event and logs to console', () => {
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-    renderHook(() => useSSE());
-
-    const instance = createdInstances[0];
-    const addEventListenerCalls = instance.addEventListener.mock.calls;
-    const prophecyDeletedListener = addEventListenerCalls.find(
-      (call) => (call as [string, unknown])[0] === 'prophecy:deleted'
-    )?.[1];
-
-    const prophecyData = { id: 'prophecy-1' };
+    // Second error - 2000ms delay
     act(() => {
-      prophecyDeletedListener?.({ data: JSON.stringify(prophecyData) });
+      createdInstances[1].onerror?.();
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith('[SSE] Prophecy event: prophecy:deleted', prophecyData);
-    consoleSpy.mockRestore();
-  });
-
-  it('handles user:created event and fetches users', async () => {
-    const mockFetchUsers = vi.fn();
-    const { useUserStore } = await import('@/store/useUserStore');
-    vi.mocked(useUserStore).getState = () => ({
-      fetchUsers: mockFetchUsers,
-      users: [],
-      setUsers: vi.fn(),
-      isLoading: false,
-      setLoading: vi.fn(),
-      error: null,
-      updateUser: vi.fn(),
-      setError: vi.fn(),
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
     });
 
-    renderHook(() => useSSE());
+    expect(createdInstances).toHaveLength(3);
 
-    const instance = createdInstances[0];
-    const addEventListenerCalls = instance.addEventListener.mock.calls;
-    const userCreatedListener = addEventListenerCalls.find(
-      (call) => (call as [string, unknown])[0] === 'user:created'
-    )?.[1];
-
+    // Third error - 4000ms delay
     act(() => {
-      userCreatedListener?.({ data: JSON.stringify({ id: 'user-1' }) });
+      createdInstances[2].onerror?.();
     });
 
-    expect(mockFetchUsers).toHaveBeenCalled();
-  });
-
-  it('handles user:deleted event and fetches users', async () => {
-    const mockFetchUsers = vi.fn();
-    const { useUserStore } = await import('@/store/useUserStore');
-    vi.mocked(useUserStore).getState = () => ({
-      fetchUsers: mockFetchUsers,
-      users: [],
-      setUsers: vi.fn(),
-      isLoading: false,
-      setLoading: vi.fn(),
-      error: null,
-      updateUser: vi.fn(),
-      setError: vi.fn(),
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(4000);
     });
 
-    renderHook(() => useSSE());
+    expect(createdInstances).toHaveLength(4);
 
-    const instance = createdInstances[0];
-    const addEventListenerCalls = instance.addEventListener.mock.calls;
-    const userDeletedListener = addEventListenerCalls.find(
-      (call) => (call as [string, unknown])[0] === 'user:deleted'
-    )?.[1];
-
-    act(() => {
-      userDeletedListener?.({ data: JSON.stringify({ id: 'user-1' }) });
-    });
-
-    expect(mockFetchUsers).toHaveBeenCalled();
+    vi.useRealTimers();
   });
 });

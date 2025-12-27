@@ -23,22 +23,34 @@ beforeAll(() => {
 });
 
 // Mock the store
-const mockSetRounds = vi.fn();
-let mockRounds: Array<{
-  id: string;
-  title: string;
-  submissionDeadline: string;
-  ratingDeadline: string;
-  fulfillmentDate: string;
-  createdAt: string;
-  _count?: { prophecies: number };
-}> = [];
+const mockRemoveRound = vi.fn();
+let mockRoundsRecord: Record<
+  string,
+  {
+    id: string;
+    title: string;
+    submissionDeadline: string;
+    ratingDeadline: string;
+    fulfillmentDate: string;
+    createdAt: string;
+    _count?: { prophecies: number };
+  }
+> = {};
 
 vi.mock('@/store/useRoundStore', () => ({
-  useRoundStore: () => ({
-    rounds: mockRounds,
-    setRounds: mockSetRounds,
-  }),
+  useRoundStore: (selector?: (state: unknown) => unknown) => {
+    const state = {
+      rounds: mockRoundsRecord,
+      removeRound: mockRemoveRound,
+      isLoading: false,
+      error: null,
+      setRounds: vi.fn(),
+      setRound: vi.fn(),
+      setLoading: vi.fn(),
+      setError: vi.fn(),
+    };
+    return selector ? selector(state) : state;
+  },
 }));
 
 // Mock toast
@@ -87,55 +99,69 @@ describe('RoundsManager', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRounds = [];
+    mockRoundsRecord = {};
   });
 
   it('shows create button', () => {
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
     expect(screen.getByText('Neue Runde')).toBeInTheDocument();
   });
 
   it('shows round count', () => {
-    mockRounds = mockRoundsData;
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
     expect(screen.getByText('2 Runden')).toBeInTheDocument();
   });
 
   it('shows singular for one round', () => {
-    mockRounds = [mockRoundsData[0]];
-    renderWithMantine(<RoundsManager initialRounds={[mockRoundsData[0]]} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+    };
+    renderWithMantine(<RoundsManager />);
     expect(screen.getByText('1 Runde')).toBeInTheDocument();
   });
 
   it('shows empty state when no rounds', () => {
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
     expect(screen.getByText(/Keine Runden vorhanden/)).toBeInTheDocument();
   });
 
   it('displays round titles', () => {
-    mockRounds = mockRoundsData;
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
     expect(screen.getByText('Prophezeiungen 2025')).toBeInTheDocument();
     expect(screen.getByText('Sommer-Vorhersagen')).toBeInTheDocument();
   });
 
   it('displays prophecy count', () => {
-    mockRounds = mockRoundsData;
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
     expect(screen.getByText('5 Prophezeiung(en)')).toBeInTheDocument();
     expect(screen.getByText('0 Prophezeiung(en)')).toBeInTheDocument();
   });
 
   it('displays status badges', () => {
-    mockRounds = mockRoundsData;
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
     // Both rounds have future submission deadlines, so they should show "Einreichung offen"
     const badges = screen.getAllByText('Einreichung offen');
     expect(badges.length).toBe(2);
   });
 
   it('opens create modal when button clicked', async () => {
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
     fireEvent.click(screen.getByText('Neue Runde'));
     await waitFor(() => {
       expect(screen.getByText('Neue Runde erstellen')).toBeInTheDocument();
@@ -143,7 +169,7 @@ describe('RoundsManager', () => {
   });
 
   it('shows form fields in create modal', async () => {
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
     fireEvent.click(screen.getByText('Neue Runde'));
     await waitFor(() => {
       expect(screen.getByText('Titel')).toBeInTheDocument();
@@ -154,7 +180,7 @@ describe('RoundsManager', () => {
   });
 
   it('closes modal when cancel clicked', async () => {
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
     fireEvent.click(screen.getByText('Neue Runde'));
     await waitFor(() => {
       expect(screen.getByText('Neue Runde erstellen')).toBeInTheDocument();
@@ -167,8 +193,11 @@ describe('RoundsManager', () => {
   });
 
   it('opens edit modal when edit button clicked', async () => {
-    mockRounds = mockRoundsData;
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const editButtons = screen.getAllByTitle('Bearbeiten');
     fireEvent.click(editButtons[0]);
@@ -180,8 +209,11 @@ describe('RoundsManager', () => {
   });
 
   it('opens delete confirmation when delete clicked', async () => {
-    mockRounds = mockRoundsData;
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
     fireEvent.click(deleteButtons[0]);
@@ -192,8 +224,11 @@ describe('RoundsManager', () => {
   });
 
   it('closes delete modal when cancel clicked', async () => {
-    mockRounds = mockRoundsData;
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
     fireEvent.click(deleteButtons[0]);
@@ -208,11 +243,14 @@ describe('RoundsManager', () => {
   });
 
   it('calls delete API when confirmed', async () => {
-    mockRounds = mockRoundsData;
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
     fireEvent.click(deleteButtons[0]);
@@ -234,20 +272,22 @@ describe('RoundsManager', () => {
     });
   });
 
-  it('initializes store with provided rounds', () => {
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
-    expect(mockSetRounds).toHaveBeenCalledWith(mockRoundsData);
-  });
-
   it('shows error toast when delete fails', async () => {
-    mockRounds = mockRoundsData;
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
       json: () => Promise.resolve({ error: 'Cannot delete' }),
     });
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
     fireEvent.click(deleteButtons[0]);
@@ -268,11 +308,18 @@ describe('RoundsManager', () => {
   });
 
   it('shows success toast after delete', async () => {
-    mockRounds = mockRoundsData;
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
     fireEvent.click(deleteButtons[0]);
@@ -307,8 +354,10 @@ describe('RoundsManager', () => {
       _count: { prophecies: 3 },
     };
 
-    mockRounds = [roundInRatingPhase];
-    renderWithMantine(<RoundsManager initialRounds={[roundInRatingPhase]} />);
+    mockRoundsRecord = {
+      '3': roundInRatingPhase,
+    };
+    renderWithMantine(<RoundsManager />);
     expect(screen.getByText('Bewertung offen')).toBeInTheDocument();
   });
 
@@ -327,8 +376,10 @@ describe('RoundsManager', () => {
       _count: { prophecies: 2 },
     };
 
-    mockRounds = [roundWaiting];
-    renderWithMantine(<RoundsManager initialRounds={[roundWaiting]} />);
+    mockRoundsRecord = {
+      '4': roundWaiting,
+    };
+    renderWithMantine(<RoundsManager />);
     expect(screen.getByText('Läuft')).toBeInTheDocument();
   });
 
@@ -347,13 +398,15 @@ describe('RoundsManager', () => {
       _count: { prophecies: 10 },
     };
 
-    mockRounds = [completedRound];
-    renderWithMantine(<RoundsManager initialRounds={[completedRound]} />);
+    mockRoundsRecord = {
+      '5': completedRound,
+    };
+    renderWithMantine(<RoundsManager />);
     expect(screen.getByText('Abgeschlossen')).toBeInTheDocument();
   });
 
   it('has disabled create button when form is invalid', async () => {
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
     fireEvent.click(screen.getByText('Neue Runde'));
 
     await waitFor(() => {
@@ -366,7 +419,7 @@ describe('RoundsManager', () => {
   });
 
   it('enables create button when form is valid', async () => {
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
     fireEvent.click(screen.getByText('Neue Runde'));
 
     await waitFor(() => {
@@ -389,7 +442,7 @@ describe('RoundsManager', () => {
     });
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
     fireEvent.click(screen.getByText('Neue Runde'));
 
     await waitFor(() => {
@@ -406,14 +459,21 @@ describe('RoundsManager', () => {
   });
 
   it('calls update API with correct data', async () => {
-    mockRounds = mockRoundsData;
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({}),
     });
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     // Open edit modal
     const editButtons = screen.getAllByTitle('Bearbeiten');
@@ -431,14 +491,21 @@ describe('RoundsManager', () => {
   });
 
   it('shows error toast when update fails', async () => {
-    mockRounds = mockRoundsData;
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
       json: () => Promise.resolve({ error: 'Update failed' }),
     });
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const editButtons = screen.getAllByTitle('Bearbeiten');
     fireEvent.click(editButtons[0]);
@@ -471,13 +538,15 @@ describe('RoundsManager', () => {
       createdAt: new Date().toISOString(),
     };
 
-    mockRounds = [roundWithoutCount];
-    renderWithMantine(<RoundsManager initialRounds={[roundWithoutCount]} />);
+    mockRoundsRecord = {
+      '6': roundWithoutCount,
+    };
+    renderWithMantine(<RoundsManager />);
     expect(screen.getByText('0 Prophezeiung(en)')).toBeInTheDocument();
   });
 
   it('resets form when modal is closed', async () => {
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
 
     // Open create modal and enter title
     fireEvent.click(screen.getByText('Neue Runde'));
@@ -506,8 +575,15 @@ describe('RoundsManager', () => {
   });
 
   it('opens delete confirmation modal when delete button clicked', async () => {
-    mockRounds = mockRoundsData;
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
     fireEvent.click(deleteButtons[0]);
@@ -518,8 +594,15 @@ describe('RoundsManager', () => {
   });
 
   it('closes delete modal when cancelled', async () => {
-    mockRounds = mockRoundsData;
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
     fireEvent.click(deleteButtons[0]);
@@ -536,14 +619,21 @@ describe('RoundsManager', () => {
   });
 
   it('calls delete API and shows success toast', async () => {
-    mockRounds = mockRoundsData;
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ success: true }),
     });
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
     fireEvent.click(deleteButtons[0]);
@@ -564,14 +654,21 @@ describe('RoundsManager', () => {
   });
 
   it('shows error toast when delete fails', async () => {
-    mockRounds = mockRoundsData;
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
       json: () => Promise.resolve({ error: 'Delete failed' }),
     });
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
     fireEvent.click(deleteButtons[0]);
@@ -588,11 +685,18 @@ describe('RoundsManager', () => {
   });
 
   it('shows error toast when delete throws exception', async () => {
-    mockRounds = mockRoundsData;
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
     const mockFetch = vi.fn().mockRejectedValue(new Error('Network error'));
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
     fireEvent.click(deleteButtons[0]);
@@ -609,14 +713,21 @@ describe('RoundsManager', () => {
   });
 
   it('shows default error message when delete fails without error field', async () => {
-    mockRounds = mockRoundsData;
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
       json: () => Promise.resolve({}),
     });
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
     fireEvent.click(deleteButtons[0]);
@@ -633,8 +744,15 @@ describe('RoundsManager', () => {
   });
 
   it('shows Speichern button label when editing', async () => {
-    mockRounds = mockRoundsData;
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const editButtons = screen.getAllByTitle('Bearbeiten');
     fireEvent.click(editButtons[0]);
@@ -645,7 +763,7 @@ describe('RoundsManager', () => {
   });
 
   it('shows Erstellen button label when creating', async () => {
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
 
     fireEvent.click(screen.getByText('Neue Runde'));
 
@@ -655,7 +773,7 @@ describe('RoundsManager', () => {
   });
 
   it('clears form errors when title input changes', async () => {
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
 
     fireEvent.click(screen.getByText('Neue Runde'));
 
@@ -673,8 +791,15 @@ describe('RoundsManager', () => {
   });
 
   it('resets form state completely when modal is closed after editing', async () => {
-    mockRounds = mockRoundsData;
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     // Open edit modal
     const editButtons = screen.getAllByTitle('Bearbeiten');
@@ -708,14 +833,14 @@ describe('RoundsManager', () => {
   });
 
   it('closes modal and resets state when closeModals is called after successful create', async () => {
-    mockRounds = [];
+    mockRoundsRecord = {};
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ id: 'new-round', title: 'Test' }),
     });
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
     fireEvent.click(screen.getByText('Neue Runde'));
 
     await waitFor(() => {
@@ -731,7 +856,7 @@ describe('RoundsManager', () => {
   });
 
   it('clears submission deadline error when value changes', async () => {
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
 
     fireEvent.click(screen.getByText('Neue Runde'));
 
@@ -743,19 +868,13 @@ describe('RoundsManager', () => {
     const submissionLabel = screen.getByText('Einreichungs-Deadline');
     expect(submissionLabel).toBeInTheDocument();
 
-    // DateTimePicker uses buttons, find them
-    const dateButtons = screen.getAllByRole('button');
-    const submissionButton = dateButtons.find(
-      (btn) => btn.textContent?.includes('Datum') || btn.querySelector('input')
-    );
-
     // Verify date picker elements exist
     expect(screen.getByText('Bewertungs-Deadline')).toBeInTheDocument();
     expect(screen.getByText('Stichtag')).toBeInTheDocument();
   });
 
   it('clears rating deadline error when value changes', async () => {
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
 
     fireEvent.click(screen.getByText('Neue Runde'));
 
@@ -770,7 +889,7 @@ describe('RoundsManager', () => {
   });
 
   it('clears fulfillment date error when value changes', async () => {
-    renderWithMantine(<RoundsManager initialRounds={[]} />);
+    renderWithMantine(<RoundsManager />);
 
     fireEvent.click(screen.getByText('Neue Runde'));
 
@@ -788,11 +907,18 @@ describe('RoundsManager', () => {
   });
 
   it('handles non-Error thrown in delete operation', async () => {
-    mockRounds = mockRoundsData;
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
     const mockFetch = vi.fn().mockRejectedValue('String error');
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
     fireEvent.click(deleteButtons[0]);
@@ -809,7 +935,10 @@ describe('RoundsManager', () => {
   });
 
   it('shows Speichern... when submitting in edit mode', async () => {
-    mockRounds = mockRoundsData;
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
     const mockFetch = vi
       .fn()
       .mockImplementation(
@@ -820,7 +949,11 @@ describe('RoundsManager', () => {
       );
     globalThis.fetch = mockFetch;
 
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const editButtons = screen.getAllByTitle('Bearbeiten');
     fireEvent.click(editButtons[0]);
@@ -834,8 +967,15 @@ describe('RoundsManager', () => {
   });
 
   it('pre-fills dates correctly when editing a round', async () => {
-    mockRounds = mockRoundsData;
-    renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    mockRoundsRecord = {
+      '1': mockRoundsData[0],
+      '2': mockRoundsData[1],
+    };
+    renderWithMantine(<RoundsManager />);
 
     const editButtons = screen.getAllByTitle('Bearbeiten');
     fireEvent.click(editButtons[0]);
@@ -856,7 +996,7 @@ describe('RoundsManager', () => {
 
   describe('Form validation', () => {
     it('validates all required fields before submission', async () => {
-      renderWithMantine(<RoundsManager initialRounds={[]} />);
+      renderWithMantine(<RoundsManager />);
 
       fireEvent.click(screen.getByText('Neue Runde'));
 
@@ -870,7 +1010,7 @@ describe('RoundsManager', () => {
     });
 
     it('handles validation error parsing correctly', async () => {
-      renderWithMantine(<RoundsManager initialRounds={[]} />);
+      renderWithMantine(<RoundsManager />);
 
       fireEvent.click(screen.getByText('Neue Runde'));
 
@@ -890,14 +1030,21 @@ describe('RoundsManager', () => {
 
   describe('Error handling', () => {
     it('shows default error message when API returns no error field', async () => {
-      mockRounds = mockRoundsData;
+      mockRoundsRecord = {
+        '1': mockRoundsData[0],
+        '2': mockRoundsData[1],
+      };
       const mockFetch = vi.fn().mockResolvedValue({
         ok: false,
         json: () => Promise.resolve({}),
       });
       globalThis.fetch = mockFetch;
 
-      renderWithMantine(<RoundsManager initialRounds={mockRoundsData} />);
+      mockRoundsRecord = {
+        '1': mockRoundsData[0],
+        '2': mockRoundsData[1],
+      };
+      renderWithMantine(<RoundsManager />);
 
       const deleteButtons = screen.getAllByTitle('Löschen');
       fireEvent.click(deleteButtons[0]);

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db/prisma';
-import { ApiError, Errors } from './errors';
+import { Errors } from './errors';
 import { Prophecy, Round } from '@prisma/client';
 
 export type ProphecyWithRound = Prophecy & { round: Round };

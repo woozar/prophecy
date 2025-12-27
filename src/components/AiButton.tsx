@@ -50,7 +50,7 @@ export const AiButton = memo(function AiButton({
     () =>
       `
     relative px-6 py-3 rounded-lg font-semibold text-white
-    overflow-hidden
+    overflow-hidden select-none
     disabled:opacity-50 disabled:cursor-not-allowed
     ${reducedMotion ? '' : 'transition-all duration-300 hover:enabled:scale-105 active:enabled:scale-95'}
     ${className}

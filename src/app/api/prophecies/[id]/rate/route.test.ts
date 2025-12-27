@@ -149,6 +149,7 @@ describe('POST /api/prophecies/[id]/rate', () => {
   it('creates rating successfully', async () => {
     vi.mocked(getSession).mockResolvedValue(mockUser);
     vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy());
+    vi.mocked(prisma.rating.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.rating.upsert).mockResolvedValue({
       id: 'rating-1',
       prophecyId: 'prophecy-1',
@@ -157,7 +158,16 @@ describe('POST /api/prophecies/[id]/rate', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    vi.mocked(prisma.rating.findMany).mockResolvedValue([{ value: 5 }]);
+    vi.mocked(prisma.rating.findMany).mockResolvedValue([
+      {
+        id: 'rating-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId: 'user-1',
+        value: 5,
+        prophecyId: 'prophecy-1',
+      },
+    ]);
     vi.mocked(prisma.prophecy.update).mockResolvedValue({
       ...createMockProphecy(),
       averageRating: 5,
@@ -172,15 +182,24 @@ describe('POST /api/prophecies/[id]/rate', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.prophecy.userRating).toBe(5);
+    expect(data.prophecy.averageRating).toBe(5);
+    expect(data.prophecy.ratingCount).toBe(1);
+    expect(data.rating.id).toBe('rating-1');
+    expect(data.rating.value).toBe(5);
+    expect(data.rating.prophecyId).toBe('prophecy-1');
+    expect(data.rating.userId).toBe('user-1');
     expect(sseEmitter.broadcast).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'prophecy:rated' })
+      expect.objectContaining({ type: 'prophecy:updated' })
+    );
+    expect(sseEmitter.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'rating:created' })
     );
   });
 
   it('calculates average rating correctly', async () => {
     vi.mocked(getSession).mockResolvedValue(mockUser);
     vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy());
+    vi.mocked(prisma.rating.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.rating.upsert).mockResolvedValue({
       id: 'rating-1',
       prophecyId: 'prophecy-1',
@@ -189,7 +208,32 @@ describe('POST /api/prophecies/[id]/rate', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    vi.mocked(prisma.rating.findMany).mockResolvedValue([{ value: 8 }, { value: 4 }, { value: 6 }]);
+    vi.mocked(prisma.rating.findMany).mockResolvedValue([
+      {
+        id: 'rating-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId: 'user-1',
+        value: 8,
+        prophecyId: 'prophecy-1',
+      },
+      {
+        id: 'rating-2',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId: 'user-2',
+        value: 4,
+        prophecyId: 'prophecy-1',
+      },
+      {
+        id: 'rating-3',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId: 'user-3',
+        value: 6,
+        prophecyId: 'prophecy-1',
+      },
+    ]);
     vi.mocked(prisma.prophecy.update).mockResolvedValue({
       ...createMockProphecy(),
       averageRating: 6,
@@ -201,7 +245,6 @@ describe('POST /api/prophecies/[id]/rate', () => {
       body: JSON.stringify({ value: 8 }),
     });
     const response = await POST(request, createRouteParams('prophecy-1'));
-    const data = await response.json();
 
     expect(response.status).toBe(200);
     expect(prisma.prophecy.update).toHaveBeenCalledWith(

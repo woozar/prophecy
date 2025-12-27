@@ -1,17 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback, memo, useMemo } from 'react';
+import { useState, useCallback, memo, useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { GlowBadge } from '@/components/GlowBadge';
+import { UserAvatar } from '@/components/UserAvatar';
 import { useUserStore, type User } from '@/store/useUserStore';
 import { showSuccessToast, showErrorToast } from '@/lib/toast/toast';
 import { IconCheck, IconX, IconBan, IconShield, IconUser, IconTrash } from '@tabler/icons-react';
-
-interface UsersManagerProps {
-  initialUsers: User[];
-}
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: 'Ausstehend',
@@ -33,17 +31,11 @@ interface ConfirmAction {
   type: 'delete' | 'suspend' | 'demote';
 }
 
-export const UsersManager = memo(function UsersManager({
-  initialUsers,
-}: Readonly<UsersManagerProps>) {
-  const { users, setUsers, updateUser } = useUserStore();
+export const UsersManager = memo(function UsersManager() {
+  const users = useUserStore(useShallow((state) => Object.values(state.users)));
+  const { setUser, removeUser } = useUserStore();
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Initialize store with server data
-  useEffect(() => {
-    setUsers(initialUsers);
-  }, [initialUsers, setUsers]);
 
   const handleStatusChange = useCallback(
     async (userId: string, status: string) => {
@@ -61,7 +53,7 @@ export const UsersManager = memo(function UsersManager({
         }
 
         const { user } = await res.json();
-        updateUser(user);
+        setUser(user);
         showSuccessToast(`Benutzer ${STATUS_LABELS[status].toLowerCase()}`);
         setConfirmAction(null);
       } catch (error) {
@@ -70,7 +62,7 @@ export const UsersManager = memo(function UsersManager({
         setIsSubmitting(false);
       }
     },
-    [updateUser]
+    [setUser]
   );
 
   const handleRoleChange = useCallback(
@@ -89,7 +81,7 @@ export const UsersManager = memo(function UsersManager({
         }
 
         const { user } = await res.json();
-        updateUser(user);
+        setUser(user);
         showSuccessToast(role === 'ADMIN' ? 'Zum Admin befördert' : 'Adminrechte entzogen');
         setConfirmAction(null);
       } catch (error) {
@@ -98,31 +90,33 @@ export const UsersManager = memo(function UsersManager({
         setIsSubmitting(false);
       }
     },
-    [updateUser]
+    [setUser]
   );
 
-  const handleDelete = useCallback(async (userId: string) => {
-    setIsSubmitting(true);
-    try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
-        method: 'DELETE',
-      });
+  const handleDelete = useCallback(
+    async (userId: string) => {
+      setIsSubmitting(true);
+      try {
+        const res = await fetch(`/api/admin/users/${userId}`, {
+          method: 'DELETE',
+        });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Fehler beim Löschen');
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Fehler beim Löschen');
+        }
+
+        removeUser(userId);
+        showSuccessToast('Benutzer gelöscht');
+        setConfirmAction(null);
+      } catch (error) {
+        showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
+      } finally {
+        setIsSubmitting(false);
       }
-
-      // Refetch users
-      await useUserStore.getState().fetchUsers();
-      showSuccessToast('Benutzer gelöscht');
-      setConfirmAction(null);
-    } catch (error) {
-      showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, []);
+    },
+    [removeUser]
+  );
 
   const handleConfirm = useCallback(() => {
     if (!confirmAction) return;
@@ -149,9 +143,12 @@ export const UsersManager = memo(function UsersManager({
   };
 
   // Group users by status
-  const pendingUsers = users.filter((u) => u.status === 'PENDING');
-  const activeUsers = users.filter((u) => u.status === 'APPROVED');
-  const otherUsers = users.filter((u) => u.status !== 'PENDING' && u.status !== 'APPROVED');
+  const pendingUsers = useMemo(() => users.filter((u) => u.status === 'PENDING'), [users]);
+  const activeUsers = useMemo(() => users.filter((u) => u.status === 'APPROVED'), [users]);
+  const otherUsers = useMemo(
+    () => users.filter((u) => u.status !== 'PENDING' && u.status !== 'APPROVED'),
+    [users]
+  );
 
   const modalContent = useMemo(() => {
     if (!confirmAction) return null;
@@ -323,9 +320,7 @@ const UserCard = memo(function UserCard({
     <Card padding="p-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-full bg-linear-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-lg font-bold text-white shadow-[0_0_15px_rgba(6,182,212,0.3)] shrink-0">
-            {(user.displayName || user.username).charAt(0).toUpperCase()}
-          </div>
+          <UserAvatar user={user} size="md" />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-white truncate">
@@ -341,7 +336,8 @@ const UserCard = memo(function UserCard({
               </GlowBadge>
             </div>
             <p className="text-sm text-(--text-muted) truncate">
-              @{user.username} · Seit {formatDate(user.createdAt)}
+              @{user.username}
+              {user.createdAt && <> · Seit {formatDate(user.createdAt)}</>}
             </p>
             <p className="text-xs text-(--text-muted)">
               {user._count?.prophecies || 0} Prophezeiungen · {user._count?.ratings || 0}{' '}

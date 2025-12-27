@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatDate, type DateFormatType } from './date';
+import { formatDate } from './date';
 
 describe('formatDate', () => {
   // Use a fixed date for consistent testing

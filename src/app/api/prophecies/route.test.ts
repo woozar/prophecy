@@ -215,7 +215,7 @@ describe('POST /api/prophecies', () => {
 
     expect(response.status).toBe(200);
     expect(data.prophecy.title).toBe('New Prophecy');
-    expect(data.prophecy.isOwn).toBe(true);
+    expect(data.prophecy.creatorId).toBe('user-1');
     expect(sseEmitter.broadcast).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'prophecy:created' })
     );

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { RoundStatusBadge, getRoundStatus } from './RoundStatusBadge';
 
 // Mock matchMedia for useReducedMotion hook

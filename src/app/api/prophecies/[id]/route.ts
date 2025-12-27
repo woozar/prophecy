@@ -46,38 +46,28 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         averageRating: null,
         ratingCount: 0,
       },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            username: true,
-            displayName: true,
-          },
-        },
-      },
     });
+
+    const prophecyData = {
+      id: updatedProphecy.id,
+      title: updatedProphecy.title,
+      description: updatedProphecy.description,
+      creatorId: updatedProphecy.creatorId,
+      roundId: updatedProphecy.roundId,
+      createdAt: updatedProphecy.createdAt.toISOString(),
+      fulfilled: updatedProphecy.fulfilled,
+      resolvedAt: updatedProphecy.resolvedAt?.toISOString() ?? null,
+      averageRating: updatedProphecy.averageRating,
+      ratingCount: updatedProphecy.ratingCount,
+    };
 
     // Broadcast to all connected clients
     sseEmitter.broadcast({
       type: 'prophecy:updated',
-      data: {
-        ...updatedProphecy,
-        averageRating: null,
-        ratingCount: 0,
-        userRating: null,
-        isOwn: true,
-      },
+      data: prophecyData,
     });
 
-    return NextResponse.json({
-      prophecy: {
-        ...updatedProphecy,
-        averageRating: null,
-        ratingCount: 0,
-        userRating: null,
-        isOwn: true,
-      },
-    });
+    return NextResponse.json({ prophecy: prophecyData });
   }, 'Error updating prophecy:');
 }
 

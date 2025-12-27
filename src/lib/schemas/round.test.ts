@@ -57,19 +57,22 @@ describe('createRoundSchema', () => {
   });
 
   it('rejects missing submissionDeadline', () => {
-    const { submissionDeadline, ...rest } = validData;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { submissionDeadline: _, ...rest } = validData;
     const result = createRoundSchema.safeParse(rest);
     expect(result.success).toBe(false);
   });
 
   it('rejects missing ratingDeadline', () => {
-    const { ratingDeadline, ...rest } = validData;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { ratingDeadline: _, ...rest } = validData;
     const result = createRoundSchema.safeParse(rest);
     expect(result.success).toBe(false);
   });
 
   it('rejects missing fulfillmentDate', () => {
-    const { fulfillmentDate, ...rest } = validData;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { fulfillmentDate: _, ...rest } = validData;
     const result = createRoundSchema.safeParse(rest);
     expect(result.success).toBe(false);
   });

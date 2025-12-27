@@ -23,6 +23,7 @@ const baseStyles = [
   'overflow-hidden',
   'isolate',
   'cursor-pointer',
+  'select-none',
   'transition-all',
   'duration-300',
   'ease-out',
@@ -150,7 +151,7 @@ export const Button = memo(function Button({
   const buttonClassName = useMemo(() => {
     // Ghost variant skips baseStyles to allow full control via className
     if (variant === 'ghost') {
-      return className;
+      return `select-none ${className}`;
     }
     return [...baseStyles, ...variantStyles[variant], className].filter(Boolean).join(' ');
   }, [variant, className]);

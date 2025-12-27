@@ -40,6 +40,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.js ./prisma.config.
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
+# Create upload directory for avatars
+RUN mkdir -p /app/uploads/avatars && chown -R nextjs:nodejs /app/uploads
+
 # Copy standalone build FIRST (includes node_modules with @prisma/client)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static

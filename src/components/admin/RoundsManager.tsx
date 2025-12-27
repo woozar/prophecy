@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, memo, useMemo } from 'react';
+import { useState, useCallback, memo, useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal';
@@ -13,14 +14,15 @@ import { createRoundSchema, updateRoundSchema } from '@/lib/schemas/round';
 import { IconPlus, IconEdit, IconTrash, IconCalendar } from '@tabler/icons-react';
 import { DateTimePicker } from '@/components/DateTimePicker';
 
-interface RoundsManagerProps {
-  initialRounds: Round[];
-}
-
-export const RoundsManager = memo(function RoundsManager({
-  initialRounds,
-}: Readonly<RoundsManagerProps>) {
-  const { rounds, setRounds } = useRoundStore();
+export const RoundsManager = memo(function RoundsManager() {
+  const rounds = useRoundStore(
+    useShallow((state) =>
+      Object.values(state.rounds).sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+    )
+  );
+  const { removeRound } = useRoundStore();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingRound, setEditingRound] = useState<Round | null>(null);
   const [deletingRoundId, setDeletingRoundId] = useState<string | null>(null);
@@ -40,11 +42,6 @@ export const RoundsManager = memo(function RoundsManager({
     fulfillmentDate?: string;
   }
   const [formErrors, setFormErrors] = useState<FormErrors>({});
-
-  // Initialize store with server data
-  useEffect(() => {
-    setRounds(initialRounds);
-  }, [initialRounds, setRounds]);
 
   const resetForm = useCallback(() => {
     setTitle('');
@@ -161,6 +158,7 @@ export const RoundsManager = memo(function RoundsManager({
         throw new Error(data.error || 'Fehler beim Löschen');
       }
 
+      removeRound(deletingRoundId);
       showSuccessToast('Runde gelöscht');
       closeModals();
     } catch (error) {
@@ -168,7 +166,7 @@ export const RoundsManager = memo(function RoundsManager({
     } finally {
       setIsSubmitting(false);
     }
-  }, [deletingRoundId, closeModals]);
+  }, [deletingRoundId, closeModals, removeRound]);
 
   const submitButtonLabel = useMemo(() => {
     if (isSubmitting) return 'Speichern...';

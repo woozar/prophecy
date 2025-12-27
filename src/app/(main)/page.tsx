@@ -2,6 +2,7 @@ import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 import { Card } from '@/components/Card';
 import { RoundStatusBadge } from '@/components/RoundStatusBadge';
+import { Link } from '@/components/Link';
 
 export default async function HomePage() {
   const session = await getSession();
@@ -121,12 +122,12 @@ export default async function HomePage() {
               </div>
 
               <div className="mt-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
-                <a
+                <Link
                   href={`/rounds/${round.id}`}
                   className="text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors"
                 >
                   Zur Runde &rarr;
-                </a>
+                </Link>
               </div>
             </Card>
           ))}

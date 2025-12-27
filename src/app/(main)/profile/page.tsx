@@ -3,13 +3,24 @@ import { prisma } from '@/lib/db/prisma';
 import { Card } from '@/components/Card';
 import { GlowBadge } from '@/components/GlowBadge';
 import { PasskeyManager } from '@/components/PasskeyManager';
+import { ProfileAvatarSection } from '@/components/ProfileAvatarSection';
+import { UserAvatar } from '@/components/UserAvatar';
 
 export default async function ProfilePage() {
   const session = await getSession();
 
   const user = await prisma.user.findUnique({
     where: { id: session!.userId },
-    include: {
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      avatarUrl: true,
+      avatarEffect: true,
+      avatarEffectColors: true,
+      role: true,
+      status: true,
+      createdAt: true,
       authenticators: {
         select: {
           id: true,
@@ -40,9 +51,7 @@ export default async function ProfilePage() {
       {/* User Info */}
       <Card padding="p-6">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-2xl font-bold text-white shadow-[0_0_25px_rgba(6,182,212,0.3)]">
-            {(user.displayName || user.username).charAt(0).toUpperCase()}
-          </div>
+          <UserAvatar userId={user.id} size="xl" />
           <div>
             <h2 className="text-xl font-semibold text-white">
               {user.displayName || user.username}
@@ -67,6 +76,15 @@ export default async function ProfilePage() {
           </div>
         </div>
       </Card>
+
+      {/* Avatar Upload & Effects */}
+      <ProfileAvatarSection
+        username={user.username}
+        displayName={user.displayName}
+        avatarUrl={user.avatarUrl}
+        avatarEffect={user.avatarEffect}
+        avatarEffectColors={user.avatarEffectColors ? JSON.parse(user.avatarEffectColors) : []}
+      />
 
       {/* Passkeys */}
       <PasskeyManager

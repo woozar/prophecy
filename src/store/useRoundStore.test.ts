@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { act } from '@testing-library/react';
 import { useRoundStore, type Round } from './useRoundStore';
 
@@ -26,20 +26,16 @@ describe('useRoundStore', () => {
   beforeEach(() => {
     // Reset store state before each test
     useRoundStore.setState({
-      rounds: [],
+      rounds: {},
       isLoading: false,
       error: null,
     });
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   describe('initial state', () => {
-    it('has empty rounds array initially', () => {
+    it('has empty rounds record initially', () => {
       const { rounds } = useRoundStore.getState();
-      expect(rounds).toEqual([]);
+      expect(rounds).toEqual({});
     });
 
     it('is not loading initially', () => {
@@ -54,7 +50,7 @@ describe('useRoundStore', () => {
   });
 
   describe('setRounds', () => {
-    it('sets rounds to provided array', () => {
+    it('sets rounds as record', () => {
       const { setRounds } = useRoundStore.getState();
 
       act(() => {
@@ -62,13 +58,13 @@ describe('useRoundStore', () => {
       });
 
       const { rounds } = useRoundStore.getState();
-      expect(rounds).toHaveLength(2);
-      expect(rounds[0].id).toBe('round-1');
-      expect(rounds[1].id).toBe('round-2');
+      expect(Object.keys(rounds)).toHaveLength(2);
+      expect(rounds['round-1'].title).toBe('Test Round');
+      expect(rounds['round-2'].title).toBe('Another Round');
     });
 
     it('replaces existing rounds', () => {
-      useRoundStore.setState({ rounds: [mockRound] });
+      useRoundStore.setState({ rounds: { 'round-1': mockRound } });
       const { setRounds } = useRoundStore.getState();
 
       act(() => {
@@ -76,129 +72,87 @@ describe('useRoundStore', () => {
       });
 
       const { rounds } = useRoundStore.getState();
-      expect(rounds).toHaveLength(1);
-      expect(rounds[0].id).toBe('round-2');
+      expect(Object.keys(rounds)).toHaveLength(1);
+      expect(rounds['round-2']).toBeDefined();
+      expect(rounds['round-1']).toBeUndefined();
     });
   });
 
-  describe('addRound', () => {
-    it('adds new round to the beginning of the list', () => {
-      useRoundStore.setState({ rounds: [mockRound2] });
-      const { addRound } = useRoundStore.getState();
+  describe('setRound', () => {
+    it('adds new round', () => {
+      const { setRound } = useRoundStore.getState();
 
       act(() => {
-        addRound(mockRound);
+        setRound(mockRound);
       });
 
       const { rounds } = useRoundStore.getState();
-      expect(rounds).toHaveLength(2);
-      expect(rounds[0].id).toBe('round-1');
-      expect(rounds[1].id).toBe('round-2');
+      expect(rounds['round-1']).toEqual(mockRound);
     });
 
-    it('updates existing round instead of adding duplicate', () => {
-      useRoundStore.setState({ rounds: [mockRound] });
-      const { addRound } = useRoundStore.getState();
-
-      const updatedRound = { ...mockRound, title: 'Updated Title' };
-      act(() => {
-        addRound(updatedRound);
-      });
-
-      const { rounds } = useRoundStore.getState();
-      expect(rounds).toHaveLength(1);
-      expect(rounds[0].title).toBe('Updated Title');
-    });
-
-    it('handles adding to empty list', () => {
-      const { addRound } = useRoundStore.getState();
-
-      act(() => {
-        addRound(mockRound);
-      });
-
-      const { rounds } = useRoundStore.getState();
-      expect(rounds).toHaveLength(1);
-      expect(rounds[0].id).toBe('round-1');
-    });
-  });
-
-  describe('updateRound', () => {
     it('updates existing round', () => {
-      useRoundStore.setState({ rounds: [mockRound, mockRound2] });
-      const { updateRound } = useRoundStore.getState();
+      useRoundStore.setState({ rounds: { 'round-1': mockRound, 'round-2': mockRound2 } });
+      const { setRound } = useRoundStore.getState();
 
-      const updatedRound = { ...mockRound, title: 'New Title' };
       act(() => {
-        updateRound(updatedRound);
+        setRound({ ...mockRound, title: 'Updated Title' });
       });
 
       const { rounds } = useRoundStore.getState();
-      expect(rounds[0].title).toBe('New Title');
-      expect(rounds[1].title).toBe('Another Round');
+      expect(rounds['round-1'].title).toBe('Updated Title');
+      expect(rounds['round-2'].title).toBe('Another Round');
     });
 
-    it('does not modify other rounds', () => {
-      useRoundStore.setState({ rounds: [mockRound, mockRound2] });
-      const { updateRound } = useRoundStore.getState();
+    it('preserves other rounds when adding', () => {
+      useRoundStore.setState({ rounds: { 'round-2': mockRound2 } });
+      const { setRound } = useRoundStore.getState();
 
       act(() => {
-        updateRound({ ...mockRound, title: 'Updated' });
+        setRound(mockRound);
       });
 
       const { rounds } = useRoundStore.getState();
-      expect(rounds[1]).toEqual(mockRound2);
-    });
-
-    it('handles updating non-existent round (no-op)', () => {
-      useRoundStore.setState({ rounds: [mockRound] });
-      const { updateRound } = useRoundStore.getState();
-
-      act(() => {
-        updateRound({ ...mockRound2, title: 'Ghost Round' });
-      });
-
-      const { rounds } = useRoundStore.getState();
-      expect(rounds).toHaveLength(1);
-      expect(rounds[0].id).toBe('round-1');
+      expect(Object.keys(rounds)).toHaveLength(2);
+      expect(rounds['round-1']).toBeDefined();
+      expect(rounds['round-2']).toBeDefined();
     });
   });
 
-  describe('deleteRound', () => {
+  describe('removeRound', () => {
     it('removes round by id', () => {
-      useRoundStore.setState({ rounds: [mockRound, mockRound2] });
-      const { deleteRound } = useRoundStore.getState();
+      useRoundStore.setState({ rounds: { 'round-1': mockRound, 'round-2': mockRound2 } });
+      const { removeRound } = useRoundStore.getState();
 
       act(() => {
-        deleteRound('round-1');
+        removeRound('round-1');
       });
 
       const { rounds } = useRoundStore.getState();
-      expect(rounds).toHaveLength(1);
-      expect(rounds[0].id).toBe('round-2');
+      expect(rounds['round-1']).toBeUndefined();
+      expect(rounds['round-2']).toBeDefined();
     });
 
     it('handles deleting non-existent round', () => {
-      useRoundStore.setState({ rounds: [mockRound] });
-      const { deleteRound } = useRoundStore.getState();
+      useRoundStore.setState({ rounds: { 'round-1': mockRound } });
+      const { removeRound } = useRoundStore.getState();
 
       act(() => {
-        deleteRound('non-existent');
+        removeRound('non-existent');
       });
 
       const { rounds } = useRoundStore.getState();
-      expect(rounds).toHaveLength(1);
+      expect(Object.keys(rounds)).toHaveLength(1);
     });
 
-    it('handles deleting from empty list', () => {
-      const { deleteRound } = useRoundStore.getState();
+    it('handles deleting from empty record', () => {
+      const { removeRound } = useRoundStore.getState();
 
       act(() => {
-        deleteRound('round-1');
+        removeRound('round-1');
       });
 
       const { rounds } = useRoundStore.getState();
-      expect(rounds).toHaveLength(0);
+      expect(Object.keys(rounds)).toHaveLength(0);
     });
   });
 
@@ -246,118 +200,6 @@ describe('useRoundStore', () => {
       act(() => {
         setError(null);
       });
-
-      const { error } = useRoundStore.getState();
-      expect(error).toBeNull();
-    });
-  });
-
-  describe('fetchRounds', () => {
-    it('sets loading state during fetch', async () => {
-      const mockFetch = vi.fn(
-        () =>
-          new Promise((resolve) => {
-            setTimeout(() => {
-              resolve({
-                ok: true,
-                json: () => Promise.resolve({ rounds: [mockRound] }),
-              });
-            }, 10);
-          })
-      ) as unknown as typeof fetch;
-
-      vi.stubGlobal('fetch', mockFetch);
-
-      const { fetchRounds } = useRoundStore.getState();
-
-      const fetchPromise = fetchRounds();
-
-      // Should be loading immediately
-      expect(useRoundStore.getState().isLoading).toBe(true);
-
-      await fetchPromise;
-
-      // Should stop loading after fetch
-      expect(useRoundStore.getState().isLoading).toBe(false);
-    });
-
-    it('fetches and sets rounds on success', async () => {
-      const mockFetch = vi.fn(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ rounds: [mockRound, mockRound2] }),
-        })
-      ) as unknown as typeof fetch;
-
-      vi.stubGlobal('fetch', mockFetch);
-
-      const { fetchRounds } = useRoundStore.getState();
-      await fetchRounds();
-
-      const { rounds, error } = useRoundStore.getState();
-      expect(rounds).toHaveLength(2);
-      expect(error).toBeNull();
-      expect(mockFetch).toHaveBeenCalledWith('/api/rounds');
-    });
-
-    it('sets error on API failure', async () => {
-      const mockFetch = vi.fn(() =>
-        Promise.resolve({
-          ok: false,
-          status: 500,
-        })
-      ) as unknown as typeof fetch;
-
-      vi.stubGlobal('fetch', mockFetch);
-
-      const { fetchRounds } = useRoundStore.getState();
-      await fetchRounds();
-
-      const { error, isLoading } = useRoundStore.getState();
-      expect(error).toBe('Fehler beim Laden der Runden');
-      expect(isLoading).toBe(false);
-    });
-
-    it('sets error on network failure', async () => {
-      const mockFetch = vi.fn(() =>
-        Promise.reject(new Error('Network error'))
-      ) as unknown as typeof fetch;
-
-      vi.stubGlobal('fetch', mockFetch);
-
-      const { fetchRounds } = useRoundStore.getState();
-      await fetchRounds();
-
-      const { error } = useRoundStore.getState();
-      expect(error).toBe('Network error');
-    });
-
-    it('sets generic error for non-Error exceptions', async () => {
-      const mockFetch = vi.fn(() => Promise.reject('Unknown failure')) as unknown as typeof fetch;
-
-      vi.stubGlobal('fetch', mockFetch);
-
-      const { fetchRounds } = useRoundStore.getState();
-      await fetchRounds();
-
-      const { error } = useRoundStore.getState();
-      expect(error).toBe('Unbekannter Fehler');
-    });
-
-    it('clears previous error on new fetch', async () => {
-      useRoundStore.setState({ error: 'Previous error' });
-
-      const mockFetch = vi.fn(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ rounds: [] }),
-        })
-      ) as unknown as typeof fetch;
-
-      vi.stubGlobal('fetch', mockFetch);
-
-      const { fetchRounds } = useRoundStore.getState();
-      await fetchRounds();
 
       const { error } = useRoundStore.getState();
       expect(error).toBeNull();

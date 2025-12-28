@@ -1,12 +1,18 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextResponse } from 'next/server';
+import { SignJWT } from 'jose';
 
-// Unmock session module (it's mocked globally in vitest.setup.ts)
-vi.unmock('@/lib/auth/session');
+// Set SESSION_SECRET for tests before importing session module
+const TEST_SECRET = 'test-session-secret-at-least-32-chars-long';
+vi.stubEnv('SESSION_SECRET', TEST_SECRET);
 
-// Mock cookies
-const mockGet = vi.fn();
-const mockSet = vi.fn();
+// Mock cookies - capture values set and return them
+let mockCookieValue: string | undefined;
+
+const mockGet = vi.fn(() => (mockCookieValue ? { value: mockCookieValue } : undefined));
+const mockSet = vi.fn((_name: string, value: string) => {
+  mockCookieValue = value;
+});
 
 vi.mock('next/headers', () => ({
   cookies: vi.fn(() =>
@@ -18,44 +24,108 @@ vi.mock('next/headers', () => ({
 }));
 
 // Import after mock setup
-import { getSession, requireSession, loginSuccessResponse, loginErrorResponse } from './session';
+import {
+  getSession,
+  requireSession,
+  setSessionCookie,
+  loginSuccessResponse,
+  loginErrorResponse,
+  resetSecretCache,
+} from './session';
+
+// Helper to create valid JWT tokens for testing
+async function createTestToken(payload: Record<string, unknown>): Promise<string> {
+  const secret = new TextEncoder().encode(TEST_SECRET);
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d')
+    .sign(secret);
+}
 
 describe('session utilities', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCookieValue = undefined;
+    resetSecretCache();
+  });
+
+  afterEach(() => {
+    resetSecretCache();
   });
 
   describe('getSession', () => {
     it('returns null when no session cookie exists', async () => {
-      mockGet.mockReturnValue(undefined);
+      mockCookieValue = undefined;
 
       const session = await getSession();
       expect(session).toBeNull();
     });
 
     it('returns null when session cookie value is empty', async () => {
-      mockGet.mockReturnValue({ value: '' });
+      mockCookieValue = '';
 
       const session = await getSession();
       expect(session).toBeNull();
     });
 
-    it('returns parsed session data when valid cookie exists', async () => {
-      const sessionData = {
+    it('returns parsed session data when valid JWT exists', async () => {
+      // Use setSessionCookie to create a valid token
+      await setSessionCookie({
+        id: 'user-1',
+        username: 'testuser',
+        displayName: 'Test User',
+        role: 'USER',
+      });
+
+      const session = await getSession();
+      expect(session).toMatchObject({
         userId: 'user-1',
         username: 'testuser',
         role: 'USER',
-        iat: Date.now(),
-      };
-      const encoded = Buffer.from(JSON.stringify(sessionData)).toString('base64');
-      mockGet.mockReturnValue({ value: encoded });
-
-      const session = await getSession();
-      expect(session).toEqual(sessionData);
+      });
+      expect(session?.iat).toBeDefined();
     });
 
-    it('returns null when cookie contains invalid base64', async () => {
-      mockGet.mockReturnValue({ value: '!!invalid!!' });
+    it('returns null when token is invalid', async () => {
+      mockCookieValue = 'invalid-token';
+
+      const session = await getSession();
+      expect(session).toBeNull();
+    });
+
+    it('returns null when token is tampered with', async () => {
+      // Create a valid token first
+      await setSessionCookie({
+        id: 'user-1',
+        username: 'testuser',
+        displayName: 'Test User',
+        role: 'USER',
+      });
+
+      // Tamper with the token
+      if (mockCookieValue) {
+        mockCookieValue = mockCookieValue.slice(0, -5) + 'XXXXX';
+      }
+
+      const session = await getSession();
+      expect(session).toBeNull();
+    });
+
+    it('returns null when token was signed with different secret', async () => {
+      // Create a token with a different secret
+      const wrongSecret = new TextEncoder().encode('completely-different-secret-key-here');
+      const token = await new SignJWT({
+        userId: 'user-1',
+        username: 'testuser',
+        role: 'USER',
+      })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setIssuedAt()
+        .setExpirationTime('7d')
+        .sign(wrongSecret);
+
+      mockCookieValue = token;
 
       const session = await getSession();
       expect(session).toBeNull();
@@ -63,24 +133,68 @@ describe('session utilities', () => {
   });
 
   describe('requireSession', () => {
-    it('returns session when valid session exists', async () => {
-      const sessionData = {
+    it('returns session when valid JWT exists', async () => {
+      await setSessionCookie({
+        id: 'user-1',
+        username: 'testuser',
+        displayName: 'Test User',
+        role: 'USER',
+      });
+
+      const session = await requireSession();
+      expect(session).toMatchObject({
         userId: 'user-1',
         username: 'testuser',
         role: 'USER',
-        iat: Date.now(),
-      };
-      const encoded = Buffer.from(JSON.stringify(sessionData)).toString('base64');
-      mockGet.mockReturnValue({ value: encoded });
-
-      const session = await requireSession();
-      expect(session).toEqual(sessionData);
+      });
     });
 
     it('throws error when no session exists', async () => {
-      mockGet.mockReturnValue(undefined);
+      mockCookieValue = undefined;
 
       await expect(requireSession()).rejects.toThrow('Nicht angemeldet');
+    });
+  });
+
+  describe('setSessionCookie', () => {
+    it('sets httpOnly cookie with JWT token', async () => {
+      await setSessionCookie({
+        id: 'user-1',
+        username: 'testuser',
+        displayName: 'Test User',
+        role: 'ADMIN',
+      });
+
+      expect(mockSet).toHaveBeenCalledWith(
+        'session',
+        expect.any(String),
+        expect.objectContaining({
+          httpOnly: true,
+          sameSite: 'strict',
+          path: '/',
+          maxAge: 60 * 60 * 24 * 7,
+        })
+      );
+
+      // Verify the token is a valid JWT format (header.payload.signature)
+      const token = mockSet.mock.calls[0][1];
+      expect(token.split('.').length).toBe(3);
+    });
+
+    it('creates token that can be verified by getSession', async () => {
+      await setSessionCookie({
+        id: 'admin-1',
+        username: 'admin',
+        displayName: 'Admin User',
+        role: 'ADMIN',
+      });
+
+      const session = await getSession();
+      expect(session).toMatchObject({
+        userId: 'admin-1',
+        username: 'admin',
+        role: 'ADMIN',
+      });
     });
   });
 

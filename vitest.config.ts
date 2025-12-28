@@ -12,6 +12,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     include: ['src/**/*.test.{ts,tsx}'],
+    exclude: ['src/lib/auth/session.test.ts'], // Run separately in node env
     setupFiles: ['./vitest.setup.ts'],
     coverage: {
       provider: 'v8',

@@ -369,4 +369,252 @@ describe('UsersManager', () => {
       expect(screen.getByText('Keine aktiven Benutzer vorhanden.')).toBeInTheDocument();
     });
   });
+
+  describe('suspend and reactivate', () => {
+    it('opens suspend confirmation modal for active users', async () => {
+      mockUsersRecord = { '2': mockUsersData['2'] };
+      renderWithMantine(<UsersManager />);
+
+      const suspendButton = screen.getByTitle('Sperren');
+      fireEvent.click(suspendButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Benutzer sperren?')).toBeInTheDocument();
+      });
+      expect(screen.getByText(/"Active User"/)).toBeInTheDocument();
+    });
+
+    it('suspends user when confirmed', async () => {
+      mockUsersRecord = { '2': mockUsersData['2'] };
+      const updatedUser = { ...mockUsersData['2'], status: 'SUSPENDED' };
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ user: updatedUser }),
+      });
+      globalThis.fetch = mockFetch;
+
+      renderWithMantine(<UsersManager />);
+
+      const suspendButton = screen.getByTitle('Sperren');
+      fireEvent.click(suspendButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Benutzer sperren?')).toBeInTheDocument();
+      });
+
+      // Find the confirm button in the modal (not the icon button with title)
+      const confirmButtons = screen.getAllByRole('button', { name: 'Sperren' });
+      const confirmButton = confirmButtons.find((btn) => !btn.hasAttribute('title'));
+      fireEvent.click(confirmButton!);
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/2', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'SUSPENDED' }),
+        });
+      });
+      expect(mockSetUser).toHaveBeenCalledWith(updatedUser);
+    });
+
+    it('reactivates suspended user', async () => {
+      mockUsersRecord = { '4': mockUsersData['4'] };
+      const updatedUser = { ...mockUsersData['4'], status: 'APPROVED' };
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ user: updatedUser }),
+      });
+      globalThis.fetch = mockFetch;
+
+      renderWithMantine(<UsersManager />);
+
+      const reactivateButton = screen.getByTitle('Reaktivieren');
+      fireEvent.click(reactivateButton);
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/4', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'APPROVED' }),
+        });
+      });
+      expect(mockSetUser).toHaveBeenCalledWith(updatedUser);
+    });
+  });
+
+  describe('demote admin', () => {
+    it('opens demote confirmation modal for admin users', async () => {
+      mockUsersRecord = { '3': mockUsersData['3'] };
+      renderWithMantine(<UsersManager />);
+
+      const demoteButton = screen.getByTitle('Adminrechte entziehen');
+      fireEvent.click(demoteButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Adminrechte entziehen?')).toBeInTheDocument();
+      });
+      expect(screen.getByText(/"Admin User"/)).toBeInTheDocument();
+    });
+
+    it('demotes admin when confirmed', async () => {
+      mockUsersRecord = { '3': mockUsersData['3'] };
+      const updatedUser = { ...mockUsersData['3'], role: 'USER' };
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ user: updatedUser }),
+      });
+      globalThis.fetch = mockFetch;
+
+      renderWithMantine(<UsersManager />);
+
+      const demoteButton = screen.getByTitle('Adminrechte entziehen');
+      fireEvent.click(demoteButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Adminrechte entziehen?')).toBeInTheDocument();
+      });
+
+      const confirmButton = screen.getByRole('button', { name: 'Rechte entziehen' });
+      fireEvent.click(confirmButton);
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/3', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: 'USER' }),
+        });
+      });
+      expect(mockSetUser).toHaveBeenCalledWith(updatedUser);
+      expect(mockShowSuccessToast).toHaveBeenCalledWith('Adminrechte entzogen');
+    });
+  });
+
+  describe('password reset', () => {
+    it('resets password and shows result modal', async () => {
+      mockUsersRecord = { '2': mockUsersData['2'] };
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ newPassword: 'TempPass123' }),
+      });
+      globalThis.fetch = mockFetch;
+
+      renderWithMantine(<UsersManager />);
+
+      const resetButton = screen.getByTitle('Passwort zurücksetzen');
+      fireEvent.click(resetButton);
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/2/reset-password', {
+          method: 'POST',
+        });
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Passwort zurückgesetzt')).toBeInTheDocument();
+      });
+      expect(screen.getByText('TempPass123')).toBeInTheDocument();
+      // Check that the modal shows the username - use the text within the modal
+      expect(screen.getByText(/wurde zurückgesetzt/)).toBeInTheDocument();
+      expect(mockShowSuccessToast).toHaveBeenCalledWith('Passwort wurde zurückgesetzt');
+    });
+
+    it('shows error when password reset fails', async () => {
+      mockUsersRecord = { '2': mockUsersData['2'] };
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Cannot reset' }),
+      });
+      globalThis.fetch = mockFetch;
+
+      renderWithMantine(<UsersManager />);
+
+      const resetButton = screen.getByTitle('Passwort zurücksetzen');
+      fireEvent.click(resetButton);
+
+      await waitFor(() => {
+        expect(mockShowErrorToast).toHaveBeenCalledWith('Cannot reset');
+      });
+    });
+
+    it('closes password result modal when clicking close button', async () => {
+      mockUsersRecord = { '2': mockUsersData['2'] };
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ newPassword: 'TempPass123' }),
+      });
+      globalThis.fetch = mockFetch;
+
+      renderWithMantine(<UsersManager />);
+
+      const resetButton = screen.getByTitle('Passwort zurücksetzen');
+      fireEvent.click(resetButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Passwort zurückgesetzt')).toBeInTheDocument();
+      });
+
+      const closeButton = screen.getByRole('button', { name: 'Schließen' });
+      fireEvent.click(closeButton);
+
+      await waitFor(() => {
+        expect(screen.queryByText('Passwort zurückgesetzt')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('modal interactions', () => {
+    it('closes delete confirmation modal when clicking cancel', async () => {
+      mockUsersRecord = { '1': mockUsersData['1'] };
+      renderWithMantine(<UsersManager />);
+
+      const deleteButton = screen.getByTitle('Löschen');
+      fireEvent.click(deleteButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Benutzer löschen?')).toBeInTheDocument();
+      });
+
+      const cancelButton = screen.getByRole('button', { name: 'Abbrechen' });
+      fireEvent.click(cancelButton);
+
+      await waitFor(() => {
+        expect(screen.queryByText('Benutzer löschen?')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('error handling', () => {
+    it('shows error toast when status change fails', async () => {
+      mockUsersRecord = { '1': mockUsersData['1'] };
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Status change failed' }),
+      });
+      globalThis.fetch = mockFetch;
+
+      renderWithMantine(<UsersManager />);
+
+      const approveButton = screen.getByTitle('Freigeben');
+      fireEvent.click(approveButton);
+
+      await waitFor(() => {
+        expect(mockShowErrorToast).toHaveBeenCalledWith('Status change failed');
+      });
+    });
+
+    it('handles unknown errors gracefully', async () => {
+      mockUsersRecord = { '2': mockUsersData['2'] };
+      const mockFetch = vi.fn().mockRejectedValue('Network error');
+      globalThis.fetch = mockFetch;
+
+      renderWithMantine(<UsersManager />);
+
+      const promoteButton = screen.getByTitle('Zum Admin machen');
+      fireEvent.click(promoteButton);
+
+      await waitFor(() => {
+        expect(mockShowErrorToast).toHaveBeenCalledWith('Unbekannter Fehler');
+      });
+    });
+  });
 });

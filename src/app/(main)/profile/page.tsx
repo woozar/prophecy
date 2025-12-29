@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/prisma';
 import { Card } from '@/components/Card';
 import { GlowBadge } from '@/components/GlowBadge';
 import { PasskeyManager } from '@/components/PasskeyManager';
+import { PasswordManagement } from '@/components/PasswordManagement';
 import { ProfileAvatarSection } from '@/components/ProfileAvatarSection';
 import { UserAvatar } from '@/components/UserAvatar';
 
@@ -96,6 +97,9 @@ export default async function ProfilePage() {
           credentialDeviceType: p.credentialDeviceType || 'singleDevice',
         }))}
       />
+
+      {/* Password Management */}
+      <PasswordManagement hasPasskeys={user.authenticators.length > 0} />
 
       {/* Account Info */}
       <Card padding="p-6">

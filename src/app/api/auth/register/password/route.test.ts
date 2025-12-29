@@ -33,6 +33,7 @@ const createMockUser = (overrides = {}) => ({
   username: 'testuser',
   displayName: 'Test User',
   passwordHash: 'hashed-password',
+  forcePasswordChange: false,
   avatarUrl: null,
   avatarEffect: null,
   avatarEffectColors: null,

@@ -20,6 +20,7 @@ import { Textarea } from '@/components/Textarea';
 import { IconActionButton } from '@/components/IconActionButton';
 import { FilterButton } from '@/components/FilterButton';
 import { UserAvatar } from '@/components/UserAvatar';
+import { CountdownTimer } from '@/components/CountdownTimer';
 import { formatDate } from '@/lib/formatting/date';
 import { useUser, useCurrentUser } from '@/hooks/useUser';
 import { useProphecyStore, type Prophecy } from '@/store/useProphecyStore';
@@ -337,14 +338,17 @@ export const RoundDetailClient = memo(function RoundDetailClient({
           <div>
             <span className="text-(--text-muted)">Einreichung bis:</span>
             <p className="text-white font-medium">{formatDate(round.submissionDeadline)}</p>
+            <CountdownTimer deadline={round.submissionDeadline} />
           </div>
           <div>
             <span className="text-(--text-muted)">Bewertung bis:</span>
             <p className="text-white font-medium">{formatDate(round.ratingDeadline)}</p>
+            <CountdownTimer deadline={round.ratingDeadline} />
           </div>
           <div>
             <span className="text-(--text-muted)">Stichtag:</span>
             <p className="text-white font-medium">{formatDate(round.fulfillmentDate)}</p>
+            <CountdownTimer deadline={round.fulfillmentDate} />
           </div>
         </div>
       </Card>

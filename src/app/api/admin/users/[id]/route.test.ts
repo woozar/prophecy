@@ -13,6 +13,7 @@ const createMockUser = (overrides = {}) => ({
   username: 'testuser',
   displayName: 'Test User',
   passwordHash: null,
+  forcePasswordChange: false,
   avatarUrl: null,
   avatarEffect: null,
   avatarEffectColors: null,

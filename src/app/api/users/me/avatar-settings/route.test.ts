@@ -28,6 +28,7 @@ describe('PATCH /api/users/me/avatar-settings', () => {
     username: 'testuser',
     displayName: 'Test User',
     passwordHash: null,
+    forcePasswordChange: false,
     avatarUrl: '/api/uploads/avatars/test.webp',
     avatarEffect: 'glow',
     avatarEffectColors: '["cyan","teal"]',

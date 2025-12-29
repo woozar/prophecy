@@ -9,7 +9,16 @@ import { GlowBadge } from '@/components/GlowBadge';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useUserStore, type User } from '@/store/useUserStore';
 import { showSuccessToast, showErrorToast } from '@/lib/toast/toast';
-import { IconCheck, IconX, IconBan, IconShield, IconUser, IconTrash } from '@tabler/icons-react';
+import {
+  IconCheck,
+  IconX,
+  IconBan,
+  IconShield,
+  IconUser,
+  IconTrash,
+  IconKey,
+} from '@tabler/icons-react';
+import { Modal } from '@/components/Modal';
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: 'Ausstehend',
@@ -31,11 +40,17 @@ interface ConfirmAction {
   type: 'delete' | 'suspend' | 'demote';
 }
 
+interface PasswordResetResult {
+  username: string;
+  temporaryPassword: string;
+}
+
 export const UsersManager = memo(function UsersManager() {
   const users = useUserStore(useShallow((state) => Object.values(state.users)));
   const { setUser, removeUser } = useUserStore();
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [passwordResetResult, setPasswordResetResult] = useState<PasswordResetResult | null>(null);
 
   const handleStatusChange = useCallback(
     async (userId: string, status: string) => {
@@ -117,6 +132,31 @@ export const UsersManager = memo(function UsersManager() {
     },
     [removeUser]
   );
+
+  const handleResetPassword = useCallback(async (userId: string, username: string) => {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/reset-password`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Fehler beim Zurücksetzen');
+      }
+
+      const data = await res.json();
+      setPasswordResetResult({
+        username,
+        temporaryPassword: data.newPassword,
+      });
+      showSuccessToast('Passwort wurde zurückgesetzt');
+    } catch (error) {
+      showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, []);
 
   const handleConfirm = useCallback(() => {
     if (!confirmAction) return;
@@ -236,6 +276,9 @@ export const UsersManager = memo(function UsersManager() {
                   handleRoleChange(user.id, 'ADMIN');
                 }
               }}
+              onResetPassword={() =>
+                handleResetPassword(user.id, user.displayName || user.username)
+              }
               onDelete={() =>
                 setConfirmAction({
                   userId: user.id,
@@ -289,6 +332,35 @@ export const UsersManager = memo(function UsersManager() {
           <p>{modalContent.message}</p>
         </ConfirmModal>
       )}
+
+      {/* Password Reset Result Modal */}
+      <Modal
+        opened={!!passwordResetResult}
+        onClose={() => setPasswordResetResult(null)}
+        title="Passwort zurückgesetzt"
+      >
+        <div className="space-y-4">
+          <p className="text-(--text-secondary)">
+            Das Passwort für <strong className="text-white">{passwordResetResult?.username}</strong>{' '}
+            wurde zurückgesetzt.
+          </p>
+
+          <div className="bg-[rgba(10,25,41,0.8)] p-4 rounded-lg border border-cyan-500/30">
+            <p className="text-sm text-(--text-muted) mb-1">Temporäres Passwort:</p>
+            <p className="text-lg font-mono text-cyan-400 select-all">
+              {passwordResetResult?.temporaryPassword}
+            </p>
+          </div>
+
+          <p className="text-yellow-400 text-sm">
+            Der Benutzer muss dieses Passwort beim nächsten Login ändern.
+          </p>
+
+          <div className="flex justify-end">
+            <Button onClick={() => setPasswordResetResult(null)}>Schließen</Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 });
@@ -300,6 +372,7 @@ interface UserCardProps {
   onSuspend?: () => void;
   onReactivate?: () => void;
   onToggleAdmin?: () => void;
+  onResetPassword?: () => void;
   onDelete?: () => void;
   isSubmitting: boolean;
   formatDate: (date: string) => string;
@@ -312,6 +385,7 @@ const UserCard = memo(function UserCard({
   onSuspend,
   onReactivate,
   onToggleAdmin,
+  onResetPassword,
   onDelete,
   isSubmitting,
   formatDate,
@@ -400,6 +474,17 @@ const UserCard = memo(function UserCard({
               title={user.role === 'ADMIN' ? 'Adminrechte entziehen' : 'Zum Admin machen'}
             >
               {user.role === 'ADMIN' ? <IconUser size={18} /> : <IconShield size={18} />}
+            </Button>
+          )}
+          {onResetPassword && (
+            <Button
+              variant="ghost"
+              onClick={onResetPassword}
+              disabled={isSubmitting}
+              className="p-2 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-cyan-400 hover:border-cyan-400/50 hover:shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+              title="Passwort zurücksetzen"
+            >
+              <IconKey size={18} />
             </Button>
           )}
           {onDelete && (

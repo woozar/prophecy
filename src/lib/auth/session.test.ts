@@ -33,16 +33,6 @@ import {
   resetSecretCache,
 } from './session';
 
-// Helper to create valid JWT tokens for testing
-async function createTestToken(payload: Record<string, unknown>): Promise<string> {
-  const secret = new TextEncoder().encode(TEST_SECRET);
-  return new SignJWT(payload)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('7d')
-    .sign(secret);
-}
-
 describe('session utilities', () => {
   beforeEach(() => {
     vi.clearAllMocks();

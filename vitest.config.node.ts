@@ -11,6 +11,13 @@ export default defineConfig({
     globals: true,
     include: ['src/lib/auth/session.test.ts'],
     setupFiles: ['./vitest.setup.node.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov', 'html'],
+      reportsDirectory: './coverage-node',
+      include: ['src/lib/auth/**/*.ts'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/**/*.d.ts'],
+    },
   },
   resolve: {
     alias: {

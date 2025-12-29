@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { SignJWT, jwtVerify } from 'jose';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 
 export interface SessionUser {
   userId: string;
@@ -15,6 +15,7 @@ interface LoginUser {
   username: string;
   displayName: string | null;
   role: string;
+  forcePasswordChange?: boolean;
 }
 
 /**
@@ -39,9 +40,7 @@ function getSessionSecret(): Uint8Array {
 let cachedSecret: Uint8Array | null = null;
 
 function getSecret(): Uint8Array {
-  if (!cachedSecret) {
-    cachedSecret = getSessionSecret();
-  }
+  cachedSecret ??= getSessionSecret();
   return cachedSecret;
 }
 
@@ -111,6 +110,7 @@ export async function setSessionCookie(user: LoginUser) {
 export function loginSuccessResponse(user: LoginUser) {
   return NextResponse.json({
     success: true,
+    forcePasswordChange: user.forcePasswordChange ?? false,
     user: {
       id: user.id,
       username: user.username,

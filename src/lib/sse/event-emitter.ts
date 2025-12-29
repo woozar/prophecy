@@ -28,14 +28,51 @@ export interface SSEEvent {
 type SSEClient = {
   id: string;
   controller: ReadableStreamDefaultController<Uint8Array>;
+  lastActivity: number;
 };
+
+// Heartbeat interval: 30 seconds
+const HEARTBEAT_INTERVAL = 30000;
+// Stale client timeout: 60 seconds without activity
+const STALE_CLIENT_TIMEOUT = 60000;
 
 class SSEEventEmitter {
   private readonly clients: Map<string, SSEClient> = new Map();
   private readonly encoder = new TextEncoder();
+  private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+
+  constructor() {
+    this.startHeartbeat();
+  }
+
+  private startHeartbeat(): void {
+    // Don't start multiple intervals
+    if (this.heartbeatInterval) return;
+
+    this.heartbeatInterval = setInterval(() => {
+      const now = Date.now();
+
+      for (const [id, client] of this.clients) {
+        // Remove stale clients (no activity for 60s)
+        if (now - client.lastActivity > STALE_CLIENT_TIMEOUT) {
+          console.log(`[SSE] Removing stale client: ${id}`);
+          this.removeClient(id);
+          continue;
+        }
+
+        // Send ping to active clients
+        try {
+          client.controller.enqueue(this.encoder.encode(':ping\n\n'));
+        } catch {
+          // Client connection failed, remove it
+          this.removeClient(id);
+        }
+      }
+    }, HEARTBEAT_INTERVAL);
+  }
 
   addClient(id: string, controller: ReadableStreamDefaultController<Uint8Array>): void {
-    this.clients.set(id, { id, controller });
+    this.clients.set(id, { id, controller, lastActivity: Date.now() });
     console.log(`[SSE] Client connected: ${id}. Total clients: ${this.clients.size}`);
   }
 
@@ -51,6 +88,8 @@ class SSEEventEmitter {
     for (const [id, client] of this.clients) {
       try {
         client.controller.enqueue(encoded);
+        // Update last activity on successful send
+        client.lastActivity = Date.now();
       } catch (error) {
         console.error(`[SSE] Error sending to client ${id}:`, error);
         this.removeClient(id);
@@ -67,6 +106,8 @@ class SSEEventEmitter {
 
     try {
       client.controller.enqueue(encoded);
+      // Update last activity on successful send
+      client.lastActivity = Date.now();
     } catch (error) {
       console.error(`[SSE] Error sending to client ${clientId}:`, error);
       this.removeClient(clientId);

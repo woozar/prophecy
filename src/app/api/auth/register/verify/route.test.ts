@@ -49,6 +49,7 @@ describe('POST /api/auth/register/verify', () => {
     username: 'testuser',
     displayName: 'Test User',
     passwordHash: null,
+    forcePasswordChange: false,
     avatarUrl: null,
     avatarEffect: null,
     avatarEffectColors: null,

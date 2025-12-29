@@ -136,6 +136,16 @@ function LoginForm() {
         }
 
         const data = await response.json();
+
+        // Passwort-Änderung erforderlich?
+        if (data.forcePasswordChange) {
+          notifications.show(
+            warningToast('Passwort ändern', 'Du musst dein Passwort ändern, um fortzufahren.')
+          );
+          router.push('/change-password');
+          return;
+        }
+
         notifications.show(
           successToast(`Angemeldet als ${data.user.displayName || data.user.username}`)
         );

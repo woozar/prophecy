@@ -8,6 +8,7 @@ out
 
 # Testing
 coverage
+coverage-node
 *.test.ts
 *.test.tsx
 **/*.test.ts

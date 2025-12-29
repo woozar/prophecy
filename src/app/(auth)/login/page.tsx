@@ -13,6 +13,7 @@ import { Card } from '@/components/Card';
 import { PasswordInput } from '@/components/PasswordInput';
 import { TextInput } from '@/components/TextInput';
 import { errorToast, infoToast, successToast, warningToast } from '@/lib/toast/toast-styles';
+import { useUserStore } from '@/store/useUserStore';
 
 function LoginForm() {
   const router = useRouter();
@@ -142,6 +143,8 @@ function LoginForm() {
 
         // Passwort-Änderung erforderlich?
         if (data.forcePasswordChange) {
+          // Set currentUserId so change-password page knows user is logged in
+          useUserStore.getState().setCurrentUserId(data.user.id);
           notifications.show(
             warningToast('Passwort ändern', 'Du musst dein Passwort ändern, um fortzufahren.')
           );

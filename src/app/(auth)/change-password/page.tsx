@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { PasswordInput } from '@/components/PasswordInput';
@@ -10,8 +10,6 @@ import { useUserStore } from '@/store/useUserStore';
 
 export default function ChangePasswordPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const forceChange = searchParams.get('force') === 'true';
 
   const currentUserId = useUserStore((state) => state.currentUserId);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -20,26 +18,28 @@ export default function ChangePasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasExistingPassword, setHasExistingPassword] = useState(true);
+  const [forceChange, setForceChange] = useState(false);
   const [errors, setErrors] = useState<{
     currentPassword?: string;
     newPassword?: string;
     confirmPassword?: string;
   }>({});
 
-  // Redirect if not logged in, check if user has password
+  // Redirect if not logged in, check if user has password and forceChange status
   useEffect(() => {
     if (!currentUserId) {
       router.push('/login');
       return;
     }
 
-    // Check if user has existing password
+    // Check password status from API
     const checkPasswordStatus = async () => {
       try {
         const response = await fetch('/api/users/me/password-login');
         if (response.ok) {
           const data = await response.json();
           setHasExistingPassword(data.passwordLoginEnabled);
+          setForceChange(data.forcePasswordChange);
         }
       } catch {
         // Assume has password on error

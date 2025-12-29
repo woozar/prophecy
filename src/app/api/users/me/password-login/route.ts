@@ -83,6 +83,7 @@ export async function GET() {
       where: { id: session.userId },
       select: {
         passwordHash: true,
+        forcePasswordChange: true,
         authenticators: {
           select: { id: true },
         },
@@ -95,6 +96,7 @@ export async function GET() {
 
     return NextResponse.json({
       passwordLoginEnabled: !!user.passwordHash,
+      forcePasswordChange: user.forcePasswordChange,
       hasPasskeys: user.authenticators.length > 0,
       canDisablePasswordLogin: user.authenticators.length > 0,
     });

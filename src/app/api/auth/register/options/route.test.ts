@@ -1,7 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { POST } from './route';
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { prisma } from '@/lib/db/prisma';
+
+import { POST } from './route';
 
 // Mock webauthn
 vi.mock('@simplewebauthn/server', () => ({

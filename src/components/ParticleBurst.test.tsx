@@ -1,13 +1,14 @@
-import { render, fireEvent, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { act, fireEvent, render } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+
 import { ParticleBurst } from './ParticleBurst';
 
 // Mock the useReducedMotion hook
 vi.mock('@/hooks/useReducedMotion', () => ({
   useReducedMotion: vi.fn(() => false),
 }));
-
-import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 describe('ParticleBurst', () => {
   beforeEach(() => {

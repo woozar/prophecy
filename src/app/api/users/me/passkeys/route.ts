@@ -1,12 +1,14 @@
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+
 import {
+  type RegistrationResponseJSON,
   generateRegistrationOptions,
   verifyRegistrationResponse,
-  type RegistrationResponseJSON,
 } from '@simplewebauthn/server';
-import { prisma, ensureInitialized } from '@/lib/db/prisma';
-import { webauthnConfig, storeChallenge, getChallenge, clearChallenge } from '@/lib/auth/webauthn';
-import { cookies } from 'next/headers';
+
+import { clearChallenge, getChallenge, storeChallenge, webauthnConfig } from '@/lib/auth/webauthn';
+import { ensureInitialized, prisma } from '@/lib/db/prisma';
 
 // Session-Helper
 async function getCurrentUser() {

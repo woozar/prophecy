@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { generateAuthenticationOptions } from '@simplewebauthn/server';
+
+import { storeChallenge, webauthnConfig } from '@/lib/auth/webauthn';
 import { prisma } from '@/lib/db/prisma';
-import { webauthnConfig, storeChallenge } from '@/lib/auth/webauthn';
 
 export async function POST(request: NextRequest) {
   try {

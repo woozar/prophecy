@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect, beforeAll } from 'vitest';
-import { DateTimePicker } from './DateTimePicker';
 import { MantineProvider } from '@mantine/core';
+import { render, screen } from '@testing-library/react';
+import { beforeAll, describe, expect, it } from 'vitest';
+
+import { DateTimePicker } from './DateTimePicker';
 
 // Mock matchMedia for Mantine
 beforeAll(() => {

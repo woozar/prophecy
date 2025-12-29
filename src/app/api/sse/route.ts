@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+
 import { getSession } from '@/lib/auth/session';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 

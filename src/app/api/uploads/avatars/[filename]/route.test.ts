@@ -1,5 +1,7 @@
-import { describe, it, expect } from 'vitest';
 import { NextRequest } from 'next/server';
+
+import { describe, expect, it } from 'vitest';
+
 import { GET } from './route';
 
 describe('GET /api/uploads/avatars/[filename]', () => {

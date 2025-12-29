@@ -1,7 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { validateAdminSession } from './admin-validation';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
+
+import { validateAdminSession } from './admin-validation';
 
 vi.mock('@/lib/auth/session', () => ({
   getSession: vi.fn(),

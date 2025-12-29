@@ -1,8 +1,9 @@
 'use client';
 
-import { ReactNode, memo, useMemo, useCallback, ButtonHTMLAttributes } from 'react';
-import { useClickParticles } from '@/hooks/useClickParticles';
+import { ButtonHTMLAttributes, ReactNode, memo, useCallback, useMemo } from 'react';
+
 import { ClickParticles } from '@/components/ClickParticles';
+import { useClickParticles } from '@/hooks/useClickParticles';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;

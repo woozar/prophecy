@@ -1,9 +1,11 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
-import { PasskeyManager } from './PasskeyManager';
 import { MantineProvider } from '@mantine/core';
 import { startRegistration } from '@simplewebauthn/browser';
-import { successToast, errorToast } from '@/lib/toast/toast-styles';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { errorToast, successToast } from '@/lib/toast/toast-styles';
+
+import { PasskeyManager } from './PasskeyManager';
 
 function renderWithMantine(ui: React.ReactElement) {
   return render(<MantineProvider>{ui}</MantineProvider>);

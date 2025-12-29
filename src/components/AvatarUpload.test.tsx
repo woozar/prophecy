@@ -1,8 +1,10 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
-import { AvatarUpload } from './AvatarUpload';
 import { MantineProvider } from '@mantine/core';
-import { showSuccessToast, showErrorToast } from '@/lib/toast/toast';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
+
+import { AvatarUpload } from './AvatarUpload';
 
 function renderWithMantine(ui: React.ReactElement) {
   return render(<MantineProvider>{ui}</MantineProvider>);

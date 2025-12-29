@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
 import { act } from '@testing-library/react';
-import { useUserStore, type User } from './useUserStore';
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import { type User, useUserStore } from './useUserStore';
 
 describe('useUserStore', () => {
   const mockUser: User = {

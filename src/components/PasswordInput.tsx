@@ -1,7 +1,9 @@
 'use client';
 
-import { memo, forwardRef, InputHTMLAttributes, useId, useState, useCallback } from 'react';
+import { InputHTMLAttributes, forwardRef, memo, useCallback, useId, useState } from 'react';
+
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
+
 import { Button } from './Button';
 import { RequiredAsterisk } from './RequiredAsterisk';
 

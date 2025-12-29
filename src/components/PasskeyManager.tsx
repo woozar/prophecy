@@ -1,12 +1,15 @@
 'use client';
 
-import { memo, useState, useCallback } from 'react';
-import { IconPlus, IconEdit, IconTrash, IconLoader2 } from '@tabler/icons-react';
-import { startRegistration } from '@simplewebauthn/browser';
+import { memo, useCallback, useState } from 'react';
+
 import { notifications } from '@mantine/notifications';
-import { successToast, errorToast } from '@/lib/toast/toast-styles';
-import { Card } from './Card';
+import { startRegistration } from '@simplewebauthn/browser';
+import { IconEdit, IconLoader2, IconPlus, IconTrash } from '@tabler/icons-react';
+
+import { errorToast, successToast } from '@/lib/toast/toast-styles';
+
 import { Button } from './Button';
+import { Card } from './Card';
 import { Modal } from './Modal';
 
 interface Passkey {

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
-import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 
 interface RouteParams {
   params: Promise<{ id: string }>;

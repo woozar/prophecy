@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getSession, type SessionUser } from '@/lib/auth/session';
+
+import { type SessionUser, getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 
 type ValidationResult =

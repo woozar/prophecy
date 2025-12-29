@@ -1,7 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
-import { POST } from './route';
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { findExistingUser } from '@/lib/auth/registration';
 import { prisma } from '@/lib/db/prisma';
+
+import { POST } from './route';
 
 // Mock bcrypt
 vi.mock('bcrypt', () => ({
@@ -25,8 +29,6 @@ vi.mock('@/lib/auth/registration', () => ({
   registrationSuccessResponse: mockSuccessResponse,
   registrationErrorResponse: mockErrorResponse,
 }));
-
-import { findExistingUser } from '@/lib/auth/registration';
 
 const createMockUser = (overrides = {}) => ({
   id: 'user-1',

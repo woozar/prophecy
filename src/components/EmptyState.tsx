@@ -1,6 +1,7 @@
 'use client';
 
-import { memo, ReactNode, useMemo } from 'react';
+import { ReactNode, memo, useMemo } from 'react';
+
 import { Card } from '@/components/Card';
 
 interface EmptyStateProps {

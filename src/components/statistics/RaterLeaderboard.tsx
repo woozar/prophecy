@@ -1,10 +1,12 @@
 'use client';
 
 import { memo, useMemo } from 'react';
-import { Card } from '@/components/Card';
-import { UserAvatar } from '@/components/UserAvatar';
-import { GlassProgressBar } from '@/components/GlassProgressBar';
+
 import { IconChartBar } from '@tabler/icons-react';
+
+import { Card } from '@/components/Card';
+import { GlassProgressBar } from '@/components/GlassProgressBar';
+import { UserAvatar } from '@/components/UserAvatar';
 import type { RaterStats } from '@/lib/statistics/types';
 
 interface RaterLeaderboardProps {

@@ -1,6 +1,7 @@
+import React from 'react';
+
 import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
-import React from 'react';
 
 // Fix jsdom "Not implemented: navigation" error
 // See: https://github.com/vitest-dev/vitest/issues/4450

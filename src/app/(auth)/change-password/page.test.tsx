@@ -1,7 +1,8 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
-import ChangePasswordPage from './page';
 import { MantineProvider } from '@mantine/core';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import ChangePasswordPage from './page';
 
 // Mock matchMedia
 beforeAll(() => {

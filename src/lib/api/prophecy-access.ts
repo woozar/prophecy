@@ -1,6 +1,8 @@
-import { prisma } from '@/lib/db/prisma';
-import { Errors } from './errors';
 import { Prophecy, Round } from '@prisma/client';
+
+import { prisma } from '@/lib/db/prisma';
+
+import { Errors } from './errors';
 
 export type ProphecyWithRound = Prophecy & { round: Round };
 

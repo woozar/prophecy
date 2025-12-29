@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback, useMemo, memo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { type AngularParticle, MYSTICAL_COLORS } from '@/types/particle';
 

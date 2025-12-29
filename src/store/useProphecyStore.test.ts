@@ -1,12 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
 import { act } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import {
-  useProphecyStore,
   type Prophecy,
-  selectProphecyById,
   selectAllProphecies,
-  selectPropheciesByRoundId,
   selectPropheciesByCreatorId,
+  selectPropheciesByRoundId,
+  selectProphecyById,
+  useProphecyStore,
 } from './useProphecyStore';
 
 describe('useProphecyStore', () => {

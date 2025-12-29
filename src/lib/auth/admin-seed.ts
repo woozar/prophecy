@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+
 import { prisma } from '@/lib/db/prisma';
 
 const ADMIN_USERNAME = 'admin';

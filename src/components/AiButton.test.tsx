@@ -1,13 +1,14 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+
 import { AiButton } from './AiButton';
 
 // Mock the useReducedMotion hook
 vi.mock('@/hooks/useReducedMotion', () => ({
   useReducedMotion: vi.fn(() => false),
 }));
-
-import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 describe('AiButton', () => {
   beforeEach(() => {

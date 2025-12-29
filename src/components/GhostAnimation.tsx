@@ -1,7 +1,9 @@
 'use client';
 
-import { memo, useState, useEffect, useCallback, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+
 import Image from 'next/image';
+
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 interface GhostInstance {

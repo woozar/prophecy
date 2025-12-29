@@ -1,11 +1,13 @@
 'use client';
 
-import { memo, useState, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
+
 import { Dropzone, IMAGE_MIME_TYPE } from '@mantine/dropzone';
-import { IconUpload, IconPhoto, IconX, IconTrash } from '@tabler/icons-react';
+import { IconPhoto, IconTrash, IconUpload, IconX } from '@tabler/icons-react';
+
 import { Button } from '@/components/Button';
-import { AvatarPreview, type AvatarEffect } from '@/components/UserAvatar';
-import { showSuccessToast, showErrorToast } from '@/lib/toast/toast';
+import { type AvatarEffect, AvatarPreview } from '@/components/UserAvatar';
+import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 
 interface AvatarUploadProps {
   username: string;

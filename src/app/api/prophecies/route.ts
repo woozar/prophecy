@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
-import { sseEmitter } from '@/lib/sse/event-emitter';
 import { createProphecySchema } from '@/lib/schemas/prophecy';
-import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
+import { sseEmitter } from '@/lib/sse/event-emitter';
 
 // GET /api/prophecies - Get prophecies for a round
 export async function GET(request: NextRequest) {

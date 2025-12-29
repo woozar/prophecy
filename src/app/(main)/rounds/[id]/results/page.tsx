@@ -1,10 +1,12 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useRoundStore } from '@/store/useRoundStore';
-import { useCurrentUser } from '@/hooks/useUser';
-import { Card } from '@/components/Card';
+
 import { BackLink } from '@/components/BackLink';
+import { Card } from '@/components/Card';
+import { useCurrentUser } from '@/hooks/useUser';
+import { useRoundStore } from '@/store/useRoundStore';
+
 import { RoundResultsClient } from './RoundResultsClient';
 
 export default function RoundResultsPage() {

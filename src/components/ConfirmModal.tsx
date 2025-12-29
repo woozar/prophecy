@@ -1,8 +1,9 @@
 'use client';
 
-import { memo, useMemo, ReactNode } from 'react';
-import { Modal } from '@/components/Modal';
+import { ReactNode, memo, useMemo } from 'react';
+
 import { Button } from '@/components/Button';
+import { Modal } from '@/components/Modal';
 
 type ModalVariant = 'danger' | 'warning' | 'violet';
 

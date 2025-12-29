@@ -1,5 +1,8 @@
-import { render, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { act, render } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+
 import { GhostAnimation } from './GhostAnimation';
 
 // Mock Next.js Image component
@@ -22,8 +25,6 @@ vi.mock('next/image', () => ({
 vi.mock('@/hooks/useReducedMotion', () => ({
   useReducedMotion: vi.fn(() => false),
 }));
-
-import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 const GHOST_IMAGES = ['/ghost.png', '/ghost2.png', '/ghost3.png', '/ghost4.png', '/ghost5.png'];
 

@@ -1,6 +1,7 @@
 'use client';
 
-import { memo, forwardRef, InputHTMLAttributes, useId } from 'react';
+import { InputHTMLAttributes, forwardRef, memo, useId } from 'react';
+
 import { RequiredAsterisk } from './RequiredAsterisk';
 
 interface TextInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {

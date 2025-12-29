@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useMemo, type ReactNode, type CSSProperties } from 'react';
+import { type CSSProperties, type ReactNode, memo, useMemo } from 'react';
 
 // Shared container styles for glass bars
 export function useGlassContainerStyle(

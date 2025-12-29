@@ -1,7 +1,8 @@
+import { redirect } from 'next/navigation';
+
+import { UsersManager } from '@/components/admin/UsersManager';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
-import { redirect } from 'next/navigation';
-import { UsersManager } from '@/components/admin/UsersManager';
 
 export default async function AdminUsersPage() {
   const session = await getSession();

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
 import { useIsMobile } from '@/hooks/useIsMobile';
 import {
-  type VelocityParticle,
   BURST_COLORS,
-  updateVelocityParticle,
+  type VelocityParticle,
   isParticleActive,
+  updateVelocityParticle,
 } from '@/types/particle';
 
 interface UseClickParticlesOptions {

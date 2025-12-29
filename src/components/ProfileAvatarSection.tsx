@@ -1,9 +1,10 @@
 'use client';
 
-import { memo, useState, useCallback } from 'react';
-import { Card } from '@/components/Card';
-import { AvatarUpload } from '@/components/AvatarUpload';
+import { memo, useCallback, useState } from 'react';
+
 import { AvatarEffectSelector } from '@/components/AvatarEffectSelector';
+import { AvatarUpload } from '@/components/AvatarUpload';
+import { Card } from '@/components/Card';
 
 interface ProfileAvatarSectionProps {
   username: string;

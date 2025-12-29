@@ -1,8 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
+
+// Note: Mocking node:fs and node:fs/promises is complex with Vitest
+// The filesystem operations are tested implicitly through integration tests
+// Here we focus on validation and database interaction tests
+
+import { DELETE, POST } from './route';
 
 vi.mock('@/lib/auth/session', () => ({
   getSession: vi.fn(),
@@ -32,12 +40,6 @@ vi.mock('sharp', () => ({
     toBuffer: vi.fn().mockResolvedValue(Buffer.from('processed-image-data')),
   }),
 }));
-
-// Note: Mocking node:fs and node:fs/promises is complex with Vitest
-// The filesystem operations are tested implicitly through integration tests
-// Here we focus on validation and database interaction tests
-
-import { POST, DELETE } from './route';
 
 const mockUserFull = {
   id: 'user-1',

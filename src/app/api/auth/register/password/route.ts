@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import bcrypt from 'bcrypt';
-import { prisma, ensureInitialized } from '@/lib/db/prisma';
+
 import {
+  duplicateUsernameResponse,
   findExistingUser,
   normalizeUsername,
-  duplicateUsernameResponse,
-  setPendingUserCookie,
-  registrationSuccessResponse,
   registrationErrorResponse,
+  registrationSuccessResponse,
+  setPendingUserCookie,
 } from '@/lib/auth/registration';
+import { ensureInitialized, prisma } from '@/lib/db/prisma';
 
 export async function POST(request: NextRequest) {
   await ensureInitialized();

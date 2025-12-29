@@ -1,9 +1,11 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useRoundStore } from '@/store/useRoundStore';
-import { Card } from '@/components/Card';
+
 import { BackLink } from '@/components/BackLink';
+import { Card } from '@/components/Card';
+import { useRoundStore } from '@/store/useRoundStore';
+
 import { RoundDetailClient } from './RoundDetailClient';
 
 export default function RoundDetailPage() {

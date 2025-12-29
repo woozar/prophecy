@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import {
-  verifyAuthenticationResponse,
   type AuthenticationResponseJSON,
+  verifyAuthenticationResponse,
 } from '@simplewebauthn/server';
+
+import { loginErrorResponse, loginSuccessResponse, setSessionCookie } from '@/lib/auth/session';
+import { clearChallenge, getChallenge, webauthnConfig } from '@/lib/auth/webauthn';
 import { prisma } from '@/lib/db/prisma';
-import { webauthnConfig, getChallenge, clearChallenge } from '@/lib/auth/webauthn';
-import { setSessionCookie, loginSuccessResponse, loginErrorResponse } from '@/lib/auth/session';
 
 export async function POST(request: NextRequest) {
   try {

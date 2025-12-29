@@ -22,7 +22,7 @@ React-Komponenten müssen auf Performance optimiert werden:
 ### Beispiel
 
 ```tsx
-import { memo, useMemo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 
 export const MyComponent = memo(function MyComponent({ value, onChange }) {
   const computedStyle = useMemo(

@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, memo, useMemo, HTMLAttributes } from 'react';
+import { HTMLAttributes, ReactNode, memo, useMemo } from 'react';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;

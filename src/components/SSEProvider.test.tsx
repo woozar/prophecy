@@ -1,7 +1,9 @@
 import { render } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import { SSEProvider } from './SSEProvider';
+import { describe, expect, it, vi } from 'vitest';
+
 import { useUserStore } from '@/store/useUserStore';
+
+import { SSEProvider } from './SSEProvider';
 
 // Mock the useSSE hook
 const mockUseSSE = vi.fn();

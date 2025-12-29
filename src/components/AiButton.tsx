@@ -1,9 +1,10 @@
 'use client';
 
-import { ReactNode, ButtonHTMLAttributes, memo, useMemo, useCallback } from 'react';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { useClickParticles } from '@/hooks/useClickParticles';
+import { ButtonHTMLAttributes, ReactNode, memo, useCallback, useMemo } from 'react';
+
 import { ClickParticles } from '@/components/ClickParticles';
+import { useClickParticles } from '@/hooks/useClickParticles';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 interface AiButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;

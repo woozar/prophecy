@@ -1,7 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { useUser, useCurrentUser } from './useUser';
+import { act, renderHook } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { useUserStore } from '@/store/useUserStore';
+
+import { useCurrentUser, useUser } from './useUser';
 
 describe('useUser hook', () => {
   const mockUser1 = {

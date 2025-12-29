@@ -1,6 +1,7 @@
 'use client';
 
-import { memo, useMemo, TextareaHTMLAttributes, ReactNode } from 'react';
+import { ReactNode, TextareaHTMLAttributes, memo, useMemo } from 'react';
+
 import { RequiredAsterisk } from './RequiredAsterisk';
 
 interface TextareaProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'className'> {

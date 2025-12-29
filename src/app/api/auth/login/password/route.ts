@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import bcrypt from 'bcrypt';
-import { prisma, ensureInitialized } from '@/lib/db/prisma';
-import { setSessionCookie, loginSuccessResponse, loginErrorResponse } from '@/lib/auth/session';
+
+import { loginErrorResponse, loginSuccessResponse, setSessionCookie } from '@/lib/auth/session';
+import { ensureInitialized, prisma } from '@/lib/db/prisma';
 
 export async function POST(request: NextRequest) {
   await ensureInitialized();

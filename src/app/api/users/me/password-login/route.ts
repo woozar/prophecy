@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
+
 import { z } from 'zod';
-import { prisma } from '@/lib/db/prisma';
+
 import { requireSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
 
 const togglePasswordLoginSchema = z.object({
   enabled: z.boolean(),

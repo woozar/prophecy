@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
-import { CreatorLeaderboard } from './CreatorLeaderboard';
+import { describe, expect, it } from 'vitest';
+
 import type { CreatorStats } from '@/lib/statistics/types';
+
+import { CreatorLeaderboard } from './CreatorLeaderboard';
 
 const createMockCreatorStats = (overrides: Partial<CreatorStats> = {}): CreatorStats => ({
   userId: 'user-1',

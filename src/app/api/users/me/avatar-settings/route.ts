@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { getSession } from '@/lib/auth/session';
-import { prisma, ensureInitialized } from '@/lib/db/prisma';
+import { ensureInitialized, prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
 const VALID_EFFECTS = new Set(['glow', 'particles', 'lightning', 'none']);

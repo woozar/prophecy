@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
-import { prisma, ensureInitialized } from '@/lib/db/prisma';
-import { sseEmitter } from '@/lib/sse/event-emitter';
-import sharp from 'sharp';
-import { writeFile, unlink, mkdir } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
-import path from 'node:path';
+
 import { createHash } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import sharp from 'sharp';
+
+import { getSession } from '@/lib/auth/session';
+import { ensureInitialized, prisma } from '@/lib/db/prisma';
+import { sseEmitter } from '@/lib/sse/event-emitter';
 
 const UPLOAD_DIR =
   process.env.NODE_ENV === 'production' ? '/app/uploads/avatars' : './uploads/avatars';

@@ -1,7 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET } from './route';
-import { prisma } from '@/lib/db/prisma';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { getSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
+
+import { GET } from './route';
 
 const mockUser = { userId: 'user-1', username: 'testuser', role: 'USER' as const, iat: Date.now() };
 const mockAdmin = { userId: 'admin-1', username: 'admin', role: 'ADMIN' as const, iat: Date.now() };

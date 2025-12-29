@@ -1,16 +1,19 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
+
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+
 import { notifications } from '@mantine/notifications';
 import { startRegistration } from '@simplewebauthn/browser';
-import { Card } from '@/components/Card';
+
 import { Button } from '@/components/Button';
-import { TextInput } from '@/components/TextInput';
-import { PasswordInput } from '@/components/PasswordInput';
+import { Card } from '@/components/Card';
 import { GlowBadge } from '@/components/GlowBadge';
-import { successToast, errorToast, infoToast } from '@/lib/toast/toast-styles';
+import { PasswordInput } from '@/components/PasswordInput';
+import { TextInput } from '@/components/TextInput';
+import { errorToast, infoToast, successToast } from '@/lib/toast/toast-styles';
 
 export default function RegisterPage() {
   const router = useRouter();

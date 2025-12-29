@@ -1,7 +1,9 @@
 'use client';
 
 import { ReactNode } from 'react';
+
 import Image from 'next/image';
+
 import { FogBackground } from '@/components/FogBackground';
 import { ParticleBurst } from '@/components/ParticleBurst';
 

@@ -1,10 +1,12 @@
 'use client';
 
 import { memo } from 'react';
-import { Card } from '@/components/Card';
-import { UserAvatar } from '@/components/UserAvatar';
-import { GlassProgressBar } from '@/components/GlassProgressBar';
+
 import { IconTrophy } from '@tabler/icons-react';
+
+import { Card } from '@/components/Card';
+import { GlassProgressBar } from '@/components/GlassProgressBar';
+import { UserAvatar } from '@/components/UserAvatar';
 import type { CreatorStats } from '@/lib/statistics/types';
 
 interface CreatorLeaderboardProps {

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UserAvatar, AvatarPreview } from './UserAvatar';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { AvatarPreview, UserAvatar } from './UserAvatar';
 
 // Mock the useUser hook
 type MockUser = {

@@ -1,6 +1,17 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextResponse } from 'next/server';
+
 import { SignJWT } from 'jose';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Import after mock setup
+import {
+  getSession,
+  loginErrorResponse,
+  loginSuccessResponse,
+  requireSession,
+  resetSecretCache,
+  setSessionCookie,
+} from './session';
 
 // Set SESSION_SECRET for tests before importing session module
 const TEST_SECRET = 'test-session-secret-at-least-32-chars-long';
@@ -22,16 +33,6 @@ vi.mock('next/headers', () => ({
     })
   ),
 }));
-
-// Import after mock setup
-import {
-  getSession,
-  requireSession,
-  setSessionCookie,
-  loginSuccessResponse,
-  loginErrorResponse,
-  resetSecretCache,
-} from './session';
 
 describe('session utilities', () => {
   beforeEach(() => {

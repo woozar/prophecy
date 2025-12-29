@@ -1,8 +1,10 @@
 'use client';
 
-import { memo, ReactNode, useMemo } from 'react';
+import { ReactNode, memo, useMemo } from 'react';
+
 import { Modal as MantineModal, type ModalProps as MantineModalProps } from '@mantine/core';
 import { IconX } from '@tabler/icons-react';
+
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 type ModalVariant = 'default' | 'danger' | 'warning' | 'violet';

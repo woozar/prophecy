@@ -1,6 +1,7 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeAll } from 'vitest';
-import { IconPencil, IconTrash, IconCheck, IconX, IconBan, IconShield } from '@tabler/icons-react';
+import { IconBan, IconCheck, IconPencil, IconShield, IconTrash, IconX } from '@tabler/icons-react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+
 import { IconActionButton } from './IconActionButton';
 
 // Mock matchMedia

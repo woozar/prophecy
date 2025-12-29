@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+import { Errors, getProphecyWithAccessCheck, handleApiError } from '@/lib/api';
+import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
-import { sseEmitter } from '@/lib/sse/event-emitter';
 import { updateProphecySchema } from '@/lib/schemas/prophecy';
-import { Errors, handleApiError, getProphecyWithAccessCheck } from '@/lib/api';
-import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
+import { sseEmitter } from '@/lib/sse/event-emitter';
 
 interface RouteParams {
   params: Promise<{ id: string }>;

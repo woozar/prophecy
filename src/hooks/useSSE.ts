@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useCallback, useState } from 'react';
-import { useRoundStore, type Round } from '@/store/useRoundStore';
-import { useUserStore, type User } from '@/store/useUserStore';
-import { useProphecyStore, type Prophecy } from '@/store/useProphecyStore';
-import { useRatingStore, type Rating } from '@/store/useRatingStore';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { type Prophecy, useProphecyStore } from '@/store/useProphecyStore';
+import { type Rating, useRatingStore } from '@/store/useRatingStore';
+import { type Round, useRoundStore } from '@/store/useRoundStore';
+import { type User, useUserStore } from '@/store/useUserStore';
 
 type SSEEventType =
   | 'round:created'

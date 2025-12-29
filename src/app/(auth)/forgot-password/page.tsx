@@ -1,10 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
+
 import Link from 'next/link';
+
 import { TextInput } from '@mantine/core';
-import { Card } from '@/components/Card';
+
 import { Button } from '@/components/Button';
+import { Card } from '@/components/Card';
 
 export default function ForgotPasswordPage() {
   const [username, setUsername] = useState('');
@@ -55,13 +58,13 @@ export default function ForgotPasswordPage() {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="text-cyan-400 flex-shrink-0 mt-0.5"
+                className="text-cyan-400 shrink-0 mt-0.5"
               >
                 <circle cx="12" cy="12" r="10" />
                 <path d="m9 12 2 2 4-4" />
               </svg>
               <div>
-                <p className="text-(--text-primary) font-medium mb-1">Anfrage gesendet</p>
+                <p className="text-foreground font-medium mb-1">Anfrage gesendet</p>
                 <p className="text-sm text-(--text-secondary)">
                   Ein Admin wurde über deine Anfrage informiert. Du wirst kontaktiert, sobald dein
                   Passwort zurückgesetzt wurde.

@@ -1,5 +1,6 @@
-import type { NotificationData } from '@mantine/notifications';
 import { createElement } from 'react';
+
+import type { NotificationData } from '@mantine/notifications';
 
 // Custom Icons als React Elemente
 const CheckIcon = createElement(

@@ -1,15 +1,18 @@
 'use client';
 
-import { useState, useCallback, Suspense } from 'react';
+import { Suspense, useCallback, useState } from 'react';
+
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+
 import { notifications } from '@mantine/notifications';
 import { startAuthentication } from '@simplewebauthn/browser';
-import { Card } from '@/components/Card';
+
 import { Button } from '@/components/Button';
-import { TextInput } from '@/components/TextInput';
+import { Card } from '@/components/Card';
 import { PasswordInput } from '@/components/PasswordInput';
-import { successToast, errorToast, infoToast, warningToast } from '@/lib/toast/toast-styles';
+import { TextInput } from '@/components/TextInput';
+import { errorToast, infoToast, successToast, warningToast } from '@/lib/toast/toast-styles';
 
 function LoginForm() {
   const router = useRouter();

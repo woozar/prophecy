@@ -1,41 +1,43 @@
 'use client';
 
-import { useState, useCallback, useMemo, memo } from 'react';
-import { useShallow } from 'zustand/react/shallow';
-import { Card } from '@/components/Card';
-import { Button } from '@/components/Button';
-import { Modal } from '@/components/Modal';
-import { ConfirmModal } from '@/components/ConfirmModal';
-import { TextInput } from '@/components/TextInput';
-import { GlowBadge } from '@/components/GlowBadge';
-import { RoundStatusBadge } from '@/components/RoundStatusBadge';
-import { RatingSlider } from '@/components/RatingSlider';
-import { GlassScaleBar } from '@/components/GlassScaleBar';
-import { showSuccessToast, showErrorToast } from '@/lib/toast/toast';
-import { createProphecySchema, updateProphecySchema } from '@/lib/schemas/prophecy';
+import { memo, useCallback, useMemo, useState } from 'react';
+
 import {
-  IconPlus,
-  IconTrash,
+  IconChartBar,
+  IconCheck,
   IconEdit,
   IconFilter,
-  IconCheck,
-  IconX,
-  IconChartBar,
   IconLock,
   IconLockOpen,
+  IconPlus,
+  IconTrash,
+  IconX,
 } from '@tabler/icons-react';
+import { useShallow } from 'zustand/react/shallow';
+
 import { BackLink } from '@/components/BackLink';
-import { EmptyState } from '@/components/EmptyState';
-import { Textarea } from '@/components/Textarea';
-import { IconActionButton } from '@/components/IconActionButton';
-import { FilterButton } from '@/components/FilterButton';
-import { UserAvatar } from '@/components/UserAvatar';
+import { Button } from '@/components/Button';
+import { Card } from '@/components/Card';
+import { ConfirmModal } from '@/components/ConfirmModal';
 import { CountdownTimer } from '@/components/CountdownTimer';
+import { EmptyState } from '@/components/EmptyState';
+import { FilterButton } from '@/components/FilterButton';
+import { GlassScaleBar } from '@/components/GlassScaleBar';
+import { GlowBadge } from '@/components/GlowBadge';
+import { IconActionButton } from '@/components/IconActionButton';
+import { Modal } from '@/components/Modal';
+import { RatingSlider } from '@/components/RatingSlider';
+import { RoundStatusBadge } from '@/components/RoundStatusBadge';
+import { TextInput } from '@/components/TextInput';
+import { Textarea } from '@/components/Textarea';
+import { UserAvatar } from '@/components/UserAvatar';
+import { useCurrentUser, useUser } from '@/hooks/useUser';
 import { formatDate } from '@/lib/formatting/date';
-import { useUser, useCurrentUser } from '@/hooks/useUser';
-import { useProphecyStore, type Prophecy } from '@/store/useProphecyStore';
+import { createProphecySchema, updateProphecySchema } from '@/lib/schemas/prophecy';
+import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
+import { type Prophecy, useProphecyStore } from '@/store/useProphecyStore';
+import { selectUserRatingForProphecy, useRatingStore } from '@/store/useRatingStore';
 import { type Round } from '@/store/useRoundStore';
-import { useRatingStore, selectUserRatingForProphecy } from '@/store/useRatingStore';
 
 interface RoundDetailClientProps {
   round: Round;

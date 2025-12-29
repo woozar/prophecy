@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
 import { act } from '@testing-library/react';
-import { useRoundStore, type Round } from './useRoundStore';
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import { type Round, useRoundStore } from './useRoundStore';
 
 describe('useRoundStore', () => {
   const mockRound: Round = {

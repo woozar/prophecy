@@ -1,10 +1,12 @@
-import { render, screen, fireEvent, waitFor, within, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vitest';
 import { MantineProvider } from '@mantine/core';
-import { RoundDetailClient } from './RoundDetailClient';
-import { useProphecyStore, type Prophecy } from '@/store/useProphecyStore';
-import { useRatingStore, type Rating } from '@/store/useRatingStore';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { type Prophecy, useProphecyStore } from '@/store/useProphecyStore';
+import { type Rating, useRatingStore } from '@/store/useRatingStore';
 import { useUserStore } from '@/store/useUserStore';
+
+import { RoundDetailClient } from './RoundDetailClient';
 
 async function renderWithMantine(ui: React.ReactElement) {
   let result: ReturnType<typeof render>;

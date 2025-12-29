@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
+
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
-import { prisma } from '@/lib/db/prisma';
+
 import { requireSession, setSessionCookie } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
 
 const changePasswordSchema = z
   .object({

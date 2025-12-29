@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyRegistrationResponse, type RegistrationResponseJSON } from '@simplewebauthn/server';
-import { prisma } from '@/lib/db/prisma';
-import { webauthnConfig, getChallenge, clearChallenge } from '@/lib/auth/webauthn';
+
+import { type RegistrationResponseJSON, verifyRegistrationResponse } from '@simplewebauthn/server';
+
 import {
-  normalizeUsername,
   duplicateUsernameResponse,
-  setPendingUserCookie,
-  registrationSuccessResponse,
+  normalizeUsername,
   registrationErrorResponse,
+  registrationSuccessResponse,
+  setPendingUserCookie,
 } from '@/lib/auth/registration';
+import { clearChallenge, getChallenge, webauthnConfig } from '@/lib/auth/webauthn';
+import { prisma } from '@/lib/db/prisma';
 
 export async function POST(request: NextRequest) {
   try {

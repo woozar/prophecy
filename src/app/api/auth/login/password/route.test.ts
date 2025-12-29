@@ -1,8 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
-import { POST } from './route';
-import { prisma } from '@/lib/db/prisma';
+
 import bcrypt from 'bcrypt';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { prisma } from '@/lib/db/prisma';
+
+import { POST } from './route';
 
 // Mock bcrypt
 vi.mock('bcrypt', () => ({

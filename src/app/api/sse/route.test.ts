@@ -1,8 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { GET } from './route';
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { getSession } from '@/lib/auth/session';
 import { sseEmitter } from '@/lib/sse/event-emitter';
+
+import { GET } from './route';
 
 vi.mock('@/lib/auth/session', () => ({
   getSession: vi.fn(),

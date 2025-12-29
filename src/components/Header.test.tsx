@@ -1,7 +1,9 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { errorToast, successToast } from '@/lib/toast/toast-styles';
+
 import { Header } from './Header';
-import { successToast, errorToast } from '@/lib/toast/toast-styles';
 
 const mockPush = vi.fn();
 let mockPathname = '/';

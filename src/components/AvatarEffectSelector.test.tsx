@@ -1,7 +1,9 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
+
 import { AvatarEffectSelector } from './AvatarEffectSelector';
-import { showSuccessToast, showErrorToast } from '@/lib/toast/toast';
 
 // Mock toast
 vi.mock('@/lib/toast/toast', () => ({

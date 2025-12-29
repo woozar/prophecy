@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { generateRegistrationOptions } from '@simplewebauthn/server';
-import { prisma, ensureInitialized } from '@/lib/db/prisma';
-import { webauthnConfig, storeChallenge } from '@/lib/auth/webauthn';
+
+import { storeChallenge, webauthnConfig } from '@/lib/auth/webauthn';
+import { ensureInitialized, prisma } from '@/lib/db/prisma';
 
 export async function POST(request: NextRequest) {
   await ensureInitialized();

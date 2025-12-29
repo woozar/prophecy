@@ -1,7 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET } from './route';
-import { prisma } from '@/lib/db/prisma';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { getSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
+
+import { GET } from './route';
 
 vi.mock('@/lib/auth/session', () => ({
   getSession: vi.fn(),

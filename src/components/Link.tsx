@@ -1,10 +1,12 @@
 'use client';
 
 import { memo, useCallback } from 'react';
-import NextLink from 'next/link';
 import type { ComponentProps } from 'react';
-import { useClickParticles } from '@/hooks/useClickParticles';
+
+import NextLink from 'next/link';
+
 import { ClickParticles } from '@/components/ClickParticles';
+import { useClickParticles } from '@/hooks/useClickParticles';
 
 type NextLinkProps = ComponentProps<typeof NextLink>;
 

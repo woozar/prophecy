@@ -1,9 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { POST } from './route';
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { validateAdminSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
+
+import { POST } from './route';
 
 vi.mock('@/lib/auth/admin-validation', () => ({
   validateAdminSession: vi.fn(),

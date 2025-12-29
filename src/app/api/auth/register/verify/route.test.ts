@@ -1,9 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
-import { POST } from './route';
-import { prisma } from '@/lib/db/prisma';
-import { getChallenge, clearChallenge } from '@/lib/auth/webauthn';
+
 import { verifyRegistrationResponse } from '@simplewebauthn/server';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { clearChallenge, getChallenge } from '@/lib/auth/webauthn';
+import { prisma } from '@/lib/db/prisma';
+
+import { POST } from './route';
 
 vi.mock('@/lib/auth/webauthn', () => ({
   webauthnConfig: {

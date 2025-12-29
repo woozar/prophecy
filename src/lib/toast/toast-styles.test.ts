@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { successToast, errorToast, warningToast, infoToast } from './toast-styles';
+import { describe, expect, it } from 'vitest';
+
+import { errorToast, infoToast, successToast, warningToast } from './toast-styles';
 
 describe('toast-styles', () => {
   describe('successToast', () => {

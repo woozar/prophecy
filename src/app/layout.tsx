@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
+
 import { ColorSchemeScript, MantineProvider } from '@mantine/core';
 import { DatesProvider } from '@mantine/dates';
 import { Notifications } from '@mantine/notifications';
-import { GhostAnimation } from '@/components/GhostAnimation';
 import 'dayjs/locale/de';
+
+import { GhostAnimation } from '@/components/GhostAnimation';
+
 import './globals.css';
 
 export const metadata: Metadata = {

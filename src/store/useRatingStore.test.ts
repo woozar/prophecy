@@ -1,13 +1,14 @@
-import { describe, it, expect, beforeEach } from 'vitest';
 import { act } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import {
-  useRatingStore,
   type Rating,
-  selectRatingById,
   selectAllRatings,
+  selectRatingById,
   selectRatingsByProphecyId,
   selectRatingsByUserId,
   selectUserRatingForProphecy,
+  useRatingStore,
 } from './useRatingStore';
 
 describe('useRatingStore', () => {

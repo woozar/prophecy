@@ -1,10 +1,12 @@
 'use client';
 
-import { memo, useState, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
+
+import { IconBolt, IconCircleDot, IconCircleOff, IconSparkles } from '@tabler/icons-react';
+
 import { Button } from '@/components/Button';
 import { AvatarPreview } from '@/components/UserAvatar';
-import { showSuccessToast, showErrorToast } from '@/lib/toast/toast';
-import { IconSparkles, IconBolt, IconCircleDot, IconCircleOff } from '@tabler/icons-react';
+import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 
 type AvatarEffect = 'glow' | 'particles' | 'lightning' | 'none';
 

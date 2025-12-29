@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useCallback, memo, useMemo } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
+
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { type AngularParticle } from '@/types/particle';
 

@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { notifications } from '@mantine/notifications';
-import { showSuccessToast, showErrorToast, showWarningToast, showInfoToast } from './toast';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { showErrorToast, showInfoToast, showSuccessToast, showWarningToast } from './toast';
 
 // Mock mantine notifications
 vi.mock('@mantine/notifications', () => ({

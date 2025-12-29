@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useMemo } from 'react';
+
 import {
   FogFill,
   useFillGradientStyle,

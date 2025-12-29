@@ -1,7 +1,8 @@
 'use client';
 
 import { memo, useMemo } from 'react';
-import { GlassBarContainer, FogFill, useFillGradientStyle } from './GlassBarBase';
+
+import { FogFill, GlassBarContainer, useFillGradientStyle } from './GlassBarBase';
 
 interface GlassScaleBarProps {
   /** Current value (-10 to +10) */

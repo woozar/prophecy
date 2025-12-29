@@ -1,11 +1,11 @@
-import { getSession } from '@/lib/auth/session';
-import { prisma } from '@/lib/db/prisma';
 import { Card } from '@/components/Card';
 import { GlowBadge } from '@/components/GlowBadge';
 import { PasskeyManager } from '@/components/PasskeyManager';
 import { PasswordManagement } from '@/components/PasswordManagement';
 import { ProfileAvatarSection } from '@/components/ProfileAvatarSection';
 import { UserAvatar } from '@/components/UserAvatar';
+import { getSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
 
 export default async function ProfilePage() {
   const session = await getSession();

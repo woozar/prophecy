@@ -1,13 +1,16 @@
 'use client';
 
-import { memo, useCallback, useState, useEffect, useRef } from 'react';
-import { IconChevronDown, IconUser, IconLogout, IconMenu2, IconX } from '@tabler/icons-react';
-import { Link } from '@/components/Link';
-import { Button } from '@/components/Button';
-import { UserAvatar } from '@/components/UserAvatar';
-import { useRouter, usePathname } from 'next/navigation';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+
+import { usePathname, useRouter } from 'next/navigation';
+
 import { notifications } from '@mantine/notifications';
-import { successToast, errorToast } from '@/lib/toast/toast-styles';
+import { IconChevronDown, IconLogout, IconMenu2, IconUser, IconX } from '@tabler/icons-react';
+
+import { Button } from '@/components/Button';
+import { Link } from '@/components/Link';
+import { UserAvatar } from '@/components/UserAvatar';
+import { errorToast, successToast } from '@/lib/toast/toast-styles';
 import { useUserStore } from '@/store/useUserStore';
 
 interface User {

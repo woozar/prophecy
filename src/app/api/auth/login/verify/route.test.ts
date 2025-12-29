@@ -1,11 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
-import { POST } from './route';
-import { prisma } from '@/lib/db/prisma';
-import { getChallenge, clearChallenge } from '@/lib/auth/webauthn';
-import { setSessionCookie } from '@/lib/auth/session';
-import { verifyAuthenticationResponse } from '@simplewebauthn/server';
+
 import type { Prisma } from '@prisma/client';
+import { verifyAuthenticationResponse } from '@simplewebauthn/server';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { setSessionCookie } from '@/lib/auth/session';
+import { clearChallenge, getChallenge } from '@/lib/auth/webauthn';
+import { prisma } from '@/lib/db/prisma';
+
+import { POST } from './route';
 
 type AuthenticatorWithUser = Prisma.AuthenticatorGetPayload<{ include: { user: true } }>;
 

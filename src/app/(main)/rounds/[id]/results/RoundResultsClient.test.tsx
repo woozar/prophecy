@@ -1,7 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { RoundResultsClient } from './RoundResultsClient';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { Round } from '@/store/useRoundStore';
+
+import { RoundResultsClient } from './RoundResultsClient';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;

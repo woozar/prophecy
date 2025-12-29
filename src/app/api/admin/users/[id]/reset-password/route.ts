@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
+
 import bcrypt from 'bcrypt';
 import { randomBytes } from 'node:crypto';
-import { prisma } from '@/lib/db/prisma';
+
 import { requireSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
 
 function generateRandomPassword(): string {
   // Generate a random 12-character password

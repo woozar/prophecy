@@ -1,24 +1,26 @@
 'use client';
 
-import { useState, useCallback, memo, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
+
+import {
+  IconBan,
+  IconCheck,
+  IconKey,
+  IconShield,
+  IconTrash,
+  IconUser,
+  IconX,
+} from '@tabler/icons-react';
 import { useShallow } from 'zustand/react/shallow';
-import { Card } from '@/components/Card';
+
 import { Button } from '@/components/Button';
+import { Card } from '@/components/Card';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { GlowBadge } from '@/components/GlowBadge';
-import { UserAvatar } from '@/components/UserAvatar';
-import { useUserStore, type User } from '@/store/useUserStore';
-import { showSuccessToast, showErrorToast } from '@/lib/toast/toast';
-import {
-  IconCheck,
-  IconX,
-  IconBan,
-  IconShield,
-  IconUser,
-  IconTrash,
-  IconKey,
-} from '@tabler/icons-react';
 import { Modal } from '@/components/Modal';
+import { UserAvatar } from '@/components/UserAvatar';
+import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
+import { type User, useUserStore } from '@/store/useUserStore';
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: 'Ausstehend',

@@ -1,9 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { POST } from './route';
-import { prisma } from '@/lib/db/prisma';
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { getSession } from '@/lib/auth/session';
+import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
+
+import { POST } from './route';
 
 const mockUser = { userId: 'user-1', username: 'testuser', role: 'USER' as const, iat: Date.now() };
 

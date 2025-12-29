@@ -1,6 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getProphecyWithAccessCheck } from './prophecy-access';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
+
+import { prisma } from '@/lib/db/prisma';
+
 import { ApiError } from './errors';
+import { getProphecyWithAccessCheck } from './prophecy-access';
 
 // Mock prisma
 vi.mock('@/lib/db/prisma', () => ({
@@ -10,9 +14,6 @@ vi.mock('@/lib/db/prisma', () => ({
     },
   },
 }));
-
-import { prisma } from '@/lib/db/prisma';
-import type { Mock } from 'vitest';
 
 const mockFindUnique = prisma.prophecy.findUnique as Mock;
 

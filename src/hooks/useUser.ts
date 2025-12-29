@@ -1,5 +1,6 @@
-import { useUserStore, type User } from '@/store/useUserStore';
 import { useShallow } from 'zustand/shallow';
+
+import { type User, useUserStore } from '@/store/useUserStore';
 
 /**
  * Hook to get a user by ID from the store.

@@ -1,7 +1,9 @@
 import { render } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
-import { ClickParticles } from './ClickParticles';
+import { describe, expect, it } from 'vitest';
+
 import { type VelocityParticle } from '@/types/particle';
+
+import { ClickParticles } from './ClickParticles';
 
 describe('ClickParticles', () => {
   const mockParticles: VelocityParticle[] = [

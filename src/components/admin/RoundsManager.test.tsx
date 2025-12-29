@@ -1,9 +1,11 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
-import { RoundsManager } from './RoundsManager';
 import { MantineProvider } from '@mantine/core';
 import { DatesProvider } from '@mantine/dates';
-import { showSuccessToast, showErrorToast } from '@/lib/toast/toast';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
+
+import { RoundsManager } from './RoundsManager';
 
 // Mock matchMedia for Mantine
 beforeAll(() => {

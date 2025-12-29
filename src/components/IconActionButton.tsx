@@ -1,6 +1,7 @@
 'use client';
 
-import { memo, useMemo, ButtonHTMLAttributes, ReactNode } from 'react';
+import { ButtonHTMLAttributes, ReactNode, memo, useMemo } from 'react';
+
 import { Button } from '@/components/Button';
 
 type IconActionVariant = 'edit' | 'delete' | 'approve' | 'reject' | 'ban' | 'admin' | 'default';

@@ -1,8 +1,10 @@
 import { ReactNode } from 'react';
+
 import { redirect } from 'next/navigation';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
+
 import { FogBackground } from '@/components/FogBackground';
+import { Footer } from '@/components/Footer';
+import { Header } from '@/components/Header';
 import { ParticleBurst } from '@/components/ParticleBurst';
 import { SSEProvider } from '@/components/SSEProvider';
 import { getSession } from '@/lib/auth/session';

@@ -1,5 +1,6 @@
 import { notifications } from '@mantine/notifications';
-import { successToast, errorToast, warningToast, infoToast } from './toast-styles';
+
+import { errorToast, infoToast, successToast, warningToast } from './toast-styles';
 
 export function showSuccessToast(message: string, description?: string) {
   notifications.show(successToast(message, description));

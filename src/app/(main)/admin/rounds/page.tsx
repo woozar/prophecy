@@ -1,7 +1,8 @@
+import { redirect } from 'next/navigation';
+
+import { RoundsManager } from '@/components/admin/RoundsManager';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
-import { redirect } from 'next/navigation';
-import { RoundsManager } from '@/components/admin/RoundsManager';
 
 export default async function AdminRoundsPage() {
   const session = await getSession();

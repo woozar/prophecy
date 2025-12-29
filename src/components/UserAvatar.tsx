@@ -1,7 +1,9 @@
 'use client';
 
-import { memo, useMemo, useState, useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import Image from 'next/image';
+
 import { useUser } from '@/hooks/useUser';
 
 type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';

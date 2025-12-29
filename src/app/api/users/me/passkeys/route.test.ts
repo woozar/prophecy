@@ -1,7 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { GET, POST, DELETE, PATCH } from './route';
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { prisma } from '@/lib/db/prisma';
+
+import { DELETE, GET, PATCH, POST } from './route';
 
 const mockGet = vi.fn();
 

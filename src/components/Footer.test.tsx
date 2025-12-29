@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Footer } from './Footer';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import packageJson from '../../package.json';
+import { Footer } from './Footer';
 
 describe('Footer', () => {
   beforeEach(() => {

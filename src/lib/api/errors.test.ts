@@ -1,6 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ApiError, Errors, handleApiError } from './errors';
 import { NextResponse } from 'next/server';
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { ApiError, Errors, handleApiError } from './errors';
 
 describe('ApiError', () => {
   it('creates error with message and default status 500', () => {

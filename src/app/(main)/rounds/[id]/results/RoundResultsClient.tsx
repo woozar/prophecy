@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, memo, useMemo } from 'react';
-import { Card } from '@/components/Card';
+import { memo, useEffect, useMemo, useState } from 'react';
+
 import { BackLink } from '@/components/BackLink';
+import { Card } from '@/components/Card';
+import { GlowBadge } from '@/components/GlowBadge';
 import { CreatorLeaderboard } from '@/components/statistics/CreatorLeaderboard';
 import { RaterLeaderboard } from '@/components/statistics/RaterLeaderboard';
-import { GlowBadge } from '@/components/GlowBadge';
 import { formatDate } from '@/lib/formatting/date';
 import type { RoundStatistics } from '@/lib/statistics/types';
 import type { Round } from '@/store/useRoundStore';

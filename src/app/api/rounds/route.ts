@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
-import { sseEmitter } from '@/lib/sse/event-emitter';
 import { createRoundSchema } from '@/lib/schemas/round';
+import { sseEmitter } from '@/lib/sse/event-emitter';
 
 // GET /api/rounds - Get all rounds
 export async function GET() {

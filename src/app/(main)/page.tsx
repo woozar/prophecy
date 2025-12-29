@@ -1,8 +1,8 @@
+import { Card } from '@/components/Card';
+import { Link } from '@/components/Link';
+import { RoundStatusBadge } from '@/components/RoundStatusBadge';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
-import { Card } from '@/components/Card';
-import { RoundStatusBadge } from '@/components/RoundStatusBadge';
-import { Link } from '@/components/Link';
 
 export default async function HomePage() {
   const session = await getSession();

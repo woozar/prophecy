@@ -1,6 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { calculateRoundStatistics } from './calculate';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { prisma } from '@/lib/db/prisma';
+
+import { calculateRoundStatistics } from './calculate';
 
 vi.mock('@/lib/db/prisma', () => ({
   prisma: {

@@ -9,6 +9,7 @@ describe('useRoundStore', () => {
     submissionDeadline: '2025-01-01T00:00:00Z',
     ratingDeadline: '2025-01-15T00:00:00Z',
     fulfillmentDate: '2025-02-01T00:00:00Z',
+    resultsPublishedAt: null,
     createdAt: '2024-12-01T00:00:00Z',
     _count: { prophecies: 5 },
   };
@@ -19,6 +20,7 @@ describe('useRoundStore', () => {
     submissionDeadline: '2025-02-01T00:00:00Z',
     ratingDeadline: '2025-02-15T00:00:00Z',
     fulfillmentDate: '2025-03-01T00:00:00Z',
+    resultsPublishedAt: null,
     createdAt: '2024-12-15T00:00:00Z',
     _count: { prophecies: 3 },
   };

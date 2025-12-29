@@ -880,6 +880,61 @@ body {
   box-shadow: 0 0 7px rgba(192, 132, 252, 1);
 }
 
+/* Orbiting glow animation for evaluation state */
+@keyframes orbit-glow {
+  0% {
+    left: 0%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+  25% {
+    left: 50%;
+    top: 0%;
+    transform: translate(-50%, -50%);
+  }
+  50% {
+    left: 100%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+  75% {
+    left: 50%;
+    top: 100%;
+    transform: translate(-50%, -50%);
+  }
+  100% {
+    left: 0%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.glow-badge-spinning {
+  position: relative;
+  overflow: visible;
+}
+
+.glow-badge-spinning::before {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(250, 204, 21, 0.9) 0%,
+    rgba(234, 179, 8, 0.6) 40%,
+    transparent 70%
+  );
+  box-shadow:
+    0 0 12px rgba(250, 204, 21, 0.8),
+    0 0 20px rgba(234, 179, 8, 0.5),
+    0 0 30px rgba(234, 179, 8, 0.3);
+  animation: orbit-glow 2s linear infinite;
+  pointer-events: none;
+  filter: blur(1px);
+}
+
 /* Mantine Input Styling */
 .mantine-TextInput-input,
 .mantine-Textarea-input,

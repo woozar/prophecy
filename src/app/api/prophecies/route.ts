@@ -3,6 +3,7 @@ import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 import { createProphecySchema } from '@/lib/schemas/prophecy';
+import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 
 // GET /api/prophecies - Get prophecies for a round
 export async function GET(request: NextRequest) {
@@ -123,18 +124,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const prophecyData = {
-      id: prophecy.id,
-      title: prophecy.title,
-      description: prophecy.description,
-      creatorId: prophecy.creatorId,
-      roundId: prophecy.roundId,
-      createdAt: prophecy.createdAt.toISOString(),
-      fulfilled: prophecy.fulfilled,
-      resolvedAt: prophecy.resolvedAt?.toISOString() ?? null,
-      averageRating: prophecy.averageRating,
-      ratingCount: prophecy.ratingCount,
-    };
+    const prophecyData = transformProphecyToResponse(prophecy);
 
     // Broadcast to all connected clients
     sseEmitter.broadcast({

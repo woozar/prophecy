@@ -45,13 +45,14 @@ model Authenticator {
 }
 
 model Round {
-  id                  String   @id @default(cuid())
+  id                  String    @id @default(cuid())
   title               String
   submissionDeadline  DateTime
   ratingDeadline      DateTime
   fulfillmentDate     DateTime
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  resultsPublishedAt  DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   prophecies          Prophecy[]
 }

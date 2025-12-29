@@ -7,9 +7,10 @@ interface RoundDates {
   submissionDeadline: Date | string;
   ratingDeadline: Date | string;
   fulfillmentDate: Date | string;
+  resultsPublishedAt?: Date | string | null;
 }
 
-type RoundStatus = 'submission' | 'rating' | 'waiting' | 'closed';
+type RoundStatus = 'submission' | 'rating' | 'waiting' | 'evaluation' | 'closed';
 
 type BadgeVariant = 'compact' | 'full';
 
@@ -40,6 +41,10 @@ function getRoundStatus(round: RoundDates, now: Date): RoundStatus {
   if (now < fulfillmentDate) {
     return 'waiting';
   }
+  // After fulfillmentDate: check if results are published
+  if (!round.resultsPublishedAt) {
+    return 'evaluation';
+  }
   return 'closed';
 }
 
@@ -48,8 +53,9 @@ const statusConfig: Record<
   {
     compactLabel: string;
     fullLabel: string;
-    color: 'green' | 'cyan' | 'violet' | 'gray';
+    color: 'green' | 'cyan' | 'violet' | 'yellow' | 'gray';
     animated?: boolean;
+    spinning?: boolean;
   }
 > = {
   submission: {
@@ -67,6 +73,12 @@ const statusConfig: Record<
     fullLabel: 'Läuft',
     color: 'violet',
     animated: true,
+  },
+  evaluation: {
+    compactLabel: 'Auswertung',
+    fullLabel: 'Auswertung',
+    color: 'yellow',
+    spinning: true,
   },
   closed: {
     compactLabel: 'Abgeschlossen',
@@ -94,7 +106,12 @@ export const RoundStatusBadge = memo(function RoundStatusBadge({
   }
 
   return (
-    <GlowBadge size={size} color={config.color} animated={config.animated}>
+    <GlowBadge
+      size={size}
+      color={config.color}
+      animated={config.animated}
+      className={config.spinning ? 'glow-badge-spinning' : undefined}
+    >
       {label}
     </GlowBadge>
   );

@@ -55,6 +55,8 @@ describe('RoundDetailClient', () => {
     submissionDeadline: future.toISOString(),
     ratingDeadline: farFuture.toISOString(),
     fulfillmentDate: veryFarFuture.toISOString(),
+    resultsPublishedAt: null,
+    createdAt: farPast.toISOString(),
   };
 
   const mockRoundRatingOpen = {
@@ -63,6 +65,8 @@ describe('RoundDetailClient', () => {
     submissionDeadline: past.toISOString(),
     ratingDeadline: future.toISOString(),
     fulfillmentDate: farFuture.toISOString(),
+    resultsPublishedAt: null,
+    createdAt: farPast.toISOString(),
   };
 
   const mockRoundClosed = {
@@ -71,6 +75,8 @@ describe('RoundDetailClient', () => {
     submissionDeadline: farPast.toISOString(),
     ratingDeadline: farPast.toISOString(),
     fulfillmentDate: past.toISOString(),
+    resultsPublishedAt: past.toISOString(),
+    createdAt: farPast.toISOString(),
   };
 
   const currentUserId = 'current';

@@ -13,7 +13,17 @@ import { RatingSlider } from '@/components/RatingSlider';
 import { GlassScaleBar } from '@/components/GlassScaleBar';
 import { showSuccessToast, showErrorToast } from '@/lib/toast/toast';
 import { createProphecySchema, updateProphecySchema } from '@/lib/schemas/prophecy';
-import { IconPlus, IconTrash, IconEdit, IconFilter } from '@tabler/icons-react';
+import {
+  IconPlus,
+  IconTrash,
+  IconEdit,
+  IconFilter,
+  IconCheck,
+  IconX,
+  IconChartBar,
+  IconLock,
+  IconLockOpen,
+} from '@tabler/icons-react';
 import { BackLink } from '@/components/BackLink';
 import { EmptyState } from '@/components/EmptyState';
 import { Textarea } from '@/components/Textarea';
@@ -24,15 +34,8 @@ import { CountdownTimer } from '@/components/CountdownTimer';
 import { formatDate } from '@/lib/formatting/date';
 import { useUser, useCurrentUser } from '@/hooks/useUser';
 import { useProphecyStore, type Prophecy } from '@/store/useProphecyStore';
+import { type Round } from '@/store/useRoundStore';
 import { useRatingStore, selectUserRatingForProphecy } from '@/store/useRatingStore';
-
-interface Round {
-  id: string;
-  title: string;
-  submissionDeadline: string;
-  ratingDeadline: string;
-  fulfillmentDate: string;
-}
 
 interface RoundDetailClientProps {
   round: Round;
@@ -93,6 +96,10 @@ export const RoundDetailClient = memo(function RoundDetailClient({
 
   const isSubmissionOpen = now < submissionDeadline;
   const isRatingOpen = now >= submissionDeadline && now < ratingDeadline;
+  const isRatingClosed = now >= ratingDeadline;
+  const isAdmin = currentUser?.role === 'ADMIN';
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
 
   // Get user's ratings from store
   const getUserRating = useCallback(
@@ -296,6 +303,71 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     [setProphecy, setRating]
   );
 
+  const handleResolveProphecy = useCallback(
+    async (prophecyId: string, fulfilled: boolean) => {
+      try {
+        const res = await fetch(`/api/prophecies/${prophecyId}/resolve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fulfilled }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Fehler beim Auflösen');
+        }
+
+        const { prophecy } = await res.json();
+        setProphecy(prophecy);
+        showSuccessToast(fulfilled ? 'Als erfüllt markiert' : 'Als nicht erfüllt markiert');
+      } catch (error) {
+        showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
+      }
+    },
+    [setProphecy]
+  );
+
+  const handlePublishResults = useCallback(async () => {
+    setIsPublishing(true);
+    try {
+      const res = await fetch(`/api/rounds/${round.id}/publish-results`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Fehler beim Veröffentlichen');
+      }
+
+      await res.json();
+      showSuccessToast('Ergebnisse veröffentlicht');
+    } catch (error) {
+      showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [round.id]);
+
+  const handleUnpublishResults = useCallback(async () => {
+    setIsUnpublishing(true);
+    try {
+      const res = await fetch(`/api/rounds/${round.id}/publish-results`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Fehler beim Zurückziehen');
+      }
+
+      showSuccessToast('Freigabe aufgehoben');
+    } catch (error) {
+      showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
+    } finally {
+      setIsUnpublishing(false);
+    }
+  }, [round.id]);
+
   const toRateCount = useMemo(
     () =>
       sortedProphecies.filter((p) => p.creatorId !== currentUserId && getUserRating(p.id) === null)
@@ -306,6 +378,12 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const myCount = useMemo(
     () => sortedProphecies.filter((p) => p.creatorId === currentUserId).length,
     [sortedProphecies, currentUserId]
+  );
+
+  // Check if all prophecies are resolved
+  const allResolved = useMemo(
+    () => sortedProphecies.length > 0 && sortedProphecies.every((p) => p.fulfilled !== null),
+    [sortedProphecies]
   );
 
   return (
@@ -322,14 +400,53 @@ export const RoundDetailClient = memo(function RoundDetailClient({
           </div>
         </div>
 
-        {isSubmissionOpen && (
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <div className="flex flex-row gap-2 items-center">
-              <IconPlus size={18} />
-              <span>Neue Prophezeiung</span>
-            </div>
-          </Button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {isSubmissionOpen && (
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              <div className="flex flex-row gap-2 items-center">
+                <IconPlus size={18} />
+                <span>Neue Prophezeiung</span>
+              </div>
+            </Button>
+          )}
+
+          {/* Results Link - visible when results are published or for admins as preview */}
+          {(round.resultsPublishedAt || (isAdmin && isRatingClosed)) && (
+            <Button
+              variant="outline"
+              onClick={() => (globalThis.location.href = `/rounds/${round.id}/results`)}
+            >
+              <div className="flex flex-row gap-2 items-center">
+                <IconChartBar size={18} />
+                <span>{round.resultsPublishedAt ? 'Ergebnisse' : 'Vorschau'}</span>
+              </div>
+            </Button>
+          )}
+
+          {/* Publish Button - Admin only, after rating deadline */}
+          {isAdmin && isRatingClosed && !round.resultsPublishedAt && (
+            <Button
+              onClick={handlePublishResults}
+              disabled={isPublishing || !allResolved}
+              title={allResolved ? undefined : 'Noch nicht alle Prophezeiungen ausgewertet'}
+            >
+              <div className="flex flex-row gap-2 items-center">
+                <IconLockOpen size={18} />
+                <span>{isPublishing ? 'Veröffentlichen...' : 'Ergebnisse freigeben'}</span>
+              </div>
+            </Button>
+          )}
+
+          {/* Unpublish Button - Admin only, when results are published */}
+          {isAdmin && round.resultsPublishedAt && (
+            <Button variant="outline" onClick={handleUnpublishResults} disabled={isUnpublishing}>
+              <div className="flex flex-row gap-2 items-center">
+                <IconLock size={18} />
+                <span>{isUnpublishing ? 'Wird zurückgezogen...' : 'Freigabe aufheben'}</span>
+              </div>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Deadlines Info */}
@@ -381,9 +498,13 @@ export const RoundDetailClient = memo(function RoundDetailClient({
               currentUserId={currentUserId}
               isSubmissionOpen={isSubmissionOpen}
               isRatingOpen={isRatingOpen}
+              isRatingClosed={isRatingClosed}
+              isAdmin={isAdmin}
+              resultsPublished={!!round.resultsPublishedAt}
               onEdit={handleStartEdit}
               onDelete={handleConfirmDelete}
               onRate={handleRateProphecy}
+              onResolve={handleResolveProphecy}
               isDeleting={deletingId === prophecy.id}
             />
           ))
@@ -533,9 +654,13 @@ interface ProphecyCardProps {
   currentUserId: string | undefined;
   isSubmissionOpen: boolean;
   isRatingOpen: boolean;
+  isRatingClosed: boolean;
+  isAdmin: boolean;
+  resultsPublished: boolean;
   onEdit: (prophecy: Prophecy) => void;
   onDelete: (id: string) => void;
   onRate: (id: string, value: number) => void;
+  onResolve: (id: string, fulfilled: boolean) => void;
   isDeleting: boolean;
 }
 
@@ -544,9 +669,13 @@ const ProphecyCard = memo(function ProphecyCard({
   currentUserId,
   isSubmissionOpen,
   isRatingOpen,
+  isRatingClosed,
+  isAdmin,
+  resultsPublished,
   onEdit,
   onDelete,
   onRate,
+  onResolve,
   isDeleting,
 }: Readonly<ProphecyCardProps>) {
   // Get user's rating for this prophecy from store
@@ -591,6 +720,16 @@ const ProphecyCard = memo(function ProphecyCard({
                 Meine
               </GlowBadge>
             )}
+            {prophecy.fulfilled === true && (
+              <GlowBadge size="sm" color="cyan">
+                Erfüllt
+              </GlowBadge>
+            )}
+            {prophecy.fulfilled === false && (
+              <GlowBadge size="sm" color="red">
+                Nicht erfüllt
+              </GlowBadge>
+            )}
           </div>
           <p className="text-sm text-(--text-secondary) mb-3">{prophecy.description}</p>
           <div className="flex items-center gap-4 text-xs text-(--text-muted)">
@@ -620,6 +759,32 @@ const ProphecyCard = memo(function ProphecyCard({
                 title="Löschen"
               />
             </>
+          )}
+          {isAdmin && isRatingClosed && !resultsPublished && (
+            <div className="flex gap-1">
+              <button
+                onClick={() => onResolve(prophecy.id, true)}
+                className={`p-1.5 rounded-md transition-all ${
+                  prophecy.fulfilled === true
+                    ? 'bg-cyan-500/30 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.3)]'
+                    : 'bg-white/5 text-(--text-muted) hover:bg-cyan-500/20 hover:text-cyan-400'
+                }`}
+                title="Als erfüllt markieren"
+              >
+                <IconCheck size={18} />
+              </button>
+              <button
+                onClick={() => onResolve(prophecy.id, false)}
+                className={`p-1.5 rounded-md transition-all ${
+                  prophecy.fulfilled === false
+                    ? 'bg-red-500/30 text-red-400 shadow-[0_0_10px_rgba(239,68,68,0.3)]'
+                    : 'bg-white/5 text-(--text-muted) hover:bg-red-500/20 hover:text-red-400'
+                }`}
+                title="Als nicht erfüllt markieren"
+              >
+                <IconX size={18} />
+              </button>
+            </div>
           )}
         </div>
       </div>

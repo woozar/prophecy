@@ -24,6 +24,7 @@ describe('getRoundStatus', () => {
     submissionDeadline: '2025-01-15T00:00:00Z',
     ratingDeadline: '2025-02-15T00:00:00Z',
     fulfillmentDate: '2025-03-15T00:00:00Z',
+    resultsPublishedAt: null,
   };
 
   it('returns submission when now is before submission deadline', () => {
@@ -41,9 +42,18 @@ describe('getRoundStatus', () => {
     expect(getRoundStatus(baseRound, now)).toBe('waiting');
   });
 
-  it('returns closed when now is after fulfillment date', () => {
+  it('returns evaluation when now is after fulfillment date but results not published', () => {
     const now = new Date('2025-03-20T00:00:00Z');
-    expect(getRoundStatus(baseRound, now)).toBe('closed');
+    expect(getRoundStatus(baseRound, now)).toBe('evaluation');
+  });
+
+  it('returns closed when results are published', () => {
+    const roundWithResults = {
+      ...baseRound,
+      resultsPublishedAt: '2025-03-18T00:00:00Z',
+    };
+    const now = new Date('2025-03-20T00:00:00Z');
+    expect(getRoundStatus(roundWithResults, now)).toBe('closed');
   });
 
   it('handles Date objects for round dates', () => {
@@ -51,6 +61,7 @@ describe('getRoundStatus', () => {
       submissionDeadline: new Date('2025-01-15T00:00:00Z'),
       ratingDeadline: new Date('2025-02-15T00:00:00Z'),
       fulfillmentDate: new Date('2025-03-15T00:00:00Z'),
+      resultsPublishedAt: null,
     };
     const now = new Date('2025-01-10T00:00:00Z');
     expect(getRoundStatus(roundWithDates, now)).toBe('submission');
@@ -83,10 +94,18 @@ describe('RoundStatusBadge', () => {
     fulfillmentDate: future.toISOString(),
   };
 
+  const roundEvaluation = {
+    submissionDeadline: farPast.toISOString(),
+    ratingDeadline: farPast.toISOString(),
+    fulfillmentDate: past.toISOString(),
+    resultsPublishedAt: null,
+  };
+
   const roundClosed = {
     submissionDeadline: farPast.toISOString(),
     ratingDeadline: farPast.toISOString(),
     fulfillmentDate: past.toISOString(),
+    resultsPublishedAt: past.toISOString(),
   };
 
   it('shows compact label for submission open', () => {
@@ -112,6 +131,11 @@ describe('RoundStatusBadge', () => {
   it('shows label for waiting state', () => {
     render(<RoundStatusBadge round={roundWaiting} variant="compact" />);
     expect(screen.getByText('Läuft')).toBeInTheDocument();
+  });
+
+  it('shows label for evaluation state', () => {
+    render(<RoundStatusBadge round={roundEvaluation} variant="compact" />);
+    expect(screen.getByText('Auswertung')).toBeInTheDocument();
   });
 
   it('shows label for closed state', () => {

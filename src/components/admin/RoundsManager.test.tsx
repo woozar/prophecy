@@ -394,6 +394,7 @@ describe('RoundsManager', () => {
       submissionDeadline: past1.toISOString(),
       ratingDeadline: past2.toISOString(),
       fulfillmentDate: past3.toISOString(),
+      resultsPublishedAt: past3.toISOString(),
       createdAt: past1.toISOString(),
       _count: { prophecies: 10 },
     };

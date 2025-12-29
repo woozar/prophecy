@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
+import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -82,15 +83,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
     });
 
-    // Recalculate average rating
+    // Recalculate average rating (excluding value=0 which means "unrated")
     const ratings = await prisma.rating.findMany({
       where: { prophecyId: id },
       select: { value: true },
     });
 
-    const ratingCount = ratings.length;
+    // Filter out zero-value ratings (unrated)
+    const nonZeroRatings = ratings.filter((r) => r.value !== 0);
+    const ratingCount = nonZeroRatings.length;
     const averageRating =
-      ratingCount > 0 ? ratings.reduce((sum, r) => sum + r.value, 0) / ratingCount : null;
+      ratingCount > 0 ? nonZeroRatings.reduce((sum, r) => sum + r.value, 0) / ratingCount : null;
 
     // Update prophecy with new average
     const updatedProphecy = await prisma.prophecy.update({
@@ -101,18 +104,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
     });
 
-    const prophecyData = {
-      id: updatedProphecy.id,
-      title: updatedProphecy.title,
-      description: updatedProphecy.description,
-      creatorId: updatedProphecy.creatorId,
-      roundId: updatedProphecy.roundId,
-      createdAt: updatedProphecy.createdAt.toISOString(),
-      fulfilled: updatedProphecy.fulfilled,
-      resolvedAt: updatedProphecy.resolvedAt?.toISOString() ?? null,
-      averageRating: updatedProphecy.averageRating,
-      ratingCount: updatedProphecy.ratingCount,
-    };
+    const prophecyData = transformProphecyToResponse(updatedProphecy);
 
     const ratingData = {
       id: rating.id,

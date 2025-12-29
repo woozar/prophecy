@@ -70,6 +70,7 @@ export async function GET() {
     submissionDeadline: round.submissionDeadline.toISOString(),
     ratingDeadline: round.ratingDeadline.toISOString(),
     fulfillmentDate: round.fulfillmentDate.toISOString(),
+    resultsPublishedAt: round.resultsPublishedAt?.toISOString() ?? null,
     createdAt: round.createdAt.toISOString(),
     _count: round._count,
   }));

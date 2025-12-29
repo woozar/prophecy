@@ -6,6 +6,7 @@ export interface Round {
   submissionDeadline: string;
   ratingDeadline: string;
   fulfillmentDate: string;
+  resultsPublishedAt: string | null;
   createdAt: string;
   _count?: {
     prophecies: number;

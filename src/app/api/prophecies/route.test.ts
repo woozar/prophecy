@@ -35,6 +35,7 @@ const createMockRound = (overrides = {}) => ({
   submissionDeadline: new Date(Date.now() + 86400000), // Tomorrow
   ratingDeadline: new Date(Date.now() + 172800000),
   fulfillmentDate: new Date(Date.now() + 259200000),
+  resultsPublishedAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   ...overrides,

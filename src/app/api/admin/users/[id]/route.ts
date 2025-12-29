@@ -1,28 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { validateAdminSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
-}
-
-async function validateAdminSession() {
-  const session = await getSession();
-  if (!session) {
-    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
-  }
-  if (session.role !== 'ADMIN') {
-    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
-  }
-  const currentUser = await prisma.user.findUnique({
-    where: { id: session.userId },
-    select: { status: true },
-  });
-  if (currentUser?.status !== 'APPROVED') {
-    return { error: NextResponse.json({ error: 'Dein Account ist gesperrt' }, { status: 403 }) };
-  }
-  return { session };
 }
 
 async function canModifyAdmin(targetId: string): Promise<boolean> {

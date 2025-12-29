@@ -53,6 +53,7 @@ describe('GET /api/initial-data', () => {
       submissionDeadline: new Date('2025-02-01'),
       ratingDeadline: new Date('2025-02-15'),
       fulfillmentDate: new Date('2025-03-01'),
+      resultsPublishedAt: null,
       createdAt: new Date('2025-01-01'),
       updatedAt: new Date('2025-01-01'),
       _count: { prophecies: 5 },

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 import { updateProphecySchema } from '@/lib/schemas/prophecy';
 import { Errors, handleApiError, getProphecyWithAccessCheck } from '@/lib/api';
+import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -48,18 +49,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       },
     });
 
-    const prophecyData = {
-      id: updatedProphecy.id,
-      title: updatedProphecy.title,
-      description: updatedProphecy.description,
-      creatorId: updatedProphecy.creatorId,
-      roundId: updatedProphecy.roundId,
-      createdAt: updatedProphecy.createdAt.toISOString(),
-      fulfilled: updatedProphecy.fulfilled,
-      resolvedAt: updatedProphecy.resolvedAt?.toISOString() ?? null,
-      averageRating: updatedProphecy.averageRating,
-      ratingCount: updatedProphecy.ratingCount,
-    };
+    const prophecyData = transformProphecyToResponse(updatedProphecy);
 
     // Broadcast to all connected clients
     sseEmitter.broadcast({

@@ -2,6 +2,9 @@ services:
   app:
     image: space.fwix:5000/prophezeiung:latest
     pull_policy: always
+    depends_on:
+      db:
+        condition: service_healthy
     container_name: prophezeiung-app
     ports:
       - '30055:3000'
@@ -10,9 +13,8 @@ services:
       NODE_ENV: production
       WEBAUTHN_RP_ID: prophecy.12-of-spades.com
       WEBAUTHN_ORIGIN: https://prophecy.12-of-spades.com
-    depends_on:
-      db:
-        condition: service_healthy
+    volumes:
+      - /mnt/Master/Apps/Prophecy/upload:/app/uploads
     restart: unless-stopped
 
   db:

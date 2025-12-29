@@ -13,7 +13,15 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     include: ['src/**/*.test.{ts,tsx}'],
-    exclude: ['src/lib/auth/session.test.ts'], // Run separately in node env
+    // Server-side tests run separately in node env (see vitest.config.node.ts)
+    exclude: [
+      'src/lib/auth/session.test.ts',
+      'src/lib/auth/webauthn.test.ts',
+      'src/lib/auth/admin-seed.test.ts',
+      'src/lib/sse/event-emitter.test.ts',
+      'src/lib/api/validation.test.ts',
+      'src/lib/api/prophecy-transform.test.ts',
+    ],
     setupFiles: ['./vitest.setup.ts'],
     coverage: {
       provider: 'v8',
@@ -27,10 +35,16 @@ export default defineConfig({
         'src/app/layout.tsx',
         'src/app/**/page.tsx',
         'src/app/**/layout.tsx',
-        'src/lib/auth/**/*.ts',
-        'src/lib/db/**/*.ts',
-        'src/lib/sse/**/*.ts',
-        'src/lib/api-client/generated/**',
+        'src/lib/db/prisma.ts',
+        'src/lib/api-client/**',
+        'src/lib/openapi/**',
+        // Files tested in node environment (see vitest.config.node.ts)
+        'src/lib/auth/session.ts',
+        'src/lib/auth/webauthn.ts',
+        'src/lib/auth/admin-seed.ts',
+        'src/lib/api/validation.ts',
+        'src/lib/api/prophecy-transform.ts',
+        'src/lib/sse/event-emitter.ts',
         'src/proxy.ts',
         'src/instrumentation.ts',
       ],

@@ -203,7 +203,7 @@ export async function DELETE(request: NextRequest) {
     include: { authenticators: true },
   });
 
-  if (user && user.authenticators.length === 1 && !user.passwordHash) {
+  if (user?.authenticators.length === 1 && !user.passwordHash) {
     return NextResponse.json(
       { error: 'Du kannst deinen letzten Passkey nicht löschen, wenn kein Passwort gesetzt ist.' },
       { status: 400 }

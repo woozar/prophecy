@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { prisma } from '@/lib/db/prisma';
+
 import {
   duplicateUsernameResponse,
+  findExistingUser,
   normalizeUsername,
   registrationErrorResponse,
   registrationSuccessResponse,
+  setPendingUserCookie,
 } from './registration';
 
 // Mock prisma
@@ -144,6 +148,76 @@ describe('registration utilities', () => {
 
       expect(consoleSpy).toHaveBeenCalledWith('Test context:', testError);
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('findExistingUser', () => {
+    it('normalizes username before searching', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+      await findExistingUser('TestUser');
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { username: 'testuser' },
+      });
+    });
+
+    it('removes special characters from username', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+      await findExistingUser('Test@User!');
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { username: 'testuser' },
+      });
+    });
+
+    it('returns user when found', async () => {
+      const mockUser = {
+        id: 'user-1',
+        username: 'testuser',
+        displayName: 'Test User',
+        passwordHash: null,
+        role: 'USER',
+        status: 'PENDING',
+        forcePasswordChange: false,
+        avatarUrl: null,
+        avatarEffect: null,
+        avatarEffectColors: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+
+      const result = await findExistingUser('testuser');
+
+      expect(result).toEqual(mockUser);
+    });
+
+    it('returns null when user not found', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+      const result = await findExistingUser('nonexistent');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('setPendingUserCookie', () => {
+    it('sets cookie with correct options', async () => {
+      const mockSet = vi.fn();
+      const { cookies } = await import('next/headers');
+      vi.mocked(cookies).mockResolvedValue({ set: mockSet } as never);
+
+      await setPendingUserCookie('user-123');
+
+      expect(mockSet).toHaveBeenCalledWith('pendingUser', 'user-123', {
+        httpOnly: true,
+        secure: false, // NODE_ENV is not 'production' in tests
+        sameSite: 'strict',
+        maxAge: 3600, // 1 hour
+        path: '/',
+      });
     });
   });
 });

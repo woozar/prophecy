@@ -289,4 +289,51 @@ describe('session utilities', () => {
       consoleSpy.mockRestore();
     });
   });
+
+  describe('getSessionSecret fallback', () => {
+    it('warns and generates random secret when SESSION_SECRET is not set', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      // Remove SESSION_SECRET and reset cache
+      vi.stubEnv('SESSION_SECRET', '');
+      resetSecretCache();
+
+      // Force secret generation by creating a session
+      await setSessionCookie({
+        id: 'user-1',
+        username: 'testuser',
+        displayName: 'Test User',
+        role: 'USER',
+      });
+
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('SESSION_SECRET nicht gesetzt'));
+
+      warnSpy.mockRestore();
+      // Restore valid secret for other tests
+      vi.stubEnv('SESSION_SECRET', TEST_SECRET);
+      resetSecretCache();
+    });
+
+    it('warns when SESSION_SECRET is too short', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      // Set a secret that's too short (< 32 chars)
+      vi.stubEnv('SESSION_SECRET', 'short-secret');
+      resetSecretCache();
+
+      await setSessionCookie({
+        id: 'user-1',
+        username: 'testuser',
+        displayName: 'Test User',
+        role: 'USER',
+      });
+
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('SESSION_SECRET nicht gesetzt'));
+
+      warnSpy.mockRestore();
+      // Restore valid secret for other tests
+      vi.stubEnv('SESSION_SECRET', TEST_SECRET);
+      resetSecretCache();
+    });
+  });
 });

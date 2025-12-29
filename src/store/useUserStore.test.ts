@@ -1,7 +1,13 @@
 import { act } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { type User, useUserStore } from './useUserStore';
+import {
+  type User,
+  selectAllUsers,
+  selectCurrentUser,
+  selectUserById,
+  useUserStore,
+} from './useUserStore';
 
 describe('useUserStore', () => {
   const mockUser: User = {
@@ -114,6 +120,93 @@ describe('useUserStore', () => {
       expect(users['user-1']).toEqual(mockUser);
       expect(users['user-2'].status).toBe('INACTIVE');
     });
+
+    it('skips update when user data is unchanged', () => {
+      const userWithAvatar: User = {
+        ...mockUser,
+        avatarUrl: 'https://example.com/avatar.png',
+        avatarEffect: 'glow',
+        avatarEffectColors: ['#ff0000', '#00ff00'],
+      };
+      useUserStore.setState({ users: { 'user-1': userWithAvatar } });
+
+      const stateBefore = useUserStore.getState().users;
+      const { setUser } = useUserStore.getState();
+
+      act(() => {
+        // Same data, different object reference
+        setUser({ ...userWithAvatar, avatarEffectColors: ['#ff0000', '#00ff00'] });
+      });
+
+      const stateAfter = useUserStore.getState().users;
+      // Should be exact same object reference (no state update)
+      expect(stateAfter).toBe(stateBefore);
+    });
+
+    it('updates when avatarUrl changes', () => {
+      const userWithAvatar: User = {
+        ...mockUser,
+        avatarUrl: 'https://example.com/old-avatar.png',
+      };
+      useUserStore.setState({ users: { 'user-1': userWithAvatar } });
+
+      const stateBefore = useUserStore.getState().users;
+      const { setUser } = useUserStore.getState();
+
+      act(() => {
+        setUser({ ...userWithAvatar, avatarUrl: 'https://example.com/new-avatar.png' });
+      });
+
+      const stateAfter = useUserStore.getState().users;
+      expect(stateAfter).not.toBe(stateBefore);
+      expect(stateAfter['user-1'].avatarUrl).toBe('https://example.com/new-avatar.png');
+    });
+
+    it('updates when avatarEffect changes', () => {
+      const userWithAvatar: User = {
+        ...mockUser,
+        avatarEffect: 'glow',
+      };
+      useUserStore.setState({ users: { 'user-1': userWithAvatar } });
+
+      const { setUser } = useUserStore.getState();
+
+      act(() => {
+        setUser({ ...userWithAvatar, avatarEffect: 'sparkle' });
+      });
+
+      expect(useUserStore.getState().users['user-1'].avatarEffect).toBe('sparkle');
+    });
+
+    it('updates when avatarEffectColors changes', () => {
+      const userWithAvatar: User = {
+        ...mockUser,
+        avatarEffectColors: ['#ff0000'],
+      };
+      useUserStore.setState({ users: { 'user-1': userWithAvatar } });
+
+      const { setUser } = useUserStore.getState();
+
+      act(() => {
+        setUser({ ...userWithAvatar, avatarEffectColors: ['#ff0000', '#00ff00'] });
+      });
+
+      expect(useUserStore.getState().users['user-1'].avatarEffectColors).toEqual([
+        '#ff0000',
+        '#00ff00',
+      ]);
+    });
+
+    it('updates when role changes', () => {
+      useUserStore.setState({ users: { 'user-1': mockUser } });
+      const { setUser } = useUserStore.getState();
+
+      act(() => {
+        setUser({ ...mockUser, role: 'ADMIN' });
+      });
+
+      expect(useUserStore.getState().users['user-1'].role).toBe('ADMIN');
+    });
   });
 
   describe('removeUser', () => {
@@ -211,6 +304,95 @@ describe('useUserStore', () => {
       });
 
       expect(useUserStore.getState().isInitialized).toBe(true);
+    });
+  });
+
+  describe('selectUserById', () => {
+    it('returns user by id', () => {
+      useUserStore.setState({ users: { 'user-1': mockUser, 'user-2': mockUser2 } });
+
+      const selector = selectUserById('user-1');
+      const result = selector(useUserStore.getState());
+
+      expect(result).toEqual(mockUser);
+    });
+
+    it('returns undefined for unknown id', () => {
+      useUserStore.setState({ users: { 'user-1': mockUser } });
+
+      const selector = selectUserById('unknown-id');
+      const result = selector(useUserStore.getState());
+
+      expect(result).toBeUndefined();
+    });
+
+    it('returns undefined when users is empty', () => {
+      const selector = selectUserById('user-1');
+      const result = selector(useUserStore.getState());
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('selectCurrentUser', () => {
+    it('returns current user when logged in', () => {
+      useUserStore.setState({
+        users: { 'user-1': mockUser, 'user-2': mockUser2 },
+        currentUserId: 'user-1',
+      });
+
+      const result = selectCurrentUser(useUserStore.getState());
+
+      expect(result).toEqual(mockUser);
+    });
+
+    it('returns undefined when not logged in', () => {
+      useUserStore.setState({
+        users: { 'user-1': mockUser },
+        currentUserId: null,
+      });
+
+      const result = selectCurrentUser(useUserStore.getState());
+
+      expect(result).toBeUndefined();
+    });
+
+    it('returns undefined when currentUserId does not exist in users', () => {
+      useUserStore.setState({
+        users: { 'user-1': mockUser },
+        currentUserId: 'deleted-user',
+      });
+
+      const result = selectCurrentUser(useUserStore.getState());
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('selectAllUsers', () => {
+    it('returns all users as array', () => {
+      useUserStore.setState({ users: { 'user-1': mockUser, 'user-2': mockUser2 } });
+
+      const result = selectAllUsers(useUserStore.getState());
+
+      expect(result).toHaveLength(2);
+      expect(result).toContainEqual(mockUser);
+      expect(result).toContainEqual(mockUser2);
+    });
+
+    it('returns empty array when no users', () => {
+      const result = selectAllUsers(useUserStore.getState());
+
+      expect(result).toEqual([]);
+    });
+
+    it('returns single user array', () => {
+      useUserStore.setState({ users: { 'user-1': mockUser } });
+
+      const result = selectAllUsers(useUserStore.getState());
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual(mockUser);
     });
   });
 });

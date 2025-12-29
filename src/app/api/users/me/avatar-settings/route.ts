@@ -1,28 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { validateBody } from '@/lib/api/validation';
 import { getSession } from '@/lib/auth/session';
 import { ensureInitialized, prisma } from '@/lib/db/prisma';
+import { updateAvatarSettingsSchema } from '@/lib/schemas/user';
 import { sseEmitter } from '@/lib/sse/event-emitter';
-
-const VALID_EFFECTS = new Set(['glow', 'particles', 'lightning', 'none']);
-const VALID_COLORS = new Set([
-  'cyan',
-  'teal',
-  'violet',
-  'emerald',
-  'rose',
-  'amber',
-  'blue',
-  'pink',
-]);
-
-function validateColors(colors: string[] | undefined): string | null {
-  if (colors === undefined) return null;
-  if (!Array.isArray(colors)) return 'Farben müssen ein Array sein';
-  const invalidColors = colors.filter((c) => !VALID_COLORS.has(c));
-  if (invalidColors.length > 0) return `Ungültige Farben: ${invalidColors.join(', ')}`;
-  return null;
-}
 
 // PATCH: Avatar-Effekt und Farben aktualisieren
 export async function PATCH(request: NextRequest) {
@@ -34,25 +16,10 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const body = await request.json();
-    const { avatarEffect, avatarEffectColors } = body as {
-      avatarEffect?: string;
-      avatarEffectColors?: string[];
-    };
-
-    // Validate effect
-    if (avatarEffect !== undefined && !VALID_EFFECTS.has(avatarEffect)) {
-      return NextResponse.json(
-        { error: `Ungültiger Effekt. Erlaubt: ${[...VALID_EFFECTS].join(', ')}` },
-        { status: 400 }
-      );
-    }
-
-    // Validate colors
-    const colorValidationError = validateColors(avatarEffectColors);
-    if (colorValidationError) {
-      return NextResponse.json({ error: colorValidationError }, { status: 400 });
-    }
+    // Validate request body with Zod
+    const validation = await validateBody(request, updateAvatarSettingsSchema);
+    if (!validation.success) return validation.response;
+    const { avatarEffect, avatarEffectColors } = validation.data;
 
     // Build update data
     const updateData: { avatarEffect?: string | null; avatarEffectColors?: string | null } = {};

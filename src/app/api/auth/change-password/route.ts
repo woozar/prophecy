@@ -3,25 +3,19 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
 
+import { validateBody } from '@/lib/api/validation';
 import { requireSession, setSessionCookie } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
-
-const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().optional(),
-    newPassword: z.string().min(8, 'Neues Passwort muss mindestens 8 Zeichen haben'),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Passwörter stimmen nicht überein',
-    path: ['confirmPassword'],
-  });
+import { changePasswordSchema } from '@/lib/schemas/auth';
 
 export async function POST(request: Request) {
   try {
     const session = await requireSession();
-    const body = await request.json();
-    const validatedData = changePasswordSchema.parse(body);
+
+    // Validate request body with Zod
+    const validation = await validateBody(request, changePasswordSchema);
+    if (!validation.success) return validation.response;
+    const validatedData = validation.data;
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },

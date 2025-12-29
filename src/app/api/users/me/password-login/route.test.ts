@@ -147,7 +147,7 @@ describe('PUT /api/users/me/password-login', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Ungültige Eingabe');
+    expect(data.error).toContain('boolean');
   });
 
   it('returns 404 when user not found', async () => {

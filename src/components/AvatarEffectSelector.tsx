@@ -6,9 +6,12 @@ import { IconBolt, IconCircleDot, IconCircleOff, IconSparkles } from '@tabler/ic
 
 import { Button } from '@/components/Button';
 import { AvatarPreview } from '@/components/UserAvatar';
+import { apiClient } from '@/lib/api-client';
+import { avatarColors } from '@/lib/schemas/user';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 
 type AvatarEffect = 'glow' | 'particles' | 'lightning' | 'none';
+type AvatarColor = (typeof avatarColors)[number];
 
 interface AvatarEffectSelectorProps {
   username: string;
@@ -79,24 +82,20 @@ export const AvatarEffectSelector = memo(function AvatarEffectSelector({
   const handleSave = useCallback(async () => {
     setIsSaving(true);
     try {
-      const response = await fetch('/api/users/me/avatar-settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          avatarEffect: selectedEffect,
-          avatarEffectColors: selectedColors,
-        }),
+      // Cast colors to the expected type - component ensures only valid colors are selected
+      const { error } = await apiClient.user.avatarSettings.update({
+        avatarEffect: selectedEffect,
+        avatarEffectColors: selectedColors as AvatarColor[],
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Speichern fehlgeschlagen');
+      if (error) {
+        throw new Error((error as { error?: string }).error || 'Speichern fehlgeschlagen');
       }
 
       onEffectChange(selectedEffect === 'none' ? null : selectedEffect, selectedColors);
       showSuccessToast('Effekte gespeichert');
-    } catch (error) {
-      showErrorToast(error instanceof Error ? error.message : 'Speichern fehlgeschlagen');
+    } catch (err) {
+      showErrorToast(err instanceof Error ? err.message : 'Speichern fehlgeschlagen');
     } finally {
       setIsSaving(false);
     }

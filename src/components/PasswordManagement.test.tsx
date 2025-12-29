@@ -45,14 +45,27 @@ vi.mock('@/lib/toast/toast', () => ({
   showErrorToast: vi.fn(),
 }));
 
+// Mock apiClient
+const mockPasswordLoginGet = vi.fn();
+const mockPasswordLoginToggle = vi.fn();
+vi.mock('@/lib/api-client', () => ({
+  apiClient: {
+    user: {
+      passwordLogin: {
+        get: () => mockPasswordLoginGet(),
+        toggle: (enabled: boolean) => mockPasswordLoginToggle(enabled),
+      },
+    },
+  },
+}));
+
 describe('PasswordManagement', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    global.fetch = vi.fn();
   });
 
   it('shows loading state initially', () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(() => new Promise(() => {}));
+    mockPasswordLoginGet.mockImplementation(() => new Promise(() => {}));
     renderWithMantine(<PasswordManagement hasPasskeys={true} />);
 
     expect(screen.getByText('Passwort')).toBeInTheDocument();
@@ -60,9 +73,8 @@ describe('PasswordManagement', () => {
   });
 
   it('shows password enabled state after loading', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ passwordLoginEnabled: true, canDisablePasswordLogin: true }),
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, canDisablePasswordLogin: true },
     });
 
     await act(async () => {
@@ -76,9 +88,8 @@ describe('PasswordManagement', () => {
   });
 
   it('shows password disabled state after loading', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ passwordLoginEnabled: false, canDisablePasswordLogin: false }),
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: false, canDisablePasswordLogin: false },
     });
 
     await act(async () => {
@@ -92,9 +103,8 @@ describe('PasswordManagement', () => {
   });
 
   it('navigates to change-password when clicking change password button', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ passwordLoginEnabled: true, canDisablePasswordLogin: true }),
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, canDisablePasswordLogin: true },
     });
 
     await act(async () => {
@@ -110,9 +120,8 @@ describe('PasswordManagement', () => {
   });
 
   it('navigates to change-password when clicking set password button', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ passwordLoginEnabled: false, canDisablePasswordLogin: false }),
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: false, canDisablePasswordLogin: false },
     });
 
     await act(async () => {
@@ -128,9 +137,8 @@ describe('PasswordManagement', () => {
   });
 
   it('shows disable button when password enabled and has passkeys', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ passwordLoginEnabled: true, canDisablePasswordLogin: true }),
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, canDisablePasswordLogin: true },
     });
 
     await act(async () => {
@@ -143,9 +151,8 @@ describe('PasswordManagement', () => {
   });
 
   it('hides disable button when no passkeys', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ passwordLoginEnabled: true, canDisablePasswordLogin: true }),
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, canDisablePasswordLogin: true },
     });
 
     await act(async () => {
@@ -160,9 +167,8 @@ describe('PasswordManagement', () => {
   });
 
   it('shows hint about passkeys when no passkeys but password enabled', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ passwordLoginEnabled: true, canDisablePasswordLogin: false }),
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, canDisablePasswordLogin: false },
     });
 
     await act(async () => {
@@ -179,9 +185,8 @@ describe('PasswordManagement', () => {
   });
 
   it('opens confirmation modal when clicking disable button', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ passwordLoginEnabled: true, canDisablePasswordLogin: true }),
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, canDisablePasswordLogin: true },
     });
 
     await act(async () => {
@@ -200,9 +205,8 @@ describe('PasswordManagement', () => {
   });
 
   it('closes modal when clicking cancel', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ passwordLoginEnabled: true, canDisablePasswordLogin: true }),
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, canDisablePasswordLogin: true },
     });
 
     await act(async () => {
@@ -227,15 +231,13 @@ describe('PasswordManagement', () => {
   });
 
   it('disables password login when confirming', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ passwordLoginEnabled: true, canDisablePasswordLogin: true }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true }),
-      });
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, canDisablePasswordLogin: true },
+    });
+    mockPasswordLoginToggle.mockResolvedValueOnce({
+      data: { success: true },
+      error: null,
+    });
 
     await act(async () => {
       renderWithMantine(<PasswordManagement hasPasskeys={true} />);
@@ -263,15 +265,12 @@ describe('PasswordManagement', () => {
   it('shows error when disable fails', async () => {
     const { showErrorToast } = await import('@/lib/toast/toast');
 
-    (global.fetch as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ passwordLoginEnabled: true, canDisablePasswordLogin: true }),
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        json: async () => ({ error: 'Cannot disable' }),
-      });
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, canDisablePasswordLogin: true },
+    });
+    mockPasswordLoginToggle.mockResolvedValueOnce({
+      error: { error: 'Cannot disable' },
+    });
 
     await act(async () => {
       renderWithMantine(<PasswordManagement hasPasskeys={true} />);
@@ -297,7 +296,7 @@ describe('PasswordManagement', () => {
   });
 
   it('handles network error when fetching status', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'));
+    mockPasswordLoginGet.mockRejectedValueOnce(new Error('Network error'));
 
     await act(async () => {
       renderWithMantine(<PasswordManagement hasPasskeys={true} />);
@@ -312,12 +311,10 @@ describe('PasswordManagement', () => {
   it('handles network error when disabling', async () => {
     const { showErrorToast } = await import('@/lib/toast/toast');
 
-    (global.fetch as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ passwordLoginEnabled: true, canDisablePasswordLogin: true }),
-      })
-      .mockRejectedValueOnce(new Error('Network error'));
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, canDisablePasswordLogin: true },
+    });
+    mockPasswordLoginToggle.mockRejectedValueOnce(new Error('Network error'));
 
     await act(async () => {
       renderWithMantine(<PasswordManagement hasPasskeys={true} />);

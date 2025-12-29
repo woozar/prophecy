@@ -3,6 +3,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSSE } from './useSSE';
 
+// Mock apiClient
+const mockInitialDataGet = vi.fn();
+
+vi.mock('@/lib/api-client', () => ({
+  apiClient: {
+    initialData: {
+      get: () => mockInitialDataGet(),
+    },
+  },
+}));
+
 // Create shared mock functions that will be reused
 const mockSetRounds = vi.fn();
 const mockSetRound = vi.fn();
@@ -124,20 +135,17 @@ describe('useSSE', () => {
       setError: vi.fn(),
     });
 
-    // Mock fetch for initial data loading
-    global.fetch = vi.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            users: [{ id: 'user-1', username: 'test' }],
-            currentUserId: 'user-1',
-            rounds: [{ id: 'round-1', title: 'Test Round' }],
-            prophecies: [{ id: 'prophecy-1', title: 'Test Prophecy' }],
-            ratings: [{ id: 'rating-1', value: 5 }],
-          }),
-      } as Response)
-    );
+    // Mock apiClient.initialData.get for initial data loading
+    mockInitialDataGet.mockResolvedValue({
+      data: {
+        users: [{ id: 'user-1', username: 'test' }],
+        currentUserId: 'user-1',
+        rounds: [{ id: 'round-1', title: 'Test Round' }],
+        prophecies: [{ id: 'prophecy-1', title: 'Test Prophecy' }],
+        ratings: [{ id: 'rating-1', value: 5 }],
+      },
+      error: null,
+    });
 
     // Use a proper constructor function for EventSource mock
     const MockEventSource = vi.fn(function (this: {
@@ -165,7 +173,7 @@ describe('useSSE', () => {
     renderHook(() => useSSE());
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/initial-data');
+      expect(mockInitialDataGet).toHaveBeenCalled();
     });
 
     await waitFor(() => {
@@ -190,15 +198,15 @@ describe('useSSE', () => {
       expect(result.current.isInitialized).toBe(true);
     });
 
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(mockInitialDataGet).not.toHaveBeenCalled();
   });
 
   it('creates EventSource connection after initial data is loaded', async () => {
     renderHook(() => useSSE());
 
-    // Wait for fetch to complete
+    // Wait for initial data to load
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/initial-data');
+      expect(mockInitialDataGet).toHaveBeenCalled();
     });
 
     // Then EventSource should be created
@@ -651,7 +659,7 @@ describe('useSSE', () => {
   it('handles fetch error gracefully during initial data load', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    global.fetch = vi.fn(() => Promise.reject(new Error('Network error')));
+    mockInitialDataGet.mockRejectedValue(new Error('Network error'));
 
     renderHook(() => useSSE());
 
@@ -668,11 +676,10 @@ describe('useSSE', () => {
   it('handles non-ok fetch response during initial data load', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    global.fetch = vi.fn(() =>
-      Promise.resolve({
-        ok: false,
-      } as Response)
-    );
+    mockInitialDataGet.mockResolvedValue({
+      data: null,
+      error: { error: 'Server error' },
+    });
 
     renderHook(() => useSSE());
 

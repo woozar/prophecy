@@ -6,12 +6,17 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { notifications } from '@mantine/notifications';
+import type {
+  AuthenticationResponseJSON,
+  PublicKeyCredentialRequestOptionsJSON,
+} from '@simplewebauthn/browser';
 import { startAuthentication } from '@simplewebauthn/browser';
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { PasswordInput } from '@/components/PasswordInput';
 import { TextInput } from '@/components/TextInput';
+import { apiClient } from '@/lib/api-client';
 import { errorToast, infoToast, successToast, warningToast } from '@/lib/toast/toast-styles';
 import { useUserStore } from '@/store/useUserStore';
 
@@ -38,27 +43,27 @@ function LoginForm() {
       }
 
       // 1. Authentication Options vom Server holen
-      const optionsResponse = await fetch('/api/auth/login/options', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
+      const { data: optionsData, error: optionsError } = await apiClient.auth.loginOptions();
 
-      if (!optionsResponse.ok) {
-        const data = await optionsResponse.json();
+      if (optionsError || !optionsData) {
         notifications.show(
-          errorToast('Anmeldung fehlgeschlagen', data.error || 'Fehler beim Starten der Anmeldung')
+          errorToast(
+            'Anmeldung fehlgeschlagen',
+            (optionsError as { error?: string })?.error || 'Fehler beim Starten der Anmeldung'
+          )
         );
         setIsPasskeyLoading(false);
         return;
       }
 
-      const { options, challengeKey } = await optionsResponse.json();
+      const { options, challengeKey } = optionsData;
 
       // 2. Passkey-Authentifizierung starten
-      let credential;
+      let credential: AuthenticationResponseJSON;
       try {
-        credential = await startAuthentication({ optionsJSON: options });
+        credential = await startAuthentication({
+          optionsJSON: options as unknown as PublicKeyCredentialRequestOptionsJSON,
+        });
       } catch (err) {
         if (err instanceof Error) {
           if (err.name === 'NotAllowedError') {
@@ -74,29 +79,39 @@ function LoginForm() {
       }
 
       // 3. Credential an Server senden zur Verifizierung
-      const verifyResponse = await fetch('/api/auth/login/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          credential,
-          challengeKey,
-        }),
-      });
+      // Type assertion needed: WebAuthn types are structurally compatible but TypeScript
+      // doesn't recognize them due to index signature differences
+      const {
+        data: verifyData,
+        error: verifyError,
+        response: verifyResponse,
+      } = await apiClient.auth.loginVerify(
+        credential as unknown as Parameters<typeof apiClient.auth.loginVerify>[0],
+        challengeKey
+      );
 
-      if (!verifyResponse.ok) {
-        const data = await verifyResponse.json();
-        if (verifyResponse.status === 403) {
-          notifications.show(warningToast('Konto nicht freigegeben', data.error));
+      if (verifyError || !verifyData) {
+        if (verifyResponse?.status === 403) {
+          notifications.show(
+            warningToast(
+              'Konto nicht freigegeben',
+              (verifyError as { error?: string })?.error || 'Konto nicht freigegeben'
+            )
+          );
         } else {
-          notifications.show(errorToast('Anmeldung fehlgeschlagen', data.error));
+          notifications.show(
+            errorToast(
+              'Anmeldung fehlgeschlagen',
+              (verifyError as { error?: string })?.error || 'Verifizierung fehlgeschlagen'
+            )
+          );
         }
         setIsPasskeyLoading(false);
         return;
       }
 
-      const data = await verifyResponse.json();
       notifications.show(
-        successToast(`Angemeldet als ${data.user.displayName || data.user.username}`)
+        successToast(`Angemeldet als ${verifyData.user.displayName || verifyData.user.username}`)
       );
 
       // Zur App weiterleiten
@@ -117,29 +132,27 @@ function LoginForm() {
       setIsLoading(true);
 
       try {
-        const response = await fetch('/api/auth/login/password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
-        });
+        const { data, error, response } = await apiClient.auth.loginPassword(username, password);
 
-        if (!response.ok) {
-          const data = await response.json();
-          if (response.status === 403) {
-            notifications.show(warningToast('Konto nicht freigegeben', data.error));
+        if (error || !data) {
+          if (response?.status === 403) {
+            notifications.show(
+              warningToast(
+                'Konto nicht freigegeben',
+                (error as { error?: string })?.error || 'Konto nicht freigegeben'
+              )
+            );
           } else {
             notifications.show(
               errorToast(
                 'Anmeldung fehlgeschlagen',
-                data.error || 'Bitte überprüfe deine Eingaben.'
+                (error as { error?: string })?.error || 'Bitte überprüfe deine Eingaben.'
               )
             );
           }
           setIsLoading(false);
           return;
         }
-
-        const data = await response.json();
 
         // Passwort-Änderung erforderlich?
         if (data.forcePasswordChange) {

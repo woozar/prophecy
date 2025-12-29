@@ -11,6 +11,18 @@ vi.mock('@/lib/toast/toast', () => ({
   showErrorToast: vi.fn(),
 }));
 
+// Mock apiClient
+const mockUpdateAvatarSettings = vi.fn();
+vi.mock('@/lib/api-client', () => ({
+  apiClient: {
+    user: {
+      avatarSettings: {
+        update: (data: unknown) => mockUpdateAvatarSettings(data),
+      },
+    },
+  },
+}));
+
 // Mock matchMedia for useReducedMotion hook
 beforeAll(() => {
   Object.defineProperty(globalThis, 'matchMedia', {
@@ -148,10 +160,7 @@ describe('AvatarEffectSelector', () => {
   describe('saving', () => {
     it('calls API and shows success toast on save', async () => {
       const mockOnEffectChange = vi.fn();
-      globalThis.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ success: true }),
-      });
+      mockUpdateAvatarSettings.mockResolvedValue({ error: null });
 
       render(
         <AvatarEffectSelector
@@ -165,10 +174,9 @@ describe('AvatarEffectSelector', () => {
       fireEvent.click(screen.getByText('Effekte speichern'));
 
       await waitFor(() => {
-        expect(fetch).toHaveBeenCalledWith('/api/users/me/avatar-settings', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: expect.any(String),
+        expect(mockUpdateAvatarSettings).toHaveBeenCalledWith({
+          avatarEffect: 'glow',
+          avatarEffectColors: ['cyan'],
         });
       });
 
@@ -177,9 +185,8 @@ describe('AvatarEffectSelector', () => {
     });
 
     it('shows error toast on API failure', async () => {
-      globalThis.fetch = vi.fn().mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({ error: 'Server error' }),
+      mockUpdateAvatarSettings.mockResolvedValue({
+        error: { error: 'Server error' },
       });
 
       render(<AvatarEffectSelector {...defaultProps} currentEffect={null} />);
@@ -198,7 +205,7 @@ describe('AvatarEffectSelector', () => {
         resolvePromise = resolve;
       });
 
-      globalThis.fetch = vi.fn().mockReturnValue(pendingPromise);
+      mockUpdateAvatarSettings.mockReturnValue(pendingPromise);
 
       render(<AvatarEffectSelector {...defaultProps} currentEffect={null} />);
 
@@ -207,7 +214,7 @@ describe('AvatarEffectSelector', () => {
 
       expect(screen.getByText('Wird gespeichert...')).toBeInTheDocument();
 
-      resolvePromise!({ ok: true, json: () => Promise.resolve({ success: true }) });
+      resolvePromise!({ error: null });
 
       await waitFor(() => {
         expect(screen.queryByText('Wird gespeichert...')).not.toBeInTheDocument();
@@ -216,10 +223,7 @@ describe('AvatarEffectSelector', () => {
 
     it('calls onEffectChange with null when selecting none', async () => {
       const mockOnEffectChange = vi.fn();
-      globalThis.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ success: true }),
-      });
+      mockUpdateAvatarSettings.mockResolvedValue({ error: null });
 
       render(
         <AvatarEffectSelector

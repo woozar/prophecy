@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 import bcrypt from 'bcrypt';
 
+import { validateBody } from '@/lib/api/validation';
 import {
   duplicateUsernameResponse,
   findExistingUser,
@@ -11,39 +12,16 @@ import {
   setPendingUserCookie,
 } from '@/lib/auth/registration';
 import { ensureInitialized, prisma } from '@/lib/db/prisma';
+import { registerPasswordSchema } from '@/lib/schemas/auth';
 
 export async function POST(request: NextRequest) {
   await ensureInitialized();
 
   try {
-    const body = await request.json();
-    const { username, password, displayName } = body as {
-      username: string;
-      password: string;
-      displayName?: string;
-    };
-
-    // Validierung
-    if (!username || !password) {
-      return NextResponse.json(
-        { error: 'Benutzername und Passwort erforderlich' },
-        { status: 400 }
-      );
-    }
-
-    if (username.length < 3) {
-      return NextResponse.json(
-        { error: 'Benutzername muss mindestens 3 Zeichen lang sein' },
-        { status: 400 }
-      );
-    }
-
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: 'Passwort muss mindestens 8 Zeichen lang sein' },
-        { status: 400 }
-      );
-    }
+    // Validate request body with Zod
+    const validation = await validateBody(request, registerPasswordSchema);
+    if (!validation.success) return validation.response;
+    const { username, password, displayName } = validation.data;
 
     const normalizedUsername = normalizeUsername(username);
 

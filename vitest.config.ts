@@ -30,6 +30,7 @@ export default defineConfig({
         'src/lib/auth/**/*.ts',
         'src/lib/db/**/*.ts',
         'src/lib/sse/**/*.ts',
+        'src/lib/api-client/generated/**',
         'src/proxy.ts',
         'src/instrumentation.ts',
       ],

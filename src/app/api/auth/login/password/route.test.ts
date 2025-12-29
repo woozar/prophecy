@@ -62,7 +62,7 @@ describe('POST /api/auth/login/password', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Benutzername und Passwort erforderlich');
+    expect(data.error).toBe('Benutzername erforderlich');
   });
 
   it('returns 400 when password is missing', async () => {
@@ -74,7 +74,7 @@ describe('POST /api/auth/login/password', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Benutzername und Passwort erforderlich');
+    expect(data.error).toBe('Passwort erforderlich');
   });
 
   it('returns 401 when user not found', async () => {

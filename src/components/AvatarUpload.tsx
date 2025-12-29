@@ -7,6 +7,7 @@ import { IconPhoto, IconTrash, IconUpload, IconX } from '@tabler/icons-react';
 
 import { Button } from '@/components/Button';
 import { type AvatarEffect, AvatarPreview } from '@/components/UserAvatar';
+import { apiClient } from '@/lib/api-client';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 
 interface AvatarUploadProps {
@@ -36,21 +37,15 @@ export const AvatarUpload = memo(function AvatarUpload({
 
       setIsUploading(true);
       try {
-        const formData = new FormData();
-        formData.append('avatar', file);
+        const { data, error } = await apiClient.user.avatar.upload(file);
 
-        const response = await fetch('/api/users/me/avatar', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || 'Upload fehlgeschlagen');
+        if (error) {
+          throw new Error((error as { error?: string }).error || 'Upload fehlgeschlagen');
         }
 
-        const { avatarUrl: newUrl } = await response.json();
-        onAvatarChange(newUrl);
+        if (data?.avatarUrl) {
+          onAvatarChange(data.avatarUrl);
+        }
         showSuccessToast('Avatar hochgeladen');
       } catch (error) {
         showErrorToast(error instanceof Error ? error.message : 'Upload fehlgeschlagen');
@@ -64,13 +59,10 @@ export const AvatarUpload = memo(function AvatarUpload({
   const handleDelete = useCallback(async () => {
     setIsDeleting(true);
     try {
-      const response = await fetch('/api/users/me/avatar', {
-        method: 'DELETE',
-      });
+      const { error } = await apiClient.user.avatar.delete();
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Löschen fehlgeschlagen');
+      if (error) {
+        throw new Error((error as { error?: string }).error || 'Löschen fehlgeschlagen');
       }
 
       onAvatarChange(null);

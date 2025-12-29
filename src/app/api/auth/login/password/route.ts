@@ -2,22 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import bcrypt from 'bcrypt';
 
+import { validateBody } from '@/lib/api/validation';
 import { loginErrorResponse, loginSuccessResponse, setSessionCookie } from '@/lib/auth/session';
 import { ensureInitialized, prisma } from '@/lib/db/prisma';
+import { passwordLoginSchema } from '@/lib/schemas/auth';
 
 export async function POST(request: NextRequest) {
   await ensureInitialized();
 
   try {
-    const body = await request.json();
-    const { username, password } = body as { username: string; password: string };
-
-    if (!username || !password) {
-      return NextResponse.json(
-        { error: 'Benutzername und Passwort erforderlich' },
-        { status: 400 }
-      );
-    }
+    // Validate request body with Zod
+    const validation = await validateBody(request, passwordLoginSchema);
+    if (!validation.success) return validation.response;
+    const { username, password } = validation.data;
 
     // User suchen
     const user = await prisma.user.findUnique({

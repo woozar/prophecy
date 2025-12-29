@@ -8,6 +8,31 @@ import { useUserStore } from '@/store/useUserStore';
 
 import { RoundDetailClient } from './RoundDetailClient';
 
+// Mock apiClient
+const mockPropheciesCreate = vi.fn();
+const mockPropheciesUpdate = vi.fn();
+const mockPropheciesDelete = vi.fn();
+const mockPropheciesRate = vi.fn();
+const mockPropheciesResolve = vi.fn();
+const mockRoundsPublishResults = vi.fn();
+const mockRoundsUnpublishResults = vi.fn();
+
+vi.mock('@/lib/api-client', () => ({
+  apiClient: {
+    prophecies: {
+      create: (...args: unknown[]) => mockPropheciesCreate(...args),
+      update: (...args: unknown[]) => mockPropheciesUpdate(...args),
+      delete: (...args: unknown[]) => mockPropheciesDelete(...args),
+      rate: (...args: unknown[]) => mockPropheciesRate(...args),
+      resolve: (...args: unknown[]) => mockPropheciesResolve(...args),
+    },
+    rounds: {
+      publishResults: (...args: unknown[]) => mockRoundsPublishResults(...args),
+      unpublishResults: (...args: unknown[]) => mockRoundsUnpublishResults(...args),
+    },
+  },
+}));
+
 async function renderWithMantine(ui: React.ReactElement) {
   let result: ReturnType<typeof render>;
   await act(async () => {
@@ -563,8 +588,7 @@ describe('RoundDetailClient', () => {
       },
     ];
 
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
-    globalThis.fetch = mockFetch;
+    mockPropheciesDelete.mockResolvedValue({ data: { success: true }, error: null });
 
     await setupStores(prophecies);
     await renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} />);
@@ -582,7 +606,7 @@ describe('RoundDetailClient', () => {
     fireEvent.click(confirmButton!);
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/prophecies/p2', { method: 'DELETE' });
+      expect(mockPropheciesDelete).toHaveBeenCalledWith('p2');
     });
   });
 
@@ -602,8 +626,7 @@ describe('RoundDetailClient', () => {
       },
     ];
 
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
-    globalThis.fetch = mockFetch;
+    mockPropheciesDelete.mockResolvedValue({ data: { success: true }, error: null });
 
     await setupStores(prophecies);
     await renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} />);
@@ -674,21 +697,19 @@ describe('RoundDetailClient', () => {
       },
     ];
 
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          prophecy: { ...prophecies[0], averageRating: 6.0, ratingCount: 5 },
-          rating: {
-            id: 'r-new',
-            prophecyId: 'p1',
-            userId: currentUserId,
-            value: 5,
-            createdAt: new Date().toISOString(),
-          },
-        }),
+    mockPropheciesRate.mockResolvedValue({
+      data: {
+        prophecy: { id: 'p1', averageRating: 6.0, ratingCount: 5 },
+        rating: {
+          id: 'r-new',
+          prophecyId: 'p1',
+          userId: currentUserId,
+          value: 5,
+          createdAt: new Date().toISOString(),
+        },
+      },
+      error: null,
     });
-    globalThis.fetch = mockFetch;
 
     await setupStores(prophecies);
     await renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} />);
@@ -700,13 +721,7 @@ describe('RoundDetailClient', () => {
     fireEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/prophecies/p1/rate',
-        expect.objectContaining({
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        })
-      );
+      expect(mockPropheciesRate).toHaveBeenCalledWith('p1', 5);
     });
   });
 
@@ -759,11 +774,10 @@ describe('RoundDetailClient', () => {
       resolvedAt: null,
     };
 
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ prophecy: newProphecy }),
+    mockPropheciesCreate.mockResolvedValue({
+      data: { prophecy: newProphecy },
+      error: null,
     });
-    globalThis.fetch = mockFetch;
 
     await setupStores([]);
     await renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} />);
@@ -783,7 +797,11 @@ describe('RoundDetailClient', () => {
     fireEvent.click(screen.getByText('Erstellen'));
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/prophecies', expect.any(Object));
+      expect(mockPropheciesCreate).toHaveBeenCalledWith({
+        roundId: '1',
+        title: 'Neue Prophezeiung',
+        description: 'Beschreibung',
+      });
     });
   });
 
@@ -1201,11 +1219,10 @@ describe('RoundDetailClient', () => {
         },
       ];
 
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({ error: 'Rating failed' }),
+      mockPropheciesRate.mockResolvedValue({
+        data: null,
+        error: { error: 'Rating failed' },
       });
-      globalThis.fetch = mockFetch;
 
       const { showErrorToast } = await import('@/lib/toast/toast');
 
@@ -1239,25 +1256,23 @@ describe('RoundDetailClient', () => {
         },
       ];
 
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            prophecy: {
-              ...prophecies[0],
-              averageRating: 6.0,
-              ratingCount: 5,
-            },
-            rating: {
-              id: 'r-new',
-              prophecyId: 'p1',
-              userId: currentUserId,
-              value: 5,
-              createdAt: new Date().toISOString(),
-            },
-          }),
+      mockPropheciesRate.mockResolvedValue({
+        data: {
+          prophecy: {
+            id: 'p1',
+            averageRating: 6.0,
+            ratingCount: 5,
+          },
+          rating: {
+            id: 'r-new',
+            prophecyId: 'p1',
+            userId: currentUserId,
+            value: 5,
+            createdAt: new Date().toISOString(),
+          },
+        },
+        error: null,
       });
-      globalThis.fetch = mockFetch;
 
       await setupStores(prophecies);
       await renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} />);
@@ -1491,17 +1506,15 @@ describe('RoundDetailClient', () => {
         },
       ];
 
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            prophecy: {
-              ...prophecies[0],
-              title: 'Updated Title',
-            },
-          }),
+      mockPropheciesUpdate.mockResolvedValue({
+        data: {
+          prophecy: {
+            ...prophecies[0],
+            title: 'Updated Title',
+          },
+        },
+        error: null,
       });
-      globalThis.fetch = mockFetch;
 
       await setupStores(prophecies);
       await renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} />);
@@ -1521,10 +1534,10 @@ describe('RoundDetailClient', () => {
       fireEvent.click(screen.getByText('Speichern'));
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith(
-          '/api/prophecies/p2',
-          expect.objectContaining({ method: 'PUT' })
-        );
+        expect(mockPropheciesUpdate).toHaveBeenCalledWith('p2', {
+          title: 'Updated Title',
+          description: 'Das ist meine eigene Prophezeiung',
+        });
       });
     });
 
@@ -1889,11 +1902,10 @@ describe('RoundDetailClient', () => {
         },
       ];
 
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ success: true }),
+      mockPropheciesDelete.mockResolvedValue({
+        data: { success: true },
+        error: null,
       });
-      globalThis.fetch = mockFetch;
 
       await setupStores(prophecies);
       await renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} />);
@@ -1905,10 +1917,7 @@ describe('RoundDetailClient', () => {
       fireEvent.click(within(modal).getByRole('button', { name: 'Löschen' }));
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith(
-          '/api/prophecies/p2',
-          expect.objectContaining({ method: 'DELETE' })
-        );
+        expect(mockPropheciesDelete).toHaveBeenCalledWith('p2');
       });
     });
   });
@@ -2122,11 +2131,10 @@ describe('RoundDetailClient', () => {
     });
 
     it('handles create API error with specific error message', async () => {
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({ error: 'Specific API error' }),
+      mockPropheciesCreate.mockResolvedValue({
+        data: null,
+        error: { error: 'Specific API error' },
       });
-      globalThis.fetch = mockFetch;
 
       const { showErrorToast } = await import('@/lib/toast/toast');
 
@@ -2170,11 +2178,10 @@ describe('RoundDetailClient', () => {
         },
       ];
 
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({ error: 'Edit failed' }),
+      mockPropheciesUpdate.mockResolvedValue({
+        data: null,
+        error: { error: 'Edit failed' },
       });
-      globalThis.fetch = mockFetch;
 
       const { showErrorToast } = await import('@/lib/toast/toast');
 
@@ -2213,11 +2220,10 @@ describe('RoundDetailClient', () => {
         },
       ];
 
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({ error: 'Delete not allowed' }),
+      mockPropheciesDelete.mockResolvedValue({
+        data: null,
+        error: { error: 'Delete not allowed' },
       });
-      globalThis.fetch = mockFetch;
 
       const { showErrorToast } = await import('@/lib/toast/toast');
 

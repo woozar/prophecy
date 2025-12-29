@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { validateBody } from '@/lib/api/validation';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 import { updateRoundSchema } from '@/lib/schemas/round';
@@ -53,15 +54,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    const body = await request.json();
-    const parsed = updateRoundSchema.safeParse(body);
-
-    if (!parsed.success) {
-      const firstError = parsed.error.errors[0];
-      return NextResponse.json({ error: firstError.message }, { status: 400 });
-    }
-
-    const { title, submissionDeadline, ratingDeadline, fulfillmentDate } = parsed.data;
+    // Validate request body with Zod
+    const validation = await validateBody(request, updateRoundSchema);
+    if (!validation.success) return validation.response;
+    const { title, submissionDeadline, ratingDeadline, fulfillmentDate } = validation.data;
 
     const round = await prisma.round.update({
       where: { id },

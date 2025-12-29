@@ -70,7 +70,7 @@ describe('PATCH /api/users/me/avatar-settings', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain('Ungültiger Effekt');
+    expect(data.error).toContain('Invalid enum value');
   });
 
   it('returns 400 for invalid colors', async () => {
@@ -84,7 +84,7 @@ describe('PATCH /api/users/me/avatar-settings', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain('Ungültige Farben');
+    expect(data.error).toContain('Invalid enum value');
   });
 
   it('returns 400 when colors is not an array', async () => {
@@ -98,7 +98,7 @@ describe('PATCH /api/users/me/avatar-settings', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Farben müssen ein Array sein');
+    expect(data.error).toContain('Expected array');
   });
 
   it('updates avatar effect successfully', async () => {

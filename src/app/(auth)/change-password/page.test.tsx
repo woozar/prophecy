@@ -38,6 +38,27 @@ vi.mock('@/lib/toast/toast', () => ({
   showErrorToast: vi.fn(),
 }));
 
+// Mock apiClient
+const mockPasswordLoginGet = vi.fn();
+const mockChangePassword = vi.fn();
+
+vi.mock('@/lib/api-client', () => ({
+  apiClient: {
+    user: {
+      passwordLogin: {
+        get: () => mockPasswordLoginGet(),
+      },
+    },
+    auth: {
+      changePassword: (
+        currentPassword: string | undefined,
+        newPassword: string,
+        confirmPassword: string
+      ) => mockChangePassword(currentPassword, newPassword, confirmPassword),
+    },
+  },
+}));
+
 // Mock store
 let mockCurrentUserId: string | null = 'user-123';
 
@@ -51,22 +72,10 @@ function renderWithMantine(ui: React.ReactElement) {
   return render(<MantineProvider>{ui}</MantineProvider>);
 }
 
-// Helper to create password status response
-function createPasswordStatusResponse(
-  passwordLoginEnabled: boolean,
-  forcePasswordChange: boolean = false
-) {
-  return {
-    ok: true,
-    json: async () => ({ passwordLoginEnabled, forcePasswordChange }),
-  };
-}
-
 describe('ChangePasswordPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockCurrentUserId = 'user-123';
-    global.fetch = vi.fn();
   });
 
   it('redirects to login when not logged in', async () => {
@@ -80,7 +89,7 @@ describe('ChangePasswordPage', () => {
   });
 
   it('shows loading state initially', () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(() => new Promise(() => {}));
+    mockPasswordLoginGet.mockImplementation(() => new Promise(() => {}));
 
     renderWithMantine(<ChangePasswordPage />);
 
@@ -88,9 +97,9 @@ describe('ChangePasswordPage', () => {
   });
 
   it('shows change password form after loading', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      createPasswordStatusResponse(true)
-    );
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, forcePasswordChange: false },
+    });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -105,9 +114,9 @@ describe('ChangePasswordPage', () => {
   });
 
   it('shows set password form when user has no existing password', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      createPasswordStatusResponse(false)
-    );
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: false, forcePasswordChange: false },
+    });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -124,9 +133,9 @@ describe('ChangePasswordPage', () => {
   });
 
   it('shows force change title when forcePasswordChange is true from API', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      createPasswordStatusResponse(true, true)
-    );
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, forcePasswordChange: true },
+    });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -143,9 +152,9 @@ describe('ChangePasswordPage', () => {
   });
 
   it('hides cancel button when forcePasswordChange is true', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      createPasswordStatusResponse(true, true)
-    );
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, forcePasswordChange: true },
+    });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -158,9 +167,9 @@ describe('ChangePasswordPage', () => {
   });
 
   it('validates empty current password', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      createPasswordStatusResponse(true)
-    );
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, forcePasswordChange: false },
+    });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -187,9 +196,9 @@ describe('ChangePasswordPage', () => {
   });
 
   it('validates empty new password', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      createPasswordStatusResponse(false)
-    );
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: false, forcePasswordChange: false },
+    });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -209,9 +218,9 @@ describe('ChangePasswordPage', () => {
   });
 
   it('validates password length', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      createPasswordStatusResponse(false)
-    );
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: false, forcePasswordChange: false },
+    });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -233,9 +242,9 @@ describe('ChangePasswordPage', () => {
   });
 
   it('validates password confirmation', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      createPasswordStatusResponse(false)
-    );
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: false, forcePasswordChange: false },
+    });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -260,9 +269,9 @@ describe('ChangePasswordPage', () => {
   });
 
   it('validates empty confirm password', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      createPasswordStatusResponse(false)
-    );
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: false, forcePasswordChange: false },
+    });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -287,12 +296,10 @@ describe('ChangePasswordPage', () => {
   });
 
   it('submits password change successfully', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce(createPasswordStatusResponse(false))
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true }),
-      });
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: false, forcePasswordChange: false },
+    });
+    mockChangePassword.mockResolvedValueOnce({ error: null });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -316,25 +323,21 @@ describe('ChangePasswordPage', () => {
       fireEvent.click(submitButton);
     });
 
-    // Verify the change password API was called with correct request body
+    // Verify the change password API was called with correct parameters
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/auth/change-password',
-        expect.objectContaining({
-          method: 'POST',
-          body: expect.stringContaining('newpassword123'),
-        })
+      expect(mockChangePassword).toHaveBeenCalledWith(
+        undefined,
+        'newpassword123',
+        'newpassword123'
       );
     });
   });
 
   it('shows error on API failure', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce(createPasswordStatusResponse(false))
-      .mockResolvedValueOnce({
-        ok: false,
-        json: async () => ({ error: 'Invalid password' }),
-      });
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: false, forcePasswordChange: false },
+    });
+    mockChangePassword.mockResolvedValueOnce({ error: { error: 'Invalid password' } });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -360,12 +363,7 @@ describe('ChangePasswordPage', () => {
 
     // Verify the API was called
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/auth/change-password',
-        expect.objectContaining({
-          method: 'POST',
-        })
-      );
+      expect(mockChangePassword).toHaveBeenCalled();
     });
 
     // On failure, should not redirect
@@ -375,9 +373,10 @@ describe('ChangePasswordPage', () => {
   it('shows network error on fetch failure', async () => {
     const { showErrorToast } = await import('@/lib/toast/toast');
 
-    (global.fetch as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce(createPasswordStatusResponse(false))
-      .mockRejectedValueOnce(new Error('Network error'));
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: false, forcePasswordChange: false },
+    });
+    mockChangePassword.mockRejectedValueOnce(new Error('Network error'));
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -407,9 +406,9 @@ describe('ChangePasswordPage', () => {
   });
 
   it('calls router.back when cancel is clicked', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      createPasswordStatusResponse(true)
-    );
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, forcePasswordChange: false },
+    });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -426,9 +425,9 @@ describe('ChangePasswordPage', () => {
   });
 
   it('shows button text as "Passwort ändern" when user has existing password', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      createPasswordStatusResponse(true)
-    );
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: true, forcePasswordChange: false },
+    });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -440,7 +439,7 @@ describe('ChangePasswordPage', () => {
   });
 
   it('handles password status check error gracefully', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'));
+    mockPasswordLoginGet.mockRejectedValueOnce(new Error('Network error'));
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -452,28 +451,24 @@ describe('ChangePasswordPage', () => {
     });
   });
 
-  it('handles non-ok response when checking password status', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: false,
-    });
+  it('handles response with no data', async () => {
+    mockPasswordLoginGet.mockResolvedValueOnce({ data: null });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
     });
 
-    // Should show the form (assumes has password when response not ok)
+    // Should show the form (assumes has password when no data)
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Passwort ändern' })).toBeInTheDocument();
     });
   });
 
   it('shows default error message when API returns no error field', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce(createPasswordStatusResponse(false))
-      .mockResolvedValueOnce({
-        ok: false,
-        json: async () => ({}),
-      });
+    mockPasswordLoginGet.mockResolvedValueOnce({
+      data: { passwordLoginEnabled: false, forcePasswordChange: false },
+    });
+    mockChangePassword.mockResolvedValueOnce({ error: {} });
 
     await act(async () => {
       renderWithMantine(<ChangePasswordPage />);
@@ -499,12 +494,7 @@ describe('ChangePasswordPage', () => {
 
     // Verify the API was called
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/auth/change-password',
-        expect.objectContaining({
-          method: 'POST',
-        })
-      );
+      expect(mockChangePassword).toHaveBeenCalled();
     });
 
     // On failure, should not redirect

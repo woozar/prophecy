@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { validateBody } from '@/lib/api/validation';
 import { validateAdminSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
+import { updateUserSchema } from '@/lib/schemas/user';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
 interface RouteParams {
@@ -20,15 +22,17 @@ async function canModifyAdmin(targetId: string): Promise<boolean> {
 
 // PUT /api/admin/users/[id] - Update a user (Admin only)
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-  const validation = await validateAdminSession();
-  if (validation.error) return validation.error;
-  const { session } = validation;
+  const adminValidation = await validateAdminSession();
+  if (adminValidation.error) return adminValidation.error;
+  const { session } = adminValidation;
 
   const { id } = await params;
 
   try {
-    const body = await request.json();
-    const { status, role } = body;
+    // Validate request body with Zod
+    const validation = await validateBody(request, updateUserSchema);
+    if (!validation.success) return validation.response;
+    const { status, role } = validation.data;
 
     if (id === session.userId && status === 'SUSPENDED') {
       return NextResponse.json({ error: 'Du kannst dich nicht selbst sperren' }, { status: 400 });

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
+import { validateBody } from '@/lib/api/validation';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
+import { rateSchema } from '@/lib/schemas/rating';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
 interface RouteParams {
@@ -19,16 +21,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    const body = await request.json();
-    const { value } = body;
-
-    // Validate rating value (-10 to +10)
-    if (typeof value !== 'number' || value < -10 || value > 10) {
-      return NextResponse.json(
-        { error: 'Bewertung muss zwischen -10 und +10 liegen' },
-        { status: 400 }
-      );
-    }
+    // Validate rating value with Zod
+    const validation = await validateBody(request, rateSchema);
+    if (!validation.success) return validation.response;
+    const { value } = validation.data;
 
     // Get prophecy with round info
     const prophecy = await prisma.prophecy.findUnique({

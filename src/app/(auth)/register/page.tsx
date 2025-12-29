@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { notifications } from '@mantine/notifications';
+import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/browser';
 import { startRegistration } from '@simplewebauthn/browser';
 
 import { Button } from '@/components/Button';
@@ -13,6 +14,7 @@ import { Card } from '@/components/Card';
 import { GlowBadge } from '@/components/GlowBadge';
 import { PasswordInput } from '@/components/PasswordInput';
 import { TextInput } from '@/components/TextInput';
+import { apiClient } from '@/lib/api-client';
 import { errorToast, infoToast, successToast } from '@/lib/toast/toast-styles';
 
 export default function RegisterPage() {
@@ -37,20 +39,18 @@ export default function RegisterPage() {
       setIsLoading(true);
 
       try {
-        const response = await fetch('/api/auth/register/password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username,
-            password,
-            displayName: displayName || username,
-          }),
-        });
+        const { error } = await apiClient.auth.registerPassword(
+          username,
+          password,
+          displayName || username
+        );
 
-        if (!response.ok) {
-          const data = await response.json();
+        if (error) {
           notifications.show(
-            errorToast('Registrierung fehlgeschlagen', data.error || 'Fehler bei der Registrierung')
+            errorToast(
+              'Registrierung fehlgeschlagen',
+              (error as { error?: string }).error || 'Fehler bei der Registrierung'
+            )
           );
           setIsLoading(false);
           return;
@@ -95,21 +95,16 @@ export default function RegisterPage() {
         return;
       }
 
-      const optionsResponse = await fetch('/api/auth/register/options', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username,
-          displayName: displayName || username,
-        }),
-      });
+      const { data: optionsData, error: optionsError } = await apiClient.auth.registerOptions(
+        username,
+        displayName || username
+      );
 
-      if (!optionsResponse.ok) {
-        const data = await optionsResponse.json();
+      if (optionsError || !optionsData) {
         notifications.show(
           errorToast(
             'Registrierung fehlgeschlagen',
-            data.error || 'Fehler beim Starten der Registrierung'
+            (optionsError as { error?: string })?.error || 'Fehler beim Starten der Registrierung'
           )
         );
         setIsPasskeyLoading(false);
@@ -121,11 +116,14 @@ export default function RegisterPage() {
         tempUserId,
         username: normalizedUsername,
         displayName: finalDisplayName,
-      } = await optionsResponse.json();
+      } = optionsData;
 
       let credential;
       try {
-        credential = await startRegistration({ optionsJSON: options });
+        // Type assertion: WebAuthn types are structurally compatible
+        credential = await startRegistration({
+          optionsJSON: options as unknown as PublicKeyCredentialCreationOptionsJSON,
+        });
       } catch (err) {
         if (err instanceof Error) {
           if (err.name === 'NotAllowedError') {
@@ -144,21 +142,20 @@ export default function RegisterPage() {
         return;
       }
 
-      const verifyResponse = await fetch('/api/auth/register/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          credential,
-          tempUserId,
-          username: normalizedUsername,
-          displayName: finalDisplayName,
-        }),
-      });
+      // Type assertion: WebAuthn credential types are structurally compatible
+      const { error: verifyError } = await apiClient.auth.registerVerify(
+        credential as unknown as Parameters<typeof apiClient.auth.registerVerify>[0],
+        tempUserId,
+        normalizedUsername,
+        finalDisplayName
+      );
 
-      if (!verifyResponse.ok) {
-        const data = await verifyResponse.json();
+      if (verifyError) {
         notifications.show(
-          errorToast('Registrierung fehlgeschlagen', data.error || 'Fehler bei der Verifizierung')
+          errorToast(
+            'Registrierung fehlgeschlagen',
+            (verifyError as { error?: string })?.error || 'Fehler bei der Verifizierung'
+          )
         );
         setIsPasskeyLoading(false);
         return;

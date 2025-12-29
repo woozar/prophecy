@@ -3,7 +3,7 @@ import { create } from 'zustand';
 export interface Prophecy {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   creatorId: string;
   roundId: string;
   createdAt: string;

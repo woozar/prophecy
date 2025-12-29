@@ -10,6 +10,21 @@ function renderWithMantine(ui: React.ReactElement) {
   return render(<MantineProvider>{ui}</MantineProvider>);
 }
 
+// Mock apiClient
+const mockAvatarUpload = vi.fn();
+const mockAvatarDelete = vi.fn();
+
+vi.mock('@/lib/api-client', () => ({
+  apiClient: {
+    user: {
+      avatar: {
+        upload: (...args: unknown[]) => mockAvatarUpload(...args),
+        delete: () => mockAvatarDelete(),
+      },
+    },
+  },
+}));
+
 // Mock toast
 vi.mock('@/lib/toast/toast', () => ({
   showSuccessToast: vi.fn(),
@@ -79,9 +94,9 @@ describe('AvatarUpload', () => {
   describe('upload functionality', () => {
     it('calls API on file drop and shows success toast', async () => {
       const mockOnAvatarChange = vi.fn();
-      globalThis.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ avatarUrl: '/api/uploads/avatars/new.webp' }),
+      mockAvatarUpload.mockResolvedValue({
+        data: { avatarUrl: '/api/uploads/avatars/new.webp' },
+        error: null,
       });
 
       renderWithMantine(<AvatarUpload {...defaultProps} onAvatarChange={mockOnAvatarChange} />);
@@ -98,10 +113,7 @@ describe('AvatarUpload', () => {
       });
 
       await waitFor(() => {
-        expect(fetch).toHaveBeenCalledWith('/api/users/me/avatar', {
-          method: 'POST',
-          body: expect.any(FormData),
-        });
+        expect(mockAvatarUpload).toHaveBeenCalledWith(file);
       });
 
       await waitFor(() => {
@@ -112,9 +124,9 @@ describe('AvatarUpload', () => {
     });
 
     it('shows error toast on upload failure', async () => {
-      globalThis.fetch = vi.fn().mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({ error: 'Upload failed' }),
+      mockAvatarUpload.mockResolvedValue({
+        data: null,
+        error: { error: 'Upload failed' },
       });
 
       renderWithMantine(<AvatarUpload {...defaultProps} />);
@@ -138,9 +150,9 @@ describe('AvatarUpload', () => {
   describe('delete functionality', () => {
     it('calls API on delete and shows success toast', async () => {
       const mockOnAvatarChange = vi.fn();
-      globalThis.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ success: true }),
+      mockAvatarDelete.mockResolvedValue({
+        data: { success: true },
+        error: null,
       });
 
       renderWithMantine(
@@ -154,9 +166,7 @@ describe('AvatarUpload', () => {
       fireEvent.click(screen.getByText('Avatar entfernen'));
 
       await waitFor(() => {
-        expect(fetch).toHaveBeenCalledWith('/api/users/me/avatar', {
-          method: 'DELETE',
-        });
+        expect(mockAvatarDelete).toHaveBeenCalled();
       });
 
       expect(showSuccessToast).toHaveBeenCalledWith('Avatar entfernt');
@@ -164,9 +174,9 @@ describe('AvatarUpload', () => {
     });
 
     it('shows error toast on delete failure', async () => {
-      globalThis.fetch = vi.fn().mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({ error: 'Delete failed' }),
+      mockAvatarDelete.mockResolvedValue({
+        data: null,
+        error: { error: 'Delete failed' },
       });
 
       renderWithMantine(
@@ -186,7 +196,7 @@ describe('AvatarUpload', () => {
         resolvePromise = resolve;
       });
 
-      globalThis.fetch = vi.fn().mockReturnValue(pendingPromise);
+      mockAvatarDelete.mockReturnValue(pendingPromise);
 
       renderWithMantine(
         <AvatarUpload {...defaultProps} avatarUrl="/api/uploads/avatars/test.webp" />
@@ -196,7 +206,7 @@ describe('AvatarUpload', () => {
 
       expect(screen.getByText('Wird entfernt...')).toBeInTheDocument();
 
-      resolvePromise!({ ok: true, json: () => Promise.resolve({ success: true }) });
+      resolvePromise!({ data: { success: true }, error: null });
 
       await waitFor(() => {
         expect(screen.queryByText('Wird entfernt...')).not.toBeInTheDocument();

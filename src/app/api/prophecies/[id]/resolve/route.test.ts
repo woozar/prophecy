@@ -85,7 +85,7 @@ describe('POST /api/prophecies/[id]/resolve', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('fulfilled muss ein Boolean sein');
+    expect(data.error).toContain('boolean');
   });
 
   it('returns 404 when prophecy not found', async () => {

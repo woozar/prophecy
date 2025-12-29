@@ -32,6 +32,16 @@ vi.mock('@/lib/toast/toast-styles', () => ({
   errorToast: vi.fn((title, message) => ({ title, message })),
 }));
 
+// Mock apiClient
+const mockLogout = vi.fn();
+vi.mock('@/lib/api-client', () => ({
+  apiClient: {
+    auth: {
+      logout: () => mockLogout(),
+    },
+  },
+}));
+
 // Mock UserAvatar component
 vi.mock('@/components/UserAvatar', () => ({
   UserAvatar: ({ user }: { user: { username: string; displayName: string | null } }) => {
@@ -233,8 +243,7 @@ describe('Header', () => {
   });
 
   it('calls logout API when logout is clicked', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true });
-    globalThis.fetch = mockFetch;
+    mockLogout.mockResolvedValue({ error: null });
 
     render(<Header user={defaultUser} />);
 
@@ -247,13 +256,12 @@ describe('Header', () => {
     fireEvent.click(logoutButton);
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' });
+      expect(mockLogout).toHaveBeenCalled();
     });
   });
 
   it('shows success toast and redirects after successful logout', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true });
-    globalThis.fetch = mockFetch;
+    mockLogout.mockResolvedValue({ error: null });
 
     render(<Header user={defaultUser} />);
 
@@ -275,8 +283,7 @@ describe('Header', () => {
   });
 
   it('shows error toast when logout fails with error response', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({ ok: false });
-    globalThis.fetch = mockFetch;
+    mockLogout.mockResolvedValue({ error: { error: 'Server error' } });
 
     render(<Header user={defaultUser} />);
 
@@ -292,8 +299,7 @@ describe('Header', () => {
   });
 
   it('shows error toast when logout throws exception', async () => {
-    const mockFetch = vi.fn().mockRejectedValue(new Error('Network error'));
-    globalThis.fetch = mockFetch;
+    mockLogout.mockRejectedValue(new Error('Network error'));
 
     render(<Header user={defaultUser} />);
 
@@ -346,12 +352,11 @@ describe('Header', () => {
   });
 
   it('shows loading state during logout', async () => {
-    let resolveLogout: () => void;
-    const logoutPromise = new Promise<{ ok: boolean }>((resolve) => {
-      resolveLogout = () => resolve({ ok: true });
+    let resolveLogout: (value: { error: null }) => void;
+    const logoutPromise = new Promise<{ error: null }>((resolve) => {
+      resolveLogout = resolve;
     });
-    const mockFetch = vi.fn().mockReturnValue(logoutPromise);
-    globalThis.fetch = mockFetch;
+    mockLogout.mockReturnValue(logoutPromise);
 
     render(<Header user={defaultUser} />);
 
@@ -368,7 +373,7 @@ describe('Header', () => {
 
     // Resolve and wait for state updates to complete
     await act(async () => {
-      resolveLogout!();
+      resolveLogout!({ error: null });
     });
   });
 
@@ -386,8 +391,7 @@ describe('Header', () => {
   });
 
   it('handles mobile logout click', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true });
-    globalThis.fetch = mockFetch;
+    mockLogout.mockResolvedValue({ error: null });
 
     render(<Header user={defaultUser} />);
 
@@ -402,7 +406,7 @@ describe('Header', () => {
     fireEvent.click(mobileLogoutButton!);
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' });
+      expect(mockLogout).toHaveBeenCalled();
     });
   });
 

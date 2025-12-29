@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { apiClient } from '@/lib/api-client';
 import { type Prophecy, useProphecyStore } from '@/store/useProphecyStore';
 import { type Rating, useRatingStore } from '@/store/useRatingStore';
 import { type Round, useRoundStore } from '@/store/useRoundStore';
@@ -44,18 +45,16 @@ export function useSSE() {
 
     async function loadInitialData() {
       try {
-        const res = await fetch('/api/initial-data');
-        if (!res.ok) throw new Error('Failed to load initial data');
-
-        const data = await res.json();
+        const { data, error } = await apiClient.initialData.get();
+        if (error || !data) throw new Error('Failed to load initial data');
 
         // Populate stores
-        useUserStore.getState().setUsers(data.users);
+        useUserStore.getState().setUsers(data.users as User[]);
         useUserStore.getState().setCurrentUserId(data.currentUserId);
         useUserStore.getState().setInitialized(true);
-        useRoundStore.getState().setRounds(data.rounds);
-        useProphecyStore.getState().setProphecies(data.prophecies);
-        useRatingStore.getState().setRatings(data.ratings);
+        useRoundStore.getState().setRounds(data.rounds as Round[]);
+        useProphecyStore.getState().setProphecies(data.prophecies as Prophecy[]);
+        useRatingStore.getState().setRatings(data.ratings as Rating[]);
 
         setIsInitialized(true);
       } catch (error) {

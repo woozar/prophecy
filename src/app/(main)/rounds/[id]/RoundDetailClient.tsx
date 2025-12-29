@@ -32,6 +32,7 @@ import { TextInput } from '@/components/TextInput';
 import { Textarea } from '@/components/Textarea';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useCurrentUser, useUser } from '@/hooks/useUser';
+import { apiClient } from '@/lib/api-client';
 import { formatDate } from '@/lib/formatting/date';
 import { createProphecySchema, updateProphecySchema } from '@/lib/schemas/prophecy';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
@@ -148,19 +149,15 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     setTitleError(undefined);
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/prophecies', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsed.data),
-      });
+      const { data, error } = await apiClient.prophecies.create(parsed.data);
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Fehler beim Erstellen');
+      if (error) {
+        throw new Error((error as { error?: string }).error || 'Fehler beim Erstellen');
       }
 
-      const { prophecy } = await res.json();
-      setProphecy(prophecy);
+      if (data?.prophecy) {
+        setProphecy(data.prophecy);
+      }
       showSuccessToast('Prophezeiung erstellt');
       setIsCreateModalOpen(false);
       setNewTitle('');
@@ -179,13 +176,10 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     const id = confirmDeleteProphecy.id;
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/prophecies/${id}`, {
-        method: 'DELETE',
-      });
+      const { error } = await apiClient.prophecies.delete(id);
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Fehler beim Löschen');
+      if (error) {
+        throw new Error((error as { error?: string }).error || 'Fehler beim Löschen');
       }
 
       removeProphecy(id);
@@ -211,7 +205,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const openEditModal = useCallback((prophecy: Prophecy) => {
     setEditingProphecy(prophecy);
     setEditTitle(prophecy.title);
-    setEditDescription(prophecy.description);
+    setEditDescription(prophecy.description ?? '');
     setEditTitleError(undefined);
   }, []);
 
@@ -251,19 +245,15 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     setEditTitleError(undefined);
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/prophecies/${editingProphecy.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsed.data),
-      });
+      const { data, error } = await apiClient.prophecies.update(editingProphecy.id, parsed.data);
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Fehler beim Aktualisieren');
+      if (error) {
+        throw new Error((error as { error?: string }).error || 'Fehler beim Aktualisieren');
       }
 
-      const { prophecy } = await res.json();
-      setProphecy(prophecy);
+      if (data?.prophecy) {
+        setProphecy(data.prophecy);
+      }
       showSuccessToast('Prophezeiung aktualisiert');
       setEditingProphecy(null);
       setEditTitle('');
@@ -279,23 +269,26 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const handleRateProphecy = useCallback(
     async (prophecyId: string, value: number) => {
       try {
-        const res = await fetch(`/api/prophecies/${prophecyId}/rate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ value }),
-        });
+        const { data, error } = await apiClient.prophecies.rate(prophecyId, value);
 
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || 'Fehler beim Bewerten');
+        if (error) {
+          throw new Error((error as { error?: string }).error || 'Fehler beim Bewerten');
         }
 
-        const { prophecy, rating } = await res.json();
-        // Update prophecy with new average
-        setProphecy(prophecy);
+        // Update prophecy with new average - merge with existing prophecy since API returns partial data
+        if (data?.prophecy) {
+          const existingProphecy = useProphecyStore.getState().prophecies[prophecyId];
+          if (existingProphecy) {
+            setProphecy({
+              ...existingProphecy,
+              averageRating: data.prophecy.averageRating,
+              ratingCount: data.prophecy.ratingCount,
+            });
+          }
+        }
         // Update rating in store
-        if (rating) {
-          setRating(rating);
+        if (data?.rating) {
+          setRating(data.rating);
         }
         showSuccessToast('Bewertung gespeichert');
       } catch (error) {
@@ -308,19 +301,15 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const handleResolveProphecy = useCallback(
     async (prophecyId: string, fulfilled: boolean) => {
       try {
-        const res = await fetch(`/api/prophecies/${prophecyId}/resolve`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fulfilled }),
-        });
+        const { data, error } = await apiClient.prophecies.resolve(prophecyId, fulfilled);
 
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || 'Fehler beim Auflösen');
+        if (error) {
+          throw new Error((error as { error?: string }).error || 'Fehler beim Auflösen');
         }
 
-        const { prophecy } = await res.json();
-        setProphecy(prophecy);
+        if (data?.prophecy) {
+          setProphecy(data.prophecy);
+        }
         showSuccessToast(fulfilled ? 'Als erfüllt markiert' : 'Als nicht erfüllt markiert');
       } catch (error) {
         showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
@@ -332,16 +321,12 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const handlePublishResults = useCallback(async () => {
     setIsPublishing(true);
     try {
-      const res = await fetch(`/api/rounds/${round.id}/publish-results`, {
-        method: 'POST',
-      });
+      const { error } = await apiClient.rounds.publishResults(round.id);
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Fehler beim Veröffentlichen');
+      if (error) {
+        throw new Error((error as { error?: string }).error || 'Fehler beim Veröffentlichen');
       }
 
-      await res.json();
       showSuccessToast('Ergebnisse veröffentlicht');
     } catch (error) {
       showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
@@ -353,13 +338,10 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const handleUnpublishResults = useCallback(async () => {
     setIsUnpublishing(true);
     try {
-      const res = await fetch(`/api/rounds/${round.id}/publish-results`, {
-        method: 'DELETE',
-      });
+      const { error } = await apiClient.rounds.unpublishResults(round.id);
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Fehler beim Zurückziehen');
+      if (error) {
+        throw new Error((error as { error?: string }).error || 'Fehler beim Zurückziehen');
       }
 
       showSuccessToast('Freigabe aufgehoben');

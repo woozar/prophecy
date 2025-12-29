@@ -10,6 +10,7 @@ import { IconChevronDown, IconLogout, IconMenu2, IconUser, IconX } from '@tabler
 import { Button } from '@/components/Button';
 import { Link } from '@/components/Link';
 import { UserAvatar } from '@/components/UserAvatar';
+import { apiClient } from '@/lib/api-client';
 import { errorToast, successToast } from '@/lib/toast/toast-styles';
 import { useUserStore } from '@/store/useUserStore';
 
@@ -57,13 +58,13 @@ export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
   const handleLogout = useCallback(async () => {
     setIsLoggingOut(true);
     try {
-      const response = await fetch('/api/auth/logout', { method: 'POST' });
-      if (response.ok) {
+      const { error } = await apiClient.auth.logout();
+      if (error) {
+        notifications.show(errorToast('Fehler', 'Abmeldung fehlgeschlagen'));
+      } else {
         useUserStore.getState().setCurrentUserId(null);
         notifications.show(successToast('Abgemeldet', 'Bis bald!'));
         router.push('/login');
-      } else {
-        notifications.show(errorToast('Fehler', 'Abmeldung fehlgeschlagen'));
       }
     } catch {
       notifications.show(errorToast('Fehler', 'Abmeldung fehlgeschlagen'));

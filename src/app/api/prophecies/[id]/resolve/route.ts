@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
+import { validateBody } from '@/lib/api/validation';
 import { validateAdminSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
+import { resolveSchema } from '@/lib/schemas/rating';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
 interface RouteParams {
@@ -11,18 +13,16 @@ interface RouteParams {
 
 // POST /api/prophecies/[id]/resolve - Mark a prophecy as fulfilled or not fulfilled (Admin only)
 export async function POST(request: NextRequest, { params }: RouteParams) {
-  const validation = await validateAdminSession();
-  if (validation.error) return validation.error;
+  const adminValidation = await validateAdminSession();
+  if (adminValidation.error) return adminValidation.error;
 
   const { id } = await params;
 
   try {
-    const body = await request.json();
-    const { fulfilled } = body;
-
-    if (typeof fulfilled !== 'boolean') {
-      return NextResponse.json({ error: 'fulfilled muss ein Boolean sein' }, { status: 400 });
-    }
+    // Validate request body with Zod
+    const validation = await validateBody(request, resolveSchema);
+    if (!validation.success) return validation.response;
+    const { fulfilled } = validation.data;
 
     // Get prophecy with round info
     const prophecy = await prisma.prophecy.findUnique({

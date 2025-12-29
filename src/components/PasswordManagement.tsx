@@ -9,6 +9,7 @@ import { IconKey, IconKeyOff } from '@tabler/icons-react';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { ConfirmModal } from '@/components/ConfirmModal';
+import { apiClient } from '@/lib/api-client';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 
 interface PasswordManagementProps {
@@ -28,9 +29,8 @@ export const PasswordManagement = memo(function PasswordManagement({
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const response = await fetch('/api/users/me/password-login');
-        if (response.ok) {
-          const data = await response.json();
+        const { data } = await apiClient.user.passwordLogin.get();
+        if (data) {
           setPasswordLoginEnabled(data.passwordLoginEnabled);
           setCanDisable(data.canDisablePasswordLogin);
         }
@@ -47,22 +47,18 @@ export const PasswordManagement = memo(function PasswordManagement({
   const handleDisablePasswordLogin = useCallback(async () => {
     setIsDisabling(true);
     try {
-      const response = await fetch('/api/users/me/password-login', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: false }),
-      });
+      const { data, error } = await apiClient.user.passwordLogin.toggle(false);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        showErrorToast(data.error || 'Fehler beim Deaktivieren');
+      if (error) {
+        showErrorToast((error as { error?: string }).error || 'Fehler beim Deaktivieren');
         return;
       }
 
-      setPasswordLoginEnabled(false);
-      setShowDisableModal(false);
-      showSuccessToast('Passwort-Login wurde deaktiviert');
+      if (data) {
+        setPasswordLoginEnabled(false);
+        setShowDisableModal(false);
+        showSuccessToast('Passwort-Login wurde deaktiviert');
+      }
     } catch {
       showErrorToast('Verbindungsfehler');
     } finally {

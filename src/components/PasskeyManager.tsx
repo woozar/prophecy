@@ -3,9 +3,11 @@
 import { memo, useCallback, useState } from 'react';
 
 import { notifications } from '@mantine/notifications';
+import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/browser';
 import { startRegistration } from '@simplewebauthn/browser';
 import { IconEdit, IconLoader2, IconPlus, IconTrash } from '@tabler/icons-react';
 
+import { apiClient } from '@/lib/api-client';
 import { errorToast, successToast } from '@/lib/toast/toast-styles';
 
 import { Button } from './Button';
@@ -40,42 +42,40 @@ export const PasskeyManager = memo(function PasskeyManager({
     setIsAdding(true);
     try {
       // Step 1: Get registration options
-      const optionsRes = await fetch('/api/users/me/passkeys', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'options' }),
-      });
+      const { data: optionsData, error: optionsError } = await apiClient.user.passkeys.getOptions();
 
-      if (!optionsRes.ok) {
-        const error = await optionsRes.json();
-        throw new Error(error.error || 'Fehler beim Abrufen der Optionen');
+      if (optionsError || !optionsData) {
+        throw new Error(
+          (optionsError as { error?: string })?.error || 'Fehler beim Abrufen der Optionen'
+        );
       }
 
-      const { options } = await optionsRes.json();
+      const { options } = optionsData;
 
       // Step 2: Start WebAuthn registration
-      const credential = await startRegistration({ optionsJSON: options });
-
-      // Step 3: Verify and store with custom name
-      const verifyRes = await fetch('/api/users/me/passkeys', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'verify',
-          credential,
-          name: newPasskeyName.trim() || undefined,
-        }),
+      const credential = await startRegistration({
+        optionsJSON: options as PublicKeyCredentialCreationOptionsJSON,
       });
 
-      if (!verifyRes.ok) {
-        const error = await verifyRes.json();
-        throw new Error(error.error || 'Verifizierung fehlgeschlagen');
+      // Step 3: Verify and store with custom name
+      const { data: verifyData, error: verifyError } = await apiClient.user.passkeys.verify(
+        credential,
+        newPasskeyName.trim() || undefined
+      );
+
+      if (verifyError || !verifyData) {
+        throw new Error(
+          (verifyError as { error?: string })?.error || 'Verifizierung fehlgeschlagen'
+        );
       }
 
-      const { passkey } = await verifyRes.json();
+      // API returns partial passkey data, we add missing fields for display
+      const { passkey } = verifyData;
       setPasskeys((prev) => [
         {
-          ...passkey,
+          id: passkey.id,
+          name: passkey.name,
+          createdAt: passkey.createdAt,
           lastUsedAt: null,
           credentialDeviceType: 'singleDevice',
         },
@@ -101,15 +101,10 @@ export const PasskeyManager = memo(function PasskeyManager({
     if (!editingPasskey || !editName.trim()) return;
 
     try {
-      const res = await fetch('/api/users/me/passkeys', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editingPasskey.id, name: editName.trim() }),
-      });
+      const { error } = await apiClient.user.passkeys.rename(editingPasskey.id, editName.trim());
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Umbenennen fehlgeschlagen');
+      if (error) {
+        throw new Error((error as { error?: string })?.error || 'Umbenennen fehlgeschlagen');
       }
 
       setPasskeys((prev) =>
@@ -130,13 +125,10 @@ export const PasskeyManager = memo(function PasskeyManager({
 
     setDeletingId(confirmDelete.id);
     try {
-      const res = await fetch(`/api/users/me/passkeys?id=${confirmDelete.id}`, {
-        method: 'DELETE',
-      });
+      const { error } = await apiClient.user.passkeys.delete(confirmDelete.id);
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Löschen fehlgeschlagen');
+      if (error) {
+        throw new Error((error as { error?: string })?.error || 'Löschen fehlgeschlagen');
       }
 
       setPasskeys((prev) => prev.filter((p) => p.id !== confirmDelete.id));

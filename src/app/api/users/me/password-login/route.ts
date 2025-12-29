@@ -2,18 +2,19 @@ import { NextResponse } from 'next/server';
 
 import { z } from 'zod';
 
+import { validateBody } from '@/lib/api/validation';
 import { requireSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
-
-const togglePasswordLoginSchema = z.object({
-  enabled: z.boolean(),
-});
+import { togglePasswordLoginSchema } from '@/lib/schemas/user';
 
 export async function PUT(request: Request) {
   try {
     const session = await requireSession();
-    const body = await request.json();
-    const { enabled } = togglePasswordLoginSchema.parse(body);
+
+    // Validate request body with Zod
+    const validation = await validateBody(request, togglePasswordLoginSchema);
+    if (!validation.success) return validation.response;
+    const { enabled } = validation.data;
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },

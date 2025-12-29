@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+// Import common to ensure extendZodWithOpenApi is called
+import './common';
+
+// ============================================================================
+// Base Round Schema (shared between create and update)
+// ============================================================================
+
 const baseRoundSchema = z.object({
   title: z
     .string()
@@ -25,8 +32,81 @@ const dateOrderRefinements = <T extends z.ZodTypeAny>(schema: T) =>
       path: ['ratingDeadline'],
     });
 
-export const createRoundSchema = dateOrderRefinements(baseRoundSchema);
-export const updateRoundSchema = dateOrderRefinements(baseRoundSchema);
+// ============================================================================
+// Request Schemas
+// ============================================================================
+
+export const createRoundSchema =
+  dateOrderRefinements(baseRoundSchema).openapi('CreateRoundRequest');
+export const updateRoundSchema =
+  dateOrderRefinements(baseRoundSchema).openapi('UpdateRoundRequest');
+
+// ============================================================================
+// Response Schemas
+// ============================================================================
+
+export const roundResponseSchema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    submissionDeadline: z.string().datetime(),
+    ratingDeadline: z.string().datetime(),
+    fulfillmentDate: z.string().datetime(),
+    resultsPublishedAt: z.string().datetime().nullable(),
+    createdAt: z.string().datetime(),
+    _count: z
+      .object({
+        prophecies: z.number(),
+      })
+      .optional(),
+  })
+  .openapi('Round');
+
+export const roundsListResponseSchema = z
+  .object({
+    rounds: z.array(roundResponseSchema),
+  })
+  .openapi('RoundsListResponse');
+
+export const roundDetailResponseSchema = z
+  .object({
+    round: roundResponseSchema,
+  })
+  .openapi('RoundDetailResponse');
+
+// ============================================================================
+// Statistics Response
+// ============================================================================
+
+export const roundStatisticsSchema = z
+  .object({
+    roundId: z.string(),
+    totalProphecies: z.number(),
+    fulfilledCount: z.number(),
+    notFulfilledCount: z.number(),
+    unresolvedCount: z.number(),
+    averageRating: z.number().nullable(),
+    topCreators: z.array(
+      z.object({
+        userId: z.string(),
+        username: z.string(),
+        displayName: z.string().nullable(),
+        avatarUrl: z.string().nullable(),
+        fulfilledCount: z.number(),
+        totalCount: z.number(),
+        averageRating: z.number().nullable(),
+      })
+    ),
+  })
+  .openapi('RoundStatistics');
+
+// ============================================================================
+// Type Exports
+// ============================================================================
 
 export type CreateRoundInput = z.infer<typeof createRoundSchema>;
 export type UpdateRoundInput = z.infer<typeof updateRoundSchema>;
+export type RoundResponse = z.infer<typeof roundResponseSchema>;
+export type RoundsListResponse = z.infer<typeof roundsListResponseSchema>;
+export type RoundDetailResponse = z.infer<typeof roundDetailResponseSchema>;
+export type RoundStatistics = z.infer<typeof roundStatisticsSchema>;

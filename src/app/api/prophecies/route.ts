@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
+import { validateBody } from '@/lib/api/validation';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 import { createProphecySchema } from '@/lib/schemas/prophecy';
@@ -93,15 +94,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = await request.json();
-    const parsed = createProphecySchema.safeParse(body);
-
-    if (!parsed.success) {
-      const firstError = parsed.error.errors[0];
-      return NextResponse.json({ error: firstError.message }, { status: 400 });
-    }
-
-    const { roundId, title, description } = parsed.data;
+    // Validate request body with Zod
+    const validation = await validateBody(request, createProphecySchema);
+    if (!validation.success) return validation.response;
+    const { roundId, title, description } = validation.data;
 
     // Check if round exists and submission is still open
     const round = await prisma.round.findUnique({

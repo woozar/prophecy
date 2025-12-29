@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { PasswordInput } from '@/components/PasswordInput';
+import { apiClient } from '@/lib/api-client';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 import { useUserStore } from '@/store/useUserStore';
 
@@ -37,11 +38,10 @@ export default function ChangePasswordPage() {
     // Check password status from API
     const checkPasswordStatus = async () => {
       try {
-        const response = await fetch('/api/users/me/password-login');
-        if (response.ok) {
-          const data = await response.json();
+        const { data } = await apiClient.user.passwordLogin.get();
+        if (data) {
           setHasExistingPassword(data.passwordLoginEnabled);
-          setForceChange(data.forcePasswordChange);
+          setForceChange(data.forcePasswordChange ?? false);
         }
       } catch {
         // Assume has password on error
@@ -88,20 +88,14 @@ export default function ChangePasswordPage() {
       setIsSubmitting(true);
 
       try {
-        const response = await fetch('/api/auth/change-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            currentPassword: skipCurrentPassword ? undefined : currentPassword,
-            newPassword,
-            confirmPassword,
-          }),
-        });
+        const { error } = await apiClient.auth.changePassword(
+          skipCurrentPassword ? undefined : currentPassword,
+          newPassword,
+          confirmPassword
+        );
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          showErrorToast(data.error || 'Fehler beim Ändern des Passworts');
+        if (error) {
+          showErrorToast((error as { error?: string }).error || 'Fehler beim Ändern des Passworts');
           return;
         }
 

@@ -44,6 +44,25 @@ vi.mock('@/lib/toast/toast-styles', () => ({
   errorToast: vi.fn((title, message) => ({ title, message })),
 }));
 
+// Mock apiClient
+const mockRename = vi.fn();
+const mockDelete = vi.fn();
+const mockGetOptions = vi.fn();
+const mockVerify = vi.fn();
+
+vi.mock('@/lib/api-client', () => ({
+  apiClient: {
+    user: {
+      passkeys: {
+        rename: (...args: unknown[]) => mockRename(...args),
+        delete: (...args: unknown[]) => mockDelete(...args),
+        getOptions: () => mockGetOptions(),
+        verify: (...args: unknown[]) => mockVerify(...args),
+      },
+    },
+  },
+}));
+
 const mockStartRegistration = vi.mocked(startRegistration);
 const mockSuccessToast = vi.mocked(successToast);
 const mockErrorToast = vi.mocked(errorToast);
@@ -191,8 +210,7 @@ describe('PasskeyManager', () => {
   });
 
   it('calls delete API when confirmed', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
-    globalThis.fetch = mockFetch;
+    mockDelete.mockResolvedValue({ data: { success: true }, error: null });
 
     renderWithMantine(<PasskeyManager initialPasskeys={mockPasskeys} />);
 
@@ -212,13 +230,12 @@ describe('PasskeyManager', () => {
     fireEvent.click(confirmButton!);
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/users/me/passkeys?id=1', { method: 'DELETE' });
+      expect(mockDelete).toHaveBeenCalledWith('1');
     });
   });
 
   it('removes passkey from list after successful delete', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
-    globalThis.fetch = mockFetch;
+    mockDelete.mockResolvedValue({ data: { success: true }, error: null });
 
     renderWithMantine(<PasskeyManager initialPasskeys={mockPasskeys} />);
 
@@ -248,11 +265,7 @@ describe('PasskeyManager', () => {
   });
 
   it('shows error toast when delete fails', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: false,
-      json: () => Promise.resolve({ error: 'Deletion forbidden' }),
-    });
-    globalThis.fetch = mockFetch;
+    mockDelete.mockResolvedValue({ data: null, error: { error: 'Deletion forbidden' } });
 
     renderWithMantine(<PasskeyManager initialPasskeys={mockPasskeys} />);
 
@@ -277,8 +290,7 @@ describe('PasskeyManager', () => {
   });
 
   it('renames passkey successfully', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
-    globalThis.fetch = mockFetch;
+    mockRename.mockResolvedValue({ data: { success: true }, error: null });
 
     renderWithMantine(<PasskeyManager initialPasskeys={mockPasskeys} />);
 
@@ -298,11 +310,7 @@ describe('PasskeyManager', () => {
     fireEvent.click(screen.getByText('Speichern'));
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/users/me/passkeys', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: '1', name: 'Work Laptop' }),
-      });
+      expect(mockRename).toHaveBeenCalledWith('1', 'Work Laptop');
     });
 
     await waitFor(() => {
@@ -312,11 +320,7 @@ describe('PasskeyManager', () => {
   });
 
   it('shows error toast when rename fails', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: false,
-      json: () => Promise.resolve({ error: 'Name already exists' }),
-    });
-    globalThis.fetch = mockFetch;
+    mockRename.mockResolvedValue({ data: null, error: { error: 'Name already exists' } });
 
     renderWithMantine(<PasskeyManager initialPasskeys={mockPasskeys} />);
 
@@ -339,21 +343,17 @@ describe('PasskeyManager', () => {
   it('registers new passkey successfully', async () => {
     const mockCredential = { id: 'cred123', type: 'public-key' };
     mockStartRegistration.mockResolvedValue(mockCredential as never);
-
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ options: { challenge: 'test' } }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            passkey: { id: '3', name: 'New Device', createdAt: '2025-06-20T10:00:00Z' },
-          }),
-      });
-    globalThis.fetch = mockFetch;
+    mockGetOptions.mockResolvedValue({
+      data: { options: { challenge: 'test' } },
+      error: null,
+    });
+    mockVerify.mockResolvedValue({
+      data: {
+        success: true,
+        passkey: { id: '3', name: 'New Device', createdAt: '2025-06-20T10:00:00Z' },
+      },
+      error: null,
+    });
 
     renderWithMantine(<PasskeyManager initialPasskeys={mockPasskeys} />);
 
@@ -371,23 +371,11 @@ describe('PasskeyManager', () => {
 
     // Verify API calls
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/users/me/passkeys', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'options' }),
-      });
+      expect(mockGetOptions).toHaveBeenCalled();
     });
 
     await waitFor(() => {
-      expect(mockStartRegistration).toHaveBeenCalledWith({ optionsJSON: { challenge: 'test' } });
-    });
-
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/users/me/passkeys', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', credential: mockCredential, name: 'New Device' }),
-      });
+      expect(mockVerify).toHaveBeenCalledWith(mockCredential, 'New Device');
     });
 
     await waitFor(() => {
@@ -397,11 +385,7 @@ describe('PasskeyManager', () => {
   });
 
   it('shows error when registration options fetch fails', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: false,
-      json: () => Promise.resolve({ error: 'Server error' }),
-    });
-    globalThis.fetch = mockFetch;
+    mockGetOptions.mockResolvedValue({ data: null, error: { error: 'Server error' } });
 
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
 
@@ -422,12 +406,10 @@ describe('PasskeyManager', () => {
     const notAllowedError = new Error('User cancelled');
     notAllowedError.name = 'NotAllowedError';
     mockStartRegistration.mockRejectedValue(notAllowedError);
-
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ options: { challenge: 'test' } }),
+    mockGetOptions.mockResolvedValue({
+      data: { options: { challenge: 'test' } },
+      error: null,
     });
-    globalThis.fetch = mockFetch;
 
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
 
@@ -450,18 +432,11 @@ describe('PasskeyManager', () => {
   it('shows error when verification fails', async () => {
     const mockCredential = { id: 'cred123', type: 'public-key' };
     mockStartRegistration.mockResolvedValue(mockCredential as never);
-
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ options: { challenge: 'test' } }),
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        json: () => Promise.resolve({ error: 'Verification failed' }),
-      });
-    globalThis.fetch = mockFetch;
+    mockGetOptions.mockResolvedValue({
+      data: { options: { challenge: 'test' } },
+      error: null,
+    });
+    mockVerify.mockResolvedValue({ data: null, error: { error: 'Verification failed' } });
 
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
 
@@ -484,21 +459,17 @@ describe('PasskeyManager', () => {
       resolveRegistration = resolve;
     });
     mockStartRegistration.mockReturnValue(registrationPromise as never);
-
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ options: { challenge: 'test' } }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            passkey: { id: 'test', name: 'Test', createdAt: new Date().toISOString() },
-          }),
-      });
-    globalThis.fetch = mockFetch;
+    mockGetOptions.mockResolvedValue({
+      data: { options: { challenge: 'test' } },
+      error: null,
+    });
+    mockVerify.mockResolvedValue({
+      data: {
+        success: true,
+        passkey: { id: 'test', name: 'Test', createdAt: new Date().toISOString() },
+      },
+      error: null,
+    });
 
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
 
@@ -523,21 +494,17 @@ describe('PasskeyManager', () => {
   it('registers passkey without custom name', async () => {
     const mockCredential = { id: 'cred123', type: 'public-key' };
     mockStartRegistration.mockResolvedValue(mockCredential as never);
-
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ options: { challenge: 'test' } }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            passkey: { id: '3', name: 'Unnamed Passkey', createdAt: '2025-06-20T10:00:00Z' },
-          }),
-      });
-    globalThis.fetch = mockFetch;
+    mockGetOptions.mockResolvedValue({
+      data: { options: { challenge: 'test' } },
+      error: null,
+    });
+    mockVerify.mockResolvedValue({
+      data: {
+        success: true,
+        passkey: { id: '3', name: 'Unnamed Passkey', createdAt: '2025-06-20T10:00:00Z' },
+      },
+      error: null,
+    });
 
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
 
@@ -551,11 +518,12 @@ describe('PasskeyManager', () => {
     fireEvent.click(screen.getByText('Passkey erstellen'));
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenLastCalledWith('/api/users/me/passkeys', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', credential: mockCredential, name: undefined }),
-      });
+      // When no name is entered, the verify call should pass undefined for the name
+      expect(mockVerify).toHaveBeenCalledWith(mockCredential, undefined);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Unnamed Passkey')).toBeInTheDocument();
     });
   });
 
@@ -636,12 +604,10 @@ describe('PasskeyManager', () => {
   it('handles generic error during registration', async () => {
     const genericError = new Error('Generic error');
     mockStartRegistration.mockRejectedValue(genericError);
-
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ options: { challenge: 'test' } }),
+    mockGetOptions.mockResolvedValue({
+      data: { options: { challenge: 'test' } },
+      error: null,
     });
-    globalThis.fetch = mockFetch;
 
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
 

@@ -67,7 +67,7 @@ describe('POST /api/prophecies/[id]/rate', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Bewertung muss zwischen -10 und +10 liegen');
+    expect(data.error).toBe('Bewertung muss mindestens -10 sein');
   });
 
   it('returns 400 for invalid rating value (too high)', async () => {
@@ -81,7 +81,7 @@ describe('POST /api/prophecies/[id]/rate', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Bewertung muss zwischen -10 und +10 liegen');
+    expect(data.error).toBe('Bewertung darf maximal +10 sein');
   });
 
   it('returns 400 for non-numeric rating value', async () => {
@@ -95,7 +95,7 @@ describe('POST /api/prophecies/[id]/rate', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Bewertung muss zwischen -10 und +10 liegen');
+    expect(data.error).toContain('number');
   });
 
   it('returns 404 when prophecy not found', async () => {

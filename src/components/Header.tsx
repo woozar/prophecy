@@ -8,6 +8,7 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { useRouter, usePathname } from 'next/navigation';
 import { notifications } from '@mantine/notifications';
 import { successToast, errorToast } from '@/lib/toast/toast-styles';
+import { useUserStore } from '@/store/useUserStore';
 
 interface User {
   id: string;
@@ -55,6 +56,7 @@ export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
     try {
       const response = await fetch('/api/auth/logout', { method: 'POST' });
       if (response.ok) {
+        useUserStore.getState().setCurrentUserId(null);
         notifications.show(successToast('Abgemeldet', 'Bis bald!'));
         router.push('/login');
       } else {

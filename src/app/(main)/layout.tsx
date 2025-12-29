@@ -48,7 +48,7 @@ export default async function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <>
-      <SSEProvider />
+      <SSEProvider userId={session.userId} />
       <ParticleBurst
         particleCount={6}
         desktopMinInterval={20000}

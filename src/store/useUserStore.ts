@@ -27,7 +27,7 @@ interface UserState {
   setUsers: (users: User[]) => void;
   setUser: (user: User) => void;
   removeUser: (id: string) => void;
-  setCurrentUserId: (id: string) => void;
+  setCurrentUserId: (id: string | null) => void;
   setInitialized: (initialized: boolean) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;

@@ -15,6 +15,8 @@ const eslintConfig = defineConfig([
     // Test coverage reports
     'coverage/**',
     'coverage-node/**',
+    // Git worktrees for parallel feature development
+    'worktrees/**',
   ]),
 ]);
 

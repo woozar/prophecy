@@ -62,6 +62,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
     const ratings = round.prophecies.flatMap((p) =>
       p.ratings.map((r) => ({
+        prophecyId: p.id,
         prophecyTitle: p.title,
         raterUsername: r.user.username,
         raterDisplayName: r.user.displayName,
@@ -84,13 +85,13 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
     // Create safe filename
     const safeTitle = round.title
-      .replace(/[^a-zA-Z0-9\u00C0-\u00FF\s-]/g, '')
-      .replace(/\s+/g, '_')
+      .replaceAll(/[^a-zA-Z0-9\u00C0-\u00FF\s-]/g, '')
+      .replaceAll(/\s+/g, '_')
       .substring(0, 50);
     const filename = `${safeTitle}_Export.xlsx`;
 
     // Return as file download
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

@@ -16,6 +16,7 @@ const mockPropheciesRate = vi.fn();
 const mockPropheciesResolve = vi.fn();
 const mockRoundsPublishResults = vi.fn();
 const mockRoundsUnpublishResults = vi.fn();
+const mockRoundsExport = vi.fn();
 
 vi.mock('@/lib/api-client', () => ({
   apiClient: {
@@ -29,6 +30,7 @@ vi.mock('@/lib/api-client', () => ({
     rounds: {
       publishResults: (...args: unknown[]) => mockRoundsPublishResults(...args),
       unpublishResults: (...args: unknown[]) => mockRoundsUnpublishResults(...args),
+      export: (...args: unknown[]) => mockRoundsExport(...args),
     },
   },
 }));
@@ -2467,6 +2469,403 @@ describe('RoundDetailClient', () => {
       fireEvent.click(screen.getByText(/Meine \(/));
 
       expect(screen.getByText('Du hast noch keine Prophezeiungen erstellt.')).toBeInTheDocument();
+    });
+  });
+
+  describe('Admin functionality', () => {
+    const adminUserId = 'admin-user';
+
+    const setupAdminStores = async (prophecies: Prophecy[], ratings: Rating[] = []) => {
+      await act(async () => {
+        const userStore = useUserStore.getState();
+        const prophecyStore = useProphecyStore.getState();
+        const ratingStore = useRatingStore.getState();
+
+        // Set up admin user
+        userStore.setCurrentUserId(adminUserId);
+        userStore.setUser({
+          id: adminUserId,
+          username: 'admin',
+          displayName: 'Admin User',
+          role: 'ADMIN',
+          status: 'active',
+        });
+
+        // Set up other users from prophecies
+        const users = prophecies.map((p) => ({
+          id: p.creatorId,
+          username: p.creatorId === 'user1' ? 'testuser' : 'other',
+          displayName: p.creatorId === 'user1' ? 'Test User' : 'Other User',
+          role: 'user',
+          status: 'active',
+        }));
+
+        users.forEach((user) => userStore.setUser(user));
+        prophecyStore.setProphecies(prophecies);
+        if (ratings.length > 0) {
+          ratingStore.setRatings(ratings);
+        }
+      });
+    };
+
+    const mockRoundAwaitingResolution = {
+      id: 'round-awaiting',
+      title: 'Runde zur Auflösung',
+      submissionDeadline: farPast.toISOString(),
+      ratingDeadline: past.toISOString(),
+      fulfillmentDate: past.toISOString(),
+      resultsPublishedAt: null,
+      createdAt: farPast.toISOString(),
+    };
+
+    describe('handleExportRound', () => {
+      it('shows export button for admin users', async () => {
+        await setupAdminStores([]);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        expect(screen.getByText('Excel Export')).toBeInTheDocument();
+      });
+
+      it('calls export API when export button clicked', async () => {
+        const mockBlob = new Blob(['test'], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        mockRoundsExport.mockResolvedValue({
+          data: { blob: mockBlob, filename: 'export.xlsx' },
+          error: null,
+        });
+
+        // Mock URL.createObjectURL and URL.revokeObjectURL
+        const mockCreateObjectURL = vi.fn(() => 'blob:test');
+        const mockRevokeObjectURL = vi.fn();
+        globalThis.URL.createObjectURL = mockCreateObjectURL;
+        globalThis.URL.revokeObjectURL = mockRevokeObjectURL;
+
+        await setupAdminStores([]);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        fireEvent.click(screen.getByText('Excel Export'));
+
+        await waitFor(() => {
+          expect(mockRoundsExport).toHaveBeenCalledWith('round-awaiting');
+        });
+      });
+
+      it('shows exporting state while export is in progress', async () => {
+        let resolveExport: (value: unknown) => void;
+        const exportPromise = new Promise((resolve) => {
+          resolveExport = resolve;
+        });
+        mockRoundsExport.mockReturnValue(exportPromise);
+
+        await setupAdminStores([]);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        fireEvent.click(screen.getByText('Excel Export'));
+
+        await waitFor(() => {
+          expect(screen.getByText('Exportieren...')).toBeInTheDocument();
+        });
+
+        // Cleanup
+        resolveExport!({ data: null, error: { error: 'cancelled' } });
+      });
+
+      it('shows error toast on export failure', async () => {
+        mockRoundsExport.mockResolvedValue({
+          data: null,
+          error: { error: 'Export fehlgeschlagen' },
+        });
+
+        const { showErrorToast } = await import('@/lib/toast/toast');
+
+        await setupAdminStores([]);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        fireEvent.click(screen.getByText('Excel Export'));
+
+        await waitFor(() => {
+          expect(showErrorToast).toHaveBeenCalledWith('Export fehlgeschlagen');
+        });
+      });
+    });
+
+    describe('handleResolveProphecy', () => {
+      it('shows resolve buttons for admin after rating deadline', async () => {
+        const prophecies = [
+          {
+            id: 'p1',
+            roundId: 'round-awaiting',
+            title: 'Unresolved Prophecy',
+            description: 'Still unresolved',
+            createdAt: new Date().toISOString(),
+            creatorId: 'user1',
+            averageRating: 5.5,
+            ratingCount: 4,
+            fulfilled: null,
+            resolvedAt: null,
+          },
+        ];
+
+        await setupAdminStores(prophecies);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        expect(screen.getByTitle('Als erfüllt markieren')).toBeInTheDocument();
+        expect(screen.getByTitle('Als nicht erfüllt markieren')).toBeInTheDocument();
+      });
+
+      it('calls resolve API when marking as fulfilled', async () => {
+        const prophecies = [
+          {
+            id: 'p1',
+            roundId: 'round-awaiting',
+            title: 'Unresolved Prophecy',
+            description: 'Still unresolved',
+            createdAt: new Date().toISOString(),
+            creatorId: 'user1',
+            averageRating: 5.5,
+            ratingCount: 4,
+            fulfilled: null,
+            resolvedAt: null,
+          },
+        ];
+
+        mockPropheciesResolve.mockResolvedValue({
+          data: { prophecy: { ...prophecies[0], fulfilled: true } },
+          error: null,
+        });
+
+        await setupAdminStores(prophecies);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        fireEvent.click(screen.getByTitle('Als erfüllt markieren'));
+
+        await waitFor(() => {
+          expect(mockPropheciesResolve).toHaveBeenCalledWith('p1', true);
+        });
+      });
+
+      it('calls resolve API when marking as not fulfilled', async () => {
+        const prophecies = [
+          {
+            id: 'p1',
+            roundId: 'round-awaiting',
+            title: 'Unresolved Prophecy',
+            description: 'Still unresolved',
+            createdAt: new Date().toISOString(),
+            creatorId: 'user1',
+            averageRating: 5.5,
+            ratingCount: 4,
+            fulfilled: null,
+            resolvedAt: null,
+          },
+        ];
+
+        mockPropheciesResolve.mockResolvedValue({
+          data: { prophecy: { ...prophecies[0], fulfilled: false } },
+          error: null,
+        });
+
+        await setupAdminStores(prophecies);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        fireEvent.click(screen.getByTitle('Als nicht erfüllt markieren'));
+
+        await waitFor(() => {
+          expect(mockPropheciesResolve).toHaveBeenCalledWith('p1', false);
+        });
+      });
+
+      it('shows error toast on resolve failure', async () => {
+        const prophecies = [
+          {
+            id: 'p1',
+            roundId: 'round-awaiting',
+            title: 'Unresolved Prophecy',
+            description: 'Still unresolved',
+            createdAt: new Date().toISOString(),
+            creatorId: 'user1',
+            averageRating: 5.5,
+            ratingCount: 4,
+            fulfilled: null,
+            resolvedAt: null,
+          },
+        ];
+
+        mockPropheciesResolve.mockResolvedValue({
+          data: null,
+          error: { error: 'Resolve fehlgeschlagen' },
+        });
+
+        const { showErrorToast } = await import('@/lib/toast/toast');
+
+        await setupAdminStores(prophecies);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        fireEvent.click(screen.getByTitle('Als erfüllt markieren'));
+
+        await waitFor(() => {
+          expect(showErrorToast).toHaveBeenCalledWith('Resolve fehlgeschlagen');
+        });
+      });
+    });
+
+    describe('handlePublishResults', () => {
+      it('shows publish button for admin when all prophecies are resolved', async () => {
+        const prophecies = [
+          {
+            id: 'p1',
+            roundId: 'round-awaiting',
+            title: 'Resolved Prophecy',
+            description: 'Already resolved',
+            createdAt: new Date().toISOString(),
+            creatorId: 'user1',
+            averageRating: 5.5,
+            ratingCount: 4,
+            fulfilled: true,
+            resolvedAt: new Date().toISOString(),
+          },
+        ];
+
+        await setupAdminStores(prophecies);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        expect(screen.getByText('Ergebnisse freigeben')).toBeInTheDocument();
+      });
+
+      it('disables publish button when not all prophecies are resolved', async () => {
+        const prophecies = [
+          {
+            id: 'p1',
+            roundId: 'round-awaiting',
+            title: 'Unresolved Prophecy',
+            description: 'Still unresolved',
+            createdAt: new Date().toISOString(),
+            creatorId: 'user1',
+            averageRating: 5.5,
+            ratingCount: 4,
+            fulfilled: null,
+            resolvedAt: null,
+          },
+        ];
+
+        await setupAdminStores(prophecies);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        const publishButton = screen.getByText('Ergebnisse freigeben').closest('button');
+        expect(publishButton).toBeDisabled();
+      });
+
+      it('calls publishResults API when publish button clicked', async () => {
+        const prophecies = [
+          {
+            id: 'p1',
+            roundId: 'round-awaiting',
+            title: 'Resolved Prophecy',
+            description: 'Already resolved',
+            createdAt: new Date().toISOString(),
+            creatorId: 'user1',
+            averageRating: 5.5,
+            ratingCount: 4,
+            fulfilled: true,
+            resolvedAt: new Date().toISOString(),
+          },
+        ];
+
+        mockRoundsPublishResults.mockResolvedValue({ data: {}, error: null });
+
+        await setupAdminStores(prophecies);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        fireEvent.click(screen.getByText('Ergebnisse freigeben'));
+
+        await waitFor(() => {
+          expect(mockRoundsPublishResults).toHaveBeenCalledWith('round-awaiting');
+        });
+      });
+
+      it('shows error toast on publish failure', async () => {
+        const prophecies = [
+          {
+            id: 'p1',
+            roundId: 'round-awaiting',
+            title: 'Resolved Prophecy',
+            description: 'Already resolved',
+            createdAt: new Date().toISOString(),
+            creatorId: 'user1',
+            averageRating: 5.5,
+            ratingCount: 4,
+            fulfilled: true,
+            resolvedAt: new Date().toISOString(),
+          },
+        ];
+
+        mockRoundsPublishResults.mockResolvedValue({
+          data: null,
+          error: { error: 'Publish fehlgeschlagen' },
+        });
+
+        const { showErrorToast } = await import('@/lib/toast/toast');
+
+        await setupAdminStores(prophecies);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        fireEvent.click(screen.getByText('Ergebnisse freigeben'));
+
+        await waitFor(() => {
+          expect(showErrorToast).toHaveBeenCalledWith('Publish fehlgeschlagen');
+        });
+      });
+    });
+
+    describe('handleUnpublishResults', () => {
+      const mockRoundPublished = {
+        id: 'round-published',
+        title: 'Veröffentlichte Runde',
+        submissionDeadline: farPast.toISOString(),
+        ratingDeadline: farPast.toISOString(),
+        fulfillmentDate: past.toISOString(),
+        resultsPublishedAt: past.toISOString(),
+        createdAt: farPast.toISOString(),
+      };
+
+      it('shows unpublish button for admin when results are published', async () => {
+        await setupAdminStores([]);
+        await renderWithMantine(<RoundDetailClient round={mockRoundPublished} />);
+
+        expect(screen.getByText('Freigabe aufheben')).toBeInTheDocument();
+      });
+
+      it('calls unpublishResults API when unpublish button clicked', async () => {
+        mockRoundsUnpublishResults.mockResolvedValue({ data: {}, error: null });
+
+        await setupAdminStores([]);
+        await renderWithMantine(<RoundDetailClient round={mockRoundPublished} />);
+
+        fireEvent.click(screen.getByText('Freigabe aufheben'));
+
+        await waitFor(() => {
+          expect(mockRoundsUnpublishResults).toHaveBeenCalledWith('round-published');
+        });
+      });
+
+      it('shows error toast on unpublish failure', async () => {
+        mockRoundsUnpublishResults.mockResolvedValue({
+          data: null,
+          error: { error: 'Unpublish fehlgeschlagen' },
+        });
+
+        const { showErrorToast } = await import('@/lib/toast/toast');
+
+        await setupAdminStores([]);
+        await renderWithMantine(<RoundDetailClient round={mockRoundPublished} />);
+
+        fireEvent.click(screen.getByText('Freigabe aufheben'));
+
+        await waitFor(() => {
+          expect(showErrorToast).toHaveBeenCalledWith('Unpublish fehlgeschlagen');
+        });
+      });
     });
   });
 });

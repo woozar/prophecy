@@ -11,6 +11,7 @@ describe('transformProphecyToResponse', () => {
     creatorId: 'user-456',
     roundId: 'round-789',
     createdAt: new Date('2025-01-15T10:30:00.000Z'),
+    updatedAt: new Date('2025-01-15T10:30:00.000Z'),
     fulfilled: null,
     resolvedAt: null,
     averageRating: null,
@@ -92,14 +93,14 @@ describe('transformProphecyToResponse', () => {
     expect(result.fulfilled).toBe(false);
   });
 
-  it('preserves null description', () => {
+  it('preserves empty description', () => {
     const prophecy = createMockProphecy({
-      description: null,
+      description: '',
     });
 
     const result = transformProphecyToResponse(prophecy);
 
-    expect(result.description).toBeNull();
+    expect(result.description).toBe('');
   });
 
   it('includes rating data correctly', () => {

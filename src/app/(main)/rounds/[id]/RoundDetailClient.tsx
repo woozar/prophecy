@@ -371,7 +371,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
         a.download = data.filename;
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
+        a.remove();
         URL.revokeObjectURL(url);
 
         showSuccessToast('Export erfolgreich');

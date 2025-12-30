@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import { describe, expect, it } from 'vitest';
 
-import { generateRoundExcel, type RoundExportData } from './excel';
+import { type RoundExportData, generateRoundExcel } from './excel';
 
 const createMockExportData = (): RoundExportData => ({
   round: {
@@ -47,6 +47,7 @@ const createMockExportData = (): RoundExportData => ({
   ],
   ratings: [
     {
+      prophecyId: 'prophecy-1',
       prophecyTitle: 'Deutschland wird Weltmeister',
       raterUsername: 'user1',
       raterDisplayName: 'User Eins',
@@ -54,6 +55,7 @@ const createMockExportData = (): RoundExportData => ({
       createdAt: new Date('2025-01-12'),
     },
     {
+      prophecyId: 'prophecy-2',
       prophecyTitle: 'Bitcoin erreicht 100k',
       raterUsername: 'user2',
       raterDisplayName: null,
@@ -66,14 +68,15 @@ const createMockExportData = (): RoundExportData => ({
 describe('generateRoundExcel', () => {
   it('generates a valid Excel buffer with two sheets', async () => {
     const data = createMockExportData();
-    const buffer = await generateRoundExcel(data);
+    const buffer: Buffer = await generateRoundExcel(data);
 
     expect(buffer).toBeInstanceOf(Buffer);
     expect(buffer.length).toBeGreaterThan(0);
 
     // Verify it's a valid XLSX by reading it back
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await workbook.xlsx.load(buffer as any);
 
     expect(workbook.worksheets).toHaveLength(2);
     expect(workbook.worksheets[0].name).toBe('Prophezeiungen');
@@ -82,91 +85,100 @@ describe('generateRoundExcel', () => {
 
   it('includes correct prophecy headers in first sheet', async () => {
     const data = createMockExportData();
-    const buffer = await generateRoundExcel(data);
+    const buffer: Buffer = await generateRoundExcel(data);
 
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await workbook.xlsx.load(buffer as any);
 
     const sheet = workbook.getWorksheet('Prophezeiungen')!;
 
-    expect(sheet.getRow(1).getCell(1).value).toBe('Titel');
-    expect(sheet.getRow(1).getCell(2).value).toBe('Beschreibung');
-    expect(sheet.getRow(1).getCell(3).value).toBe('Ersteller');
-    expect(sheet.getRow(1).getCell(4).value).toBe('Anzahl Bewertungen');
-    expect(sheet.getRow(1).getCell(5).value).toBe('Durchschnitt');
-    expect(sheet.getRow(1).getCell(6).value).toBe('Status');
-    expect(sheet.getRow(1).getCell(7).value).toBe('Erstellt am');
+    expect(sheet.getRow(1).getCell(1).value).toBe('ID');
+    expect(sheet.getRow(1).getCell(2).value).toBe('Titel');
+    expect(sheet.getRow(1).getCell(3).value).toBe('Beschreibung');
+    expect(sheet.getRow(1).getCell(4).value).toBe('Ersteller');
+    expect(sheet.getRow(1).getCell(5).value).toBe('Anzahl Bewertungen');
+    expect(sheet.getRow(1).getCell(6).value).toBe('Durchschnitt');
+    expect(sheet.getRow(1).getCell(7).value).toBe('Status');
+    expect(sheet.getRow(1).getCell(8).value).toBe('Erstellt am');
   });
 
   it('includes correct prophecy data in first sheet', async () => {
     const data = createMockExportData();
-    const buffer = await generateRoundExcel(data);
+    const buffer: Buffer = await generateRoundExcel(data);
 
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await workbook.xlsx.load(buffer as any);
 
     const sheet = workbook.getWorksheet('Prophezeiungen')!;
 
     // First data row (row 2)
-    expect(sheet.getRow(2).getCell(1).value).toBe('Deutschland wird Weltmeister');
-    expect(sheet.getRow(2).getCell(3).value).toBe('Test User'); // displayName preferred
-    expect(sheet.getRow(2).getCell(4).value).toBe(5);
-    expect(sheet.getRow(2).getCell(5).value).toBe(3.5);
-    expect(sheet.getRow(2).getCell(6).value).toBe('Ausstehend');
+    expect(sheet.getRow(2).getCell(1).value).toBe('prophecy-1'); // ID
+    expect(sheet.getRow(2).getCell(2).value).toBe('Deutschland wird Weltmeister');
+    expect(sheet.getRow(2).getCell(4).value).toBe('Test User'); // DisplayName
+    expect(sheet.getRow(2).getCell(5).value).toBe(5); // ratingCount
+    expect(sheet.getRow(2).getCell(6).value).toBe(3.5); // averageRating
+    expect(sheet.getRow(2).getCell(7).value).toBe('Ausstehend'); // status
 
-    // Second row - user without displayName
-    expect(sheet.getRow(3).getCell(3).value).toBe('crypto_fan'); // falls back to username
-    expect(sheet.getRow(3).getCell(6).value).toBe('Erfuellt');
+    // Second row - user without displayName falls back to username
+    expect(sheet.getRow(3).getCell(4).value).toBe('crypto_fan'); // username fallback
+    expect(sheet.getRow(3).getCell(7).value).toBe('Erfuellt');
 
     // Third row - nicht erfuellt
-    expect(sheet.getRow(4).getCell(6).value).toBe('Nicht erfuellt');
+    expect(sheet.getRow(4).getCell(7).value).toBe('Nicht erfuellt');
   });
 
   it('rounds averageRating to one decimal place', async () => {
     const data = createMockExportData();
-    const buffer = await generateRoundExcel(data);
+    const buffer: Buffer = await generateRoundExcel(data);
 
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await workbook.xlsx.load(buffer as any);
 
     const sheet = workbook.getWorksheet('Prophezeiungen')!;
 
-    // -2.3 should stay as -2.3
-    expect(sheet.getRow(3).getCell(5).value).toBe(-2.3);
+    // -2.3 should stay as -2.3 (column 6 is Durchschnitt)
+    expect(sheet.getRow(3).getCell(6).value).toBe(-2.3);
   });
 
   it('includes correct rating headers in second sheet', async () => {
     const data = createMockExportData();
-    const buffer = await generateRoundExcel(data);
+    const buffer: Buffer = await generateRoundExcel(data);
 
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await workbook.xlsx.load(buffer as any);
 
     const sheet = workbook.getWorksheet('Bewertungen')!;
 
-    expect(sheet.getRow(1).getCell(1).value).toBe('Prophezeiung');
-    expect(sheet.getRow(1).getCell(2).value).toBe('Bewerter');
-    expect(sheet.getRow(1).getCell(3).value).toBe('Bewertung');
-    expect(sheet.getRow(1).getCell(4).value).toBe('Datum');
+    expect(sheet.getRow(1).getCell(1).value).toBe('Prophezeiung ID');
+    expect(sheet.getRow(1).getCell(2).value).toBe('Prophezeiung');
+    expect(sheet.getRow(1).getCell(3).value).toBe('Bewerter');
+    expect(sheet.getRow(1).getCell(4).value).toBe('Bewertung');
+    expect(sheet.getRow(1).getCell(5).value).toBe('Datum');
   });
 
   it('includes correct rating data in second sheet', async () => {
     const data = createMockExportData();
-    const buffer = await generateRoundExcel(data);
+    const buffer: Buffer = await generateRoundExcel(data);
 
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await workbook.xlsx.load(buffer as any);
 
     const sheet = workbook.getWorksheet('Bewertungen')!;
 
-    // First rating
-    expect(sheet.getRow(2).getCell(1).value).toBe('Deutschland wird Weltmeister');
-    expect(sheet.getRow(2).getCell(2).value).toBe('User Eins'); // displayName
-    expect(sheet.getRow(2).getCell(3).value).toBe(5);
+    // First rating - displayName is shown
+    expect(sheet.getRow(2).getCell(1).value).toBe('prophecy-1'); // ID
+    expect(sheet.getRow(2).getCell(2).value).toBe('Deutschland wird Weltmeister');
+    expect(sheet.getRow(2).getCell(3).value).toBe('User Eins'); // DisplayName
+    expect(sheet.getRow(2).getCell(4).value).toBe(5); // value
 
-    // Second rating - user without displayName
-    expect(sheet.getRow(3).getCell(2).value).toBe('user2'); // username fallback
-    expect(sheet.getRow(3).getCell(3).value).toBe(-3);
+    // Second rating - user without displayName falls back to username
+    expect(sheet.getRow(3).getCell(3).value).toBe('user2'); // username fallback
+    expect(sheet.getRow(3).getCell(4).value).toBe(-3);
   });
 
   it('handles empty prophecies gracefully', async () => {
@@ -181,10 +193,11 @@ describe('generateRoundExcel', () => {
       ratings: [],
     };
 
-    const buffer = await generateRoundExcel(data);
+    const buffer: Buffer = await generateRoundExcel(data);
 
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await workbook.xlsx.load(buffer as any);
 
     const propheciesSheet = workbook.getWorksheet('Prophezeiungen')!;
     const ratingsSheet = workbook.getWorksheet('Bewertungen')!;
@@ -218,12 +231,14 @@ describe('generateRoundExcel', () => {
       ratings: [],
     };
 
-    const buffer = await generateRoundExcel(data);
+    const buffer: Buffer = await generateRoundExcel(data);
 
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await workbook.xlsx.load(buffer as any);
 
     const sheet = workbook.getWorksheet('Prophezeiungen')!;
-    expect(sheet.getRow(2).getCell(5).value).toBe('-');
+    // Column 6 is Durchschnitt
+    expect(sheet.getRow(2).getCell(6).value).toBe('-');
   });
 });

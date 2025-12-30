@@ -13,6 +13,7 @@ export interface ProphecyExportData {
 }
 
 export interface RatingExportData {
+  prophecyId: string;
   prophecyTitle: string;
   raterUsername: string;
   raterDisplayName: string | null;
@@ -37,6 +38,8 @@ const headerStyle: Partial<ExcelJS.Style> = {
   alignment: { horizontal: 'center', vertical: 'middle' },
 };
 
+const dateTimeFormat = 'DD.MM.YYYY HH:mm';
+
 export async function generateRoundExcel(data: RoundExportData): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'Prophezeiung App';
@@ -46,6 +49,7 @@ export async function generateRoundExcel(data: RoundExportData): Promise<Buffer>
   const propheciesSheet = workbook.addWorksheet('Prophezeiungen');
 
   propheciesSheet.columns = [
+    { header: 'ID', key: 'id', width: 28 },
     { header: 'Titel', key: 'title', width: 40 },
     { header: 'Beschreibung', key: 'description', width: 60 },
     { header: 'Ersteller', key: 'creator', width: 20 },
@@ -61,22 +65,30 @@ export async function generateRoundExcel(data: RoundExportData): Promise<Buffer>
   });
   propheciesSheet.getRow(1).height = 25;
 
+  // Set date format for createdAt column
+  propheciesSheet.getColumn('createdAt').numFmt = dateTimeFormat;
+
   // Add prophecy data
   data.prophecies.forEach((prophecy) => {
-    const statusText =
-      prophecy.fulfilled === true
-        ? 'Erfuellt'
-        : prophecy.fulfilled === false
-          ? 'Nicht erfuellt'
-          : 'Ausstehend';
+    let statusText: string;
+    if (prophecy.fulfilled === true) {
+      statusText = 'Erfuellt';
+    } else if (prophecy.fulfilled === false) {
+      statusText = 'Nicht erfuellt';
+    } else {
+      statusText = 'Ausstehend';
+    }
+
+    const averageRating =
+      prophecy.averageRating === null ? '-' : Math.round(prophecy.averageRating * 10) / 10;
 
     propheciesSheet.addRow({
+      id: prophecy.id,
       title: prophecy.title,
       description: prophecy.description,
       creator: prophecy.creatorDisplayName || prophecy.creatorUsername,
       ratingCount: prophecy.ratingCount,
-      averageRating:
-        prophecy.averageRating !== null ? Math.round(prophecy.averageRating * 10) / 10 : '-',
+      averageRating,
       status: statusText,
       createdAt: prophecy.createdAt,
     });
@@ -86,10 +98,11 @@ export async function generateRoundExcel(data: RoundExportData): Promise<Buffer>
   const ratingsSheet = workbook.addWorksheet('Bewertungen');
 
   ratingsSheet.columns = [
+    { header: 'Prophezeiung ID', key: 'prophecyId', width: 28 },
     { header: 'Prophezeiung', key: 'prophecyTitle', width: 40 },
     { header: 'Bewerter', key: 'rater', width: 20 },
     { header: 'Bewertung', key: 'value', width: 12 },
-    { header: 'Datum', key: 'createdAt', width: 18 },
+    { header: 'Datum', key: 'createdAt', width: 20 },
   ];
 
   // Style header row
@@ -98,9 +111,13 @@ export async function generateRoundExcel(data: RoundExportData): Promise<Buffer>
   });
   ratingsSheet.getRow(1).height = 25;
 
+  // Set date format for createdAt column
+  ratingsSheet.getColumn('createdAt').numFmt = dateTimeFormat;
+
   // Add rating data
   data.ratings.forEach((rating) => {
     ratingsSheet.addRow({
+      prophecyId: rating.prophecyId,
       prophecyTitle: rating.prophecyTitle,
       rater: rating.raterDisplayName || rating.raterUsername,
       value: rating.value,
@@ -109,6 +126,6 @@ export async function generateRoundExcel(data: RoundExportData): Promise<Buffer>
   });
 
   // Generate buffer
-  const buffer = await workbook.xlsx.writeBuffer();
-  return Buffer.from(buffer);
+  const arrayBuffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(arrayBuffer);
 }

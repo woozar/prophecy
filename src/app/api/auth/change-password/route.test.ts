@@ -34,6 +34,12 @@ const createMockUser = (overrides = {}) => ({
   passwordHash: 'hashed-password',
   forcePasswordChange: false,
   role: 'USER',
+  status: 'ACTIVE',
+  avatarUrl: null,
+  avatarEffect: null,
+  avatarEffectColors: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
   ...overrides,
 });
 

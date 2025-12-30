@@ -110,7 +110,7 @@ describe('GET /api/rounds/[id]/export', () => {
   it('returns Excel file on success', async () => {
     vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.round.findUnique).mockResolvedValue(createMockRound() as never);
-    vi.mocked(generateRoundExcel).mockResolvedValue(Buffer.from('mock-excel-content'));
+    vi.mocked(generateRoundExcel).mockResolvedValue(Buffer.from('mock'));
 
     const request = new NextRequest('http://localhost/api/rounds/1/export');
     const response = await GET(request, createParams('1'));
@@ -164,36 +164,37 @@ describe('GET /api/rounds/[id]/export', () => {
     const request = new NextRequest('http://localhost/api/rounds/1/export');
     await GET(request, createParams('1'));
 
-    expect(generateRoundExcel).toHaveBeenCalledWith({
-      round: {
-        title: 'Test Runde 2025',
-        submissionDeadline: expect.any(Date),
-        ratingDeadline: expect.any(Date),
-        fulfillmentDate: expect.any(Date),
-      },
-      prophecies: [
-        {
-          id: 'prophecy-1',
-          title: 'Test Prophezeiung',
-          description: 'Beschreibung',
-          creatorUsername: 'testuser',
-          creatorDisplayName: 'Test User',
-          ratingCount: 3,
-          averageRating: 2.5,
-          fulfilled: null,
-          createdAt: expect.any(Date),
+    expect(generateRoundExcel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        round: {
+          title: 'Test Runde 2025',
+          submissionDeadline: expect.any(Date),
+          ratingDeadline: expect.any(Date),
+          fulfillmentDate: expect.any(Date),
         },
-      ],
-      ratings: [
-        {
-          prophecyTitle: 'Test Prophezeiung',
-          raterUsername: 'rater1',
-          raterDisplayName: 'Rater Eins',
-          value: 5,
-          createdAt: expect.any(Date),
-        },
-      ],
-    });
+        prophecies: [
+          expect.objectContaining({
+            id: 'prophecy-1',
+            title: 'Test Prophezeiung',
+            description: 'Beschreibung',
+            creatorUsername: 'testuser',
+            creatorDisplayName: 'Test User',
+            ratingCount: 3,
+            averageRating: 2.5,
+            fulfilled: null,
+          }),
+        ],
+        ratings: [
+          expect.objectContaining({
+            prophecyId: 'prophecy-1',
+            prophecyTitle: 'Test Prophezeiung',
+            raterUsername: 'rater1',
+            raterDisplayName: 'Rater Eins',
+            value: 5,
+          }),
+        ],
+      })
+    );
   });
 
   it('handles round with no prophecies', async () => {

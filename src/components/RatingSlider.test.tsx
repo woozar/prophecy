@@ -81,10 +81,10 @@ describe('RatingSlider', () => {
     expect(screen.getByText('+3')).toBeInTheDocument();
   });
 
-  it('shows min and max labels', () => {
+  it('shows scale labels', () => {
     render(<RatingSlider min={-10} max={10} />);
-    expect(screen.getByText('-10')).toBeInTheDocument();
-    expect(screen.getByText('+10')).toBeInTheDocument();
+    expect(screen.getByText('Sicher')).toBeInTheDocument();
+    expect(screen.getByText('Unmöglich')).toBeInTheDocument();
   });
 
   it('does not create particle bursts when reduced motion is preferred', () => {
@@ -141,10 +141,11 @@ describe('RatingSlider', () => {
     expect(screen.getByText('+5')).toBeInTheDocument();
   });
 
-  it('supports custom min/max labels', () => {
+  it('shows scale labels regardless of min/max values', () => {
     render(<RatingSlider min={1} max={5} />);
-    expect(screen.getByText('1')).toBeInTheDocument();
-    expect(screen.getByText('+5')).toBeInTheDocument();
+    // Scale labels are always "Sicher" and "Unmöglich" regardless of min/max
+    expect(screen.getByText('Sicher')).toBeInTheDocument();
+    expect(screen.getByText('Unmöglich')).toBeInTheDocument();
   });
 
   it('handles boundary value -5 with red color', () => {
@@ -167,18 +168,14 @@ describe('RatingSlider', () => {
 
   it('handles maximum positive value with teal color', () => {
     render(<RatingSlider value={10} />);
-    // Multiple elements show '+10' (max label and value display), find the styled one
-    const valueDisplays = screen.getAllByText('+10');
-    const styledValue = valueDisplays.find((el) => el.classList.contains('font-bold'));
-    expect(styledValue).toHaveStyle({ color: '#14b8a6' });
+    const valueDisplay = screen.getByText('+10');
+    expect(valueDisplay).toHaveStyle({ color: '#14b8a6' });
   });
 
   it('handles minimum negative value with red color', () => {
     render(<RatingSlider value={-10} />);
-    // Multiple elements show '-10' (min label and value display), find the styled one
-    const valueDisplays = screen.getAllByText('-10');
-    const styledValue = valueDisplays.find((el) => el.classList.contains('font-bold'));
-    expect(styledValue).toHaveStyle({ color: '#ef4444' });
+    const valueDisplay = screen.getByText('-10');
+    expect(valueDisplay).toHaveStyle({ color: '#ef4444' });
   });
 
   it('does not call onChange when disabled', () => {

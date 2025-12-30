@@ -22,10 +22,10 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { CountdownTimer } from '@/components/CountdownTimer';
 import { EmptyState } from '@/components/EmptyState';
 import { FilterButton } from '@/components/FilterButton';
-import { GlassScaleBar } from '@/components/GlassScaleBar';
 import { GlowBadge } from '@/components/GlowBadge';
 import { IconActionButton } from '@/components/IconActionButton';
 import { Modal } from '@/components/Modal';
+import { RatingDisplay } from '@/components/RatingDisplay';
 import { RatingSlider } from '@/components/RatingSlider';
 import { RoundStatusBadge } from '@/components/RoundStatusBadge';
 import { TextInput } from '@/components/TextInput';
@@ -384,7 +384,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 self-end sm:self-auto">
           {isSubmissionOpen && (
             <Button onClick={() => setIsCreateModalOpen(true)}>
               <div className="flex flex-row gap-2 items-center">
@@ -674,18 +674,17 @@ const ProphecyCard = memo(function ProphecyCard({
 
   // Compute displayed rating: use local if changed, otherwise store value
   const displayedRating = localRating ?? userRating?.value ?? 0;
-  const hasChanged = localRating !== null && localRating !== (userRating?.value ?? 0);
 
   const handleRatingChange = useCallback((value: number) => {
     setLocalRating(value);
   }, []);
 
-  const handleSaveRating = useCallback(() => {
-    if (localRating !== null) {
-      onRate(prophecy.id, localRating);
-      setLocalRating(null); // Reset to sync with store
-    }
-  }, [onRate, prophecy.id, localRating]);
+  const handleSaveRating = useCallback(
+    (value: number) => {
+      onRate(prophecy.id, value);
+    },
+    [onRate, prophecy.id]
+  );
 
   // Get creator from user store
   const creator = useUser(prophecy.creatorId);
@@ -776,56 +775,22 @@ const ProphecyCard = memo(function ProphecyCard({
       {/* Average Rating Display */}
       {prophecy.ratingCount > 0 && prophecy.averageRating !== null && (
         <div className="mt-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
-          <div className="flex flex-col md:flex-row md:items-end gap-3 md:gap-4">
-            <div className="flex-1">
-              <h3 className="text-sm font-medium mb-3 text-(--text-secondary)">
-                Durchschnitt ({prophecy.ratingCount}{' '}
-                {prophecy.ratingCount === 1 ? 'Bewertung' : 'Bewertungen'})
-              </h3>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-(--text-muted) w-6">-10</span>
-                <div className="relative flex-1">
-                  <GlassScaleBar value={prophecy.averageRating} thickness={16} />
-                </div>
-                <span className="text-xs text-(--text-muted) w-6">+10</span>
-                <span
-                  className="text-lg font-bold w-10 text-right"
-                  style={{
-                    color: prophecy.averageRating >= 0 ? '#22d3ee' : '#a855f7',
-                    textShadow: `0 0 15px ${prophecy.averageRating >= 0 ? '#22d3ee40' : '#a855f740'}`,
-                  }}
-                >
-                  {prophecy.averageRating > 0 ? '+' : ''}
-                  {prophecy.averageRating.toFixed(1)}
-                </span>
-              </div>
-            </div>
-          </div>
+          <RatingDisplay value={prophecy.averageRating} ratingCount={prophecy.ratingCount} />
         </div>
       )}
 
       {/* Rating Section */}
       {(isSubmissionOpen || isRatingOpen) && !isOwn && (
         <div className="mt-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
-          <div className="flex flex-col md:flex-row md:items-end gap-3 md:gap-4">
-            <div className="flex-1">
-              <RatingSlider
-                value={displayedRating}
-                onChange={handleRatingChange}
-                label={userRating ? 'Deine Bewertung' : 'Bewerte diese Prophezeiung'}
-                min={-10}
-                max={10}
-              />
-            </div>
-            {hasChanged && (
-              <Button
-                onClick={handleSaveRating}
-                className="text-sm px-3 py-1.5 md:mb-1 w-full md:w-auto"
-              >
-                Speichern
-              </Button>
-            )}
-          </div>
+          <RatingSlider
+            value={displayedRating}
+            onChange={handleRatingChange}
+            label={userRating ? 'Deine Bewertung' : 'Bewerte diese Prophezeiung'}
+            min={-10}
+            max={10}
+            savedValue={userRating?.value ?? 0}
+            onSave={handleSaveRating}
+          />
         </div>
       )}
 

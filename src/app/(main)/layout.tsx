@@ -62,8 +62,8 @@ export default async function MainLayout({ children }: MainLayoutProps) {
       />
       <FogBackground />
       <Header user={headerUser} />
-      <main className="relative z-10 pt-20 pb-16 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">{children}</div>
+      <main className="relative z-10 pt-16 pb-12 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">{children}</div>
       </main>
       <Footer />
     </>

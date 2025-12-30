@@ -2,6 +2,8 @@
 
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 
+import { IconDeviceFloppy, IconX } from '@tabler/icons-react';
+
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { type AngularParticle } from '@/types/particle';
 
@@ -12,6 +14,8 @@ interface RatingSliderProps {
   max?: number;
   label?: string;
   disabled?: boolean;
+  savedValue?: number;
+  onSave?: (value: number) => void;
 }
 
 const SLIDER_BURST_COLORS = ['#22d3ee', '#14b8a6', '#8b5cf6', '#a855f7'];
@@ -31,6 +35,8 @@ export const RatingSlider = memo(function RatingSlider({
   max = 10,
   label,
   disabled = false,
+  savedValue,
+  onSave,
 }: Readonly<RatingSliderProps>) {
   const reducedMotion = useReducedMotion();
   const [internalValue, setInternalValue] = useState(0);
@@ -41,6 +47,19 @@ export const RatingSlider = memo(function RatingSlider({
   const lastValueRef = useRef<number | null>(null);
 
   const value = controlledValue ?? internalValue;
+
+  const hasUnsavedChanges = useMemo(
+    () => savedValue !== undefined && value !== savedValue,
+    [savedValue, value]
+  );
+
+  const handleSave = useCallback(() => {
+    onSave?.(value);
+  }, [onSave, value]);
+
+  const handleReset = useCallback(() => {
+    onChange?.(savedValue ?? 0);
+  }, [onChange, savedValue]);
 
   const createBurst = useCallback((thumbX: number, thumbY: number) => {
     const newParticles: AngularParticle[] = [];
@@ -220,11 +239,25 @@ export const RatingSlider = memo(function RatingSlider({
     []
   );
 
+  const saveButtonStyle = useMemo(
+    () => ({
+      visibility: hasUnsavedChanges ? 'visible' : 'hidden',
+    }),
+    [hasUnsavedChanges]
+  ) as React.CSSProperties;
+
+  const resetButtonStyle = useMemo(
+    () => ({
+      visibility: hasUnsavedChanges ? 'visible' : 'hidden',
+    }),
+    [hasUnsavedChanges]
+  ) as React.CSSProperties;
+
   return (
     <div className={disabled ? 'opacity-50' : ''}>
       {label && <h3 className="text-sm font-medium mb-3 text-(--text-secondary)">{label}</h3>}
+      {/* Zeile 1: Slider + Wert */}
       <div className="flex items-center gap-3">
-        <span className="text-xs text-(--text-muted) w-6">{min}</span>
         <div className="relative flex-1">
           {/* Custom track */}
           <div className="absolute pointer-events-none" style={trackStyle} />
@@ -273,13 +306,45 @@ export const RatingSlider = memo(function RatingSlider({
             />
           ))}
         </div>
-        <span className="text-xs text-(--text-muted) w-6">+{max}</span>
         <span
           className="text-lg font-bold w-10 text-right transition-colors duration-300"
           style={valueStyle}
         >
           {value > 0 ? `+${value}` : value}
         </span>
+      </div>
+      {/* Zeile 2: Labels + Button (unter dem Slider, nicht unter dem Wert) */}
+      <div className="flex items-center gap-3 mt-1">
+        <div className="flex-1 flex items-center justify-between">
+          <span className="text-xs text-(--text-muted) w-16">Sicher</span>
+          <div className="flex items-center gap-2">
+            {/* Reset-Button (grau) */}
+            <button
+              type="button"
+              onClick={handleReset}
+              disabled={disabled || !hasUnsavedChanges}
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-500/20 hover:bg-gray-500/40 text-gray-400 transition-colors"
+              style={resetButtonStyle}
+              aria-label="Änderungen verwerfen"
+            >
+              <IconX size={20} />
+            </button>
+            {/* Speichern-Button (cyan) */}
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={disabled || !hasUnsavedChanges}
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-400 transition-colors"
+              style={saveButtonStyle}
+              aria-label="Bewertung speichern"
+            >
+              <IconDeviceFloppy size={20} />
+            </button>
+          </div>
+          <span className="text-xs text-(--text-muted) w-16 text-right">Unmöglich</span>
+        </div>
+        {/* Platzhalter für die Wert-Breite */}
+        <span className="w-10" />
       </div>
     </div>
   );

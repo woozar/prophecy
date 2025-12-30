@@ -717,7 +717,7 @@ describe('RoundDetailClient', () => {
     const sliders = screen.getAllByRole('slider');
     fireEvent.change(sliders[0], { target: { value: '5' } });
 
-    const saveButton = await screen.findByText('Speichern');
+    const saveButton = await screen.findByRole('button', { name: 'Bewertung speichern' });
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -1042,9 +1042,14 @@ describe('RoundDetailClient', () => {
       ];
 
       await setupStores(prophecies);
-      await renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} />);
+      const { container } = await renderWithMantine(
+        <RoundDetailClient round={mockRoundRatingOpen} />
+      );
 
-      expect(screen.queryByText('Speichern')).not.toBeInTheDocument();
+      // Save button is always in DOM but hidden when no changes
+      const saveButton = container.querySelector('[aria-label="Bewertung speichern"]');
+      expect(saveButton).toBeInTheDocument();
+      expect(saveButton).toHaveStyle({ visibility: 'hidden' });
     });
 
     it('shows save button after changing slider value', async () => {
@@ -1064,12 +1069,15 @@ describe('RoundDetailClient', () => {
       ];
 
       await setupStores(prophecies);
-      await renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} />);
+      const { container } = await renderWithMantine(
+        <RoundDetailClient round={mockRoundRatingOpen} />
+      );
 
       const sliders = screen.getAllByRole('slider');
       fireEvent.change(sliders[0], { target: { value: '8' } });
 
-      expect(screen.getByText('Speichern')).toBeInTheDocument();
+      const saveButton = container.querySelector('[aria-label="Bewertung speichern"]');
+      expect(saveButton).toHaveStyle({ visibility: 'visible' });
     });
 
     it('shows rating slider during submission phase for other users prophecies', async () => {
@@ -1232,7 +1240,7 @@ describe('RoundDetailClient', () => {
       const sliders = screen.getAllByRole('slider');
       fireEvent.change(sliders[0], { target: { value: '5' } });
 
-      const saveButton = await screen.findByText('Speichern');
+      const saveButton = await screen.findByRole('button', { name: 'Bewertung speichern' });
       fireEvent.click(saveButton);
 
       await waitFor(() => {
@@ -1280,7 +1288,7 @@ describe('RoundDetailClient', () => {
       const sliders = screen.getAllByRole('slider');
       fireEvent.change(sliders[0], { target: { value: '5' } });
 
-      const saveButton = await screen.findByText('Speichern');
+      const saveButton = await screen.findByRole('button', { name: 'Bewertung speichern' });
       fireEvent.click(saveButton);
 
       await waitFor(() => {

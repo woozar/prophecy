@@ -109,6 +109,19 @@ export const apiClient = {
 
     unpublishResults: (id: string) =>
       api.DELETE('/api/rounds/{id}/publish-results', { params: { path: { id } } }),
+
+    // Export as Excel file (Admin only)
+    export: (id: string) =>
+      fetch(`/api/rounds/${id}/export`, { credentials: 'include' }).then(async (res) => {
+        if (!res.ok) {
+          const error = await res.json();
+          return { data: null, error, response: res };
+        }
+        const blob = await res.blob();
+        const contentDisposition = res.headers.get('Content-Disposition');
+        const filename = contentDisposition?.match(/filename="(.+)"/)?.[1] || 'export.xlsx';
+        return { data: { blob, filename }, error: null, response: res };
+      }),
   },
 
   // ============================================================================

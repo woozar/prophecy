@@ -5,6 +5,7 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import {
   IconChartBar,
   IconCheck,
+  IconDownload,
   IconEdit,
   IconFilter,
   IconLock,
@@ -103,6 +104,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const isAdmin = currentUser?.role === 'ADMIN';
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Get user's ratings from store
   const getUserRating = useCallback(
@@ -352,6 +354,35 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     }
   }, [round.id]);
 
+  const handleExportRound = useCallback(async () => {
+    setIsExporting(true);
+    try {
+      const { data, error } = await apiClient.rounds.export(round.id);
+
+      if (error) {
+        throw new Error((error as { error?: string }).error || 'Fehler beim Exportieren');
+      }
+
+      if (data) {
+        // Trigger download via Blob URL
+        const url = URL.createObjectURL(data.blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = data.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showSuccessToast('Export erfolgreich');
+      }
+    } catch (error) {
+      showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
+    } finally {
+      setIsExporting(false);
+    }
+  }, [round.id]);
+
   const toRateCount = useMemo(
     () =>
       sortedProphecies.filter((p) => p.creatorId !== currentUserId && getUserRating(p.id) === null)
@@ -427,6 +458,16 @@ export const RoundDetailClient = memo(function RoundDetailClient({
               <div className="flex flex-row gap-2 items-center">
                 <IconLock size={18} />
                 <span>{isUnpublishing ? 'Wird zurückgezogen...' : 'Freigabe aufheben'}</span>
+              </div>
+            </Button>
+          )}
+
+          {/* Export Button - Admin only */}
+          {isAdmin && (
+            <Button variant="outline" onClick={handleExportRound} disabled={isExporting}>
+              <div className="flex flex-row gap-2 items-center">
+                <IconDownload size={18} />
+                <span>{isExporting ? 'Exportieren...' : 'Excel Export'}</span>
               </div>
             </Button>
           )}

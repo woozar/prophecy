@@ -276,3 +276,43 @@ registry.registerPath({
     },
   },
 });
+
+// ============================================================================
+// Export Round as Excel
+// ============================================================================
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/rounds/{id}/export',
+  tags: ['Rounds'],
+  summary: 'Export round as Excel file (Admin only)',
+  description:
+    'Downloads an Excel file with two sheets: Prophezeiungen (prophecies with statistics) and Bewertungen (individual ratings with usernames)',
+  request: {
+    params: z.object({
+      id: z.string().openapi({ description: 'Round ID' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Excel file download',
+      content: {
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
+          schema: z.any().openapi({ type: 'string', format: 'binary' }),
+        },
+      },
+    },
+    401: {
+      description: 'Unauthorized',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    403: {
+      description: 'Forbidden (not admin)',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    404: {
+      description: 'Round not found',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+  },
+});

@@ -1,17 +1,17 @@
 'use client';
 
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   IconBan,
   IconCheck,
   IconKey,
+  IconLoader2,
   IconShield,
   IconTrash,
   IconUser,
   IconX,
 } from '@tabler/icons-react';
-import { useShallow } from 'zustand/react/shallow';
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
@@ -20,7 +20,7 @@ import { GlowBadge } from '@/components/GlowBadge';
 import { Modal } from '@/components/Modal';
 import { UserAvatar } from '@/components/UserAvatar';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
-import { type User, useUserStore } from '@/store/useUserStore';
+import { type User } from '@/store/useUserStore';
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: 'Ausstehend',
@@ -48,11 +48,40 @@ interface PasswordResetResult {
 }
 
 export const UsersManager = memo(function UsersManager() {
-  const users = useUserStore(useShallow((state) => Object.values(state.users)));
-  const { setUser, removeUser } = useUserStore();
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordResetResult, setPasswordResetResult] = useState<PasswordResetResult | null>(null);
+
+  // Fetch all users from admin API (includes PENDING users)
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch('/api/admin/users');
+        if (res.ok) {
+          const data = await res.json();
+          setUsers(data.users);
+        } else {
+          showErrorToast('Fehler beim Laden der Benutzer');
+        }
+      } catch {
+        showErrorToast('Fehler beim Laden der Benutzer');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  const updateUser = useCallback((updatedUser: User) => {
+    setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+  }, []);
+
+  const removeUser = useCallback((userId: string) => {
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+  }, []);
 
   const handleStatusChange = useCallback(
     async (userId: string, status: string) => {
@@ -70,7 +99,7 @@ export const UsersManager = memo(function UsersManager() {
         }
 
         const { user } = await res.json();
-        setUser(user);
+        updateUser(user);
         showSuccessToast(`Benutzer ${STATUS_LABELS[status].toLowerCase()}`);
         setConfirmAction(null);
       } catch (error) {
@@ -79,7 +108,7 @@ export const UsersManager = memo(function UsersManager() {
         setIsSubmitting(false);
       }
     },
-    [setUser]
+    [updateUser]
   );
 
   const handleRoleChange = useCallback(
@@ -98,7 +127,7 @@ export const UsersManager = memo(function UsersManager() {
         }
 
         const { user } = await res.json();
-        setUser(user);
+        updateUser(user);
         showSuccessToast(role === 'ADMIN' ? 'Zum Admin befördert' : 'Adminrechte entzogen');
         setConfirmAction(null);
       } catch (error) {
@@ -107,7 +136,7 @@ export const UsersManager = memo(function UsersManager() {
         setIsSubmitting(false);
       }
     },
-    [setUser]
+    [updateUser]
   );
 
   const handleDelete = useCallback(
@@ -219,6 +248,17 @@ export const UsersManager = memo(function UsersManager() {
         };
     }
   }, [confirmAction]);
+
+  if (isLoading) {
+    return (
+      <Card padding="p-6">
+        <div className="flex items-center justify-center gap-2 text-(--text-muted)">
+          <IconLoader2 size={20} className="animate-spin" />
+          <span>Benutzer werden geladen...</span>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <>

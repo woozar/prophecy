@@ -36,8 +36,18 @@ vi.mock('@/lib/toast/toast', () => ({
 const mockShowSuccessToast = vi.mocked(showSuccessToast);
 const mockShowErrorToast = vi.mocked(showErrorToast);
 
+interface MockUser {
+  id: string;
+  username: string;
+  displayName: string | null;
+  status: string;
+  role: string;
+  createdAt: string;
+  _count: { prophecies: number; ratings: number };
+}
+
 describe('UsersManager', () => {
-  const mockUsersData = [
+  const mockUsersData: MockUser[] = [
     {
       id: '1',
       username: 'pending_user',
@@ -81,7 +91,7 @@ describe('UsersManager', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch = vi.fn();
-    globalThis.fetch = mockFetch;
+    globalThis.fetch = mockFetch as unknown as typeof fetch;
   });
 
   afterEach(() => {

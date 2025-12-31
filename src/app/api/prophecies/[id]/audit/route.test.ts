@@ -18,6 +18,21 @@ const createRouteParams = (id: string) => ({
   params: Promise.resolve({ id }),
 });
 
+const createMockProphecy = (id: string) =>
+  ({
+    id,
+    title: 'Test Prophecy',
+    description: 'Test description',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    roundId: 'round-1',
+    creatorId: 'user-1',
+    fulfilled: null,
+    resolvedAt: null,
+    averageRating: null,
+    ratingCount: 0,
+  }) as const;
+
 const createMockAuditLog = (overrides = {}) => ({
   id: 'audit-1',
   entityType: 'PROPHECY',
@@ -67,7 +82,7 @@ describe('GET /api/prophecies/[id]/audit', () => {
 
   it('returns audit logs for prophecy', async () => {
     vi.mocked(getSession).mockResolvedValue(mockUser);
-    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue({ id: 'prophecy-1' });
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy('prophecy-1'));
     vi.mocked(prisma.auditLog.findMany).mockResolvedValue([
       createMockAuditLog(),
       createMockAuditLog({
@@ -99,7 +114,7 @@ describe('GET /api/prophecies/[id]/audit', () => {
 
   it('returns audit logs sorted by createdAt descending', async () => {
     vi.mocked(getSession).mockResolvedValue(mockUser);
-    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue({ id: 'prophecy-1' });
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy('prophecy-1'));
     vi.mocked(prisma.auditLog.findMany).mockResolvedValue([]);
 
     const request = new NextRequest('http://localhost/api/prophecies/prophecy-1/audit');
@@ -122,7 +137,7 @@ describe('GET /api/prophecies/[id]/audit', () => {
 
   it('returns empty array when no audit logs exist', async () => {
     vi.mocked(getSession).mockResolvedValue(mockUser);
-    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue({ id: 'prophecy-1' });
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy('prophecy-1'));
     vi.mocked(prisma.auditLog.findMany).mockResolvedValue([]);
 
     const request = new NextRequest('http://localhost/api/prophecies/prophecy-1/audit');
@@ -135,7 +150,7 @@ describe('GET /api/prophecies/[id]/audit', () => {
 
   it('includes rating audit logs', async () => {
     vi.mocked(getSession).mockResolvedValue(mockUser);
-    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue({ id: 'prophecy-1' });
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy('prophecy-1'));
     vi.mocked(prisma.auditLog.findMany).mockResolvedValue([
       createMockAuditLog({
         id: 'audit-rating',
@@ -171,7 +186,7 @@ describe('GET /api/prophecies/[id]/audit', () => {
 
   it('converts createdAt to ISO string', async () => {
     vi.mocked(getSession).mockResolvedValue(mockUser);
-    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue({ id: 'prophecy-1' });
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy('prophecy-1'));
     vi.mocked(prisma.auditLog.findMany).mockResolvedValue([createMockAuditLog()]);
 
     const request = new NextRequest('http://localhost/api/prophecies/prophecy-1/audit');

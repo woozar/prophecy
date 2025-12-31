@@ -144,6 +144,33 @@ export const apiClient = {
 
     resolve: (id: string, fulfilled: boolean) =>
       api.POST('/api/prophecies/{id}/resolve', { params: { path: { id } }, body: { fulfilled } }),
+
+    getAuditLogs: (id: string) =>
+      fetch(`/api/prophecies/${id}/audit`, { credentials: 'include' }).then(async (res) => ({
+        data: res.ok
+          ? ((await res.json()) as {
+              auditLogs: Array<{
+                id: string;
+                entityType: 'RATING' | 'PROPHECY';
+                entityId: string;
+                action: 'CREATE' | 'UPDATE' | 'DELETE' | 'BULK_DELETE';
+                prophecyId: string | null;
+                userId: string;
+                oldValue: string | null;
+                newValue: string | null;
+                context: string | null;
+                createdAt: string;
+                user: {
+                  id: string;
+                  username: string;
+                  displayName: string | null;
+                };
+              }>;
+            })
+          : null,
+        error: res.ok ? null : await res.json(),
+        response: res,
+      })),
   },
 
   // ============================================================================

@@ -2,11 +2,16 @@ import { NextRequest } from 'next/server';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createAuditLog } from '@/lib/audit/audit-service';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
 import { DELETE, PUT } from './route';
+
+vi.mock('@/lib/audit/audit-service', () => ({
+  createAuditLog: vi.fn().mockResolvedValue(undefined),
+}));
 
 const mockUser = { userId: 'user-1', username: 'testuser', role: 'USER' as const, iat: Date.now() };
 
@@ -106,6 +111,24 @@ describe('PUT /api/prophecies/[id]', () => {
   it('updates prophecy successfully and deletes ratings', async () => {
     vi.mocked(getSession).mockResolvedValue(mockUser);
     vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy());
+    vi.mocked(prisma.rating.findMany).mockResolvedValue([
+      {
+        id: 'rating-1',
+        value: 1,
+        userId: 'user-2',
+        prophecyId: 'prophecy-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'rating-2',
+        value: -1,
+        userId: 'user-3',
+        prophecyId: 'prophecy-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
     vi.mocked(prisma.rating.deleteMany).mockResolvedValue({ count: 2 });
     vi.mocked(prisma.prophecy.update).mockResolvedValue(
       createMockProphecy({ title: 'Updated Title', averageRating: null, ratingCount: 0 })
@@ -123,6 +146,7 @@ describe('PUT /api/prophecies/[id]', () => {
     expect(prisma.rating.deleteMany).toHaveBeenCalledWith({
       where: { prophecyId: 'prophecy-1' },
     });
+    expect(createAuditLog).toHaveBeenCalled();
     expect(sseEmitter.broadcast).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'prophecy:updated' })
     );

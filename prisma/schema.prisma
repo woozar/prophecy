@@ -26,6 +26,7 @@ model User {
   authenticators Authenticator[]
   prophecies     Prophecy[]
   ratings        Rating[]
+  auditLogs      AuditLog[]
 }
 
 model Authenticator {
@@ -74,6 +75,7 @@ model Prophecy {
   ratings       Rating[]
   averageRating Float?
   ratingCount   Int      @default(0)
+  auditLogs     AuditLog[]
 }
 
 model Rating {
@@ -89,4 +91,28 @@ model Rating {
   @@unique([prophecyId, userId])
   @@index([prophecyId])
   @@index([userId])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  entityType  String   // "RATING" | "PROPHECY"
+  entityId    String   // ID der betroffenen Entität
+  action      String   // "CREATE" | "UPDATE" | "DELETE" | "BULK_DELETE"
+
+  prophecyId  String?
+  prophecy    Prophecy? @relation(fields: [prophecyId], references: [id], onDelete: SetNull)
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  oldValue    String?  // JSON-String für vorherige Werte
+  newValue    String?  // JSON-String für neue Werte
+  context     String?  // z.B. "Prophezeiung wurde bearbeitet - alle Bewertungen zurückgesetzt"
+
+  createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([prophecyId])
+  @@index([userId])
+  @@index([createdAt])
 }

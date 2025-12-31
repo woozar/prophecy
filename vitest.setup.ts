@@ -99,6 +99,10 @@ vi.mock('@/lib/db/prisma', () => ({
       delete: vi.fn(),
       count: vi.fn(),
     },
+    auditLog: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+    },
     $transaction: vi.fn((fn) =>
       fn({
         round: {

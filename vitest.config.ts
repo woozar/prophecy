@@ -38,6 +38,7 @@ export default defineConfig({
         'src/lib/db/prisma.ts',
         'src/lib/api-client/**',
         'src/lib/openapi/**',
+        'src/lib/schemas/**',
         // Files tested in node environment (see vitest.config.node.ts)
         'src/lib/auth/session.ts',
         'src/lib/auth/webauthn.ts',

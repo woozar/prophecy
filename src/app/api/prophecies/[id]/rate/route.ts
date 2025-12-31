@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 import { validateBody } from '@/lib/api/validation';
+import { createAuditLog } from '@/lib/audit/audit-service';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 import { rateSchema } from '@/lib/schemas/rating';
@@ -78,6 +79,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       update: {
         value,
       },
+    });
+
+    // Create audit log for rating change
+    await createAuditLog({
+      entityType: 'RATING',
+      entityId: rating.id,
+      action: isUpdate ? 'UPDATE' : 'CREATE',
+      prophecyId: id,
+      userId: session.userId,
+      oldValue: existingRating ? { value: existingRating.value } : null,
+      newValue: { value: rating.value },
     });
 
     // Recalculate average rating (excluding value=0 which means "unrated")

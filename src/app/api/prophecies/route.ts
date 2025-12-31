@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 import { validateBody } from '@/lib/api/validation';
+import { createAuditLog } from '@/lib/audit/audit-service';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 import { createProphecySchema } from '@/lib/schemas/prophecy';
@@ -119,6 +120,16 @@ export async function POST(request: NextRequest) {
         roundId,
         creatorId: session.userId,
       },
+    });
+
+    // Create audit log for prophecy creation
+    await createAuditLog({
+      entityType: 'PROPHECY',
+      entityId: prophecy.id,
+      action: 'CREATE',
+      prophecyId: prophecy.id,
+      userId: session.userId,
+      newValue: { title, description },
     });
 
     const prophecyData = transformProphecyToResponse(prophecy);

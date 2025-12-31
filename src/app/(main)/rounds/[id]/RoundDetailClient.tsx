@@ -8,6 +8,7 @@ import {
   IconDownload,
   IconEdit,
   IconFilter,
+  IconHistory,
   IconLock,
   IconLockOpen,
   IconPlus,
@@ -26,6 +27,7 @@ import { FilterButton } from '@/components/FilterButton';
 import { GlowBadge } from '@/components/GlowBadge';
 import { IconActionButton } from '@/components/IconActionButton';
 import { Modal } from '@/components/Modal';
+import { ProphecyAuditModal } from '@/components/ProphecyAuditModal';
 import { RatingDisplay } from '@/components/RatingDisplay';
 import { RatingSlider } from '@/components/RatingSlider';
 import { RoundStatusBadge } from '@/components/RoundStatusBadge';
@@ -90,6 +92,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const [editDescription, setEditDescription] = useState('');
   const [editTitleError, setEditTitleError] = useState<string | undefined>(undefined);
   const [confirmEditProphecy, setConfirmEditProphecy] = useState<Prophecy | null>(null);
+  const [auditProphecyId, setAuditProphecyId] = useState<string | null>(null);
 
   const now = useMemo(() => new Date(), []);
   const submissionDeadline = useMemo(
@@ -383,6 +386,14 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     }
   }, [round.id]);
 
+  const handleShowAudit = useCallback((prophecyId: string) => {
+    setAuditProphecyId(prophecyId);
+  }, []);
+
+  const handleCloseAudit = useCallback(() => {
+    setAuditProphecyId(null);
+  }, []);
+
   const toRateCount = useMemo(
     () =>
       sortedProphecies.filter((p) => p.creatorId !== currentUserId && getUserRating(p.id) === null)
@@ -530,6 +541,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
               onDelete={handleConfirmDelete}
               onRate={handleRateProphecy}
               onResolve={handleResolveProphecy}
+              onShowAudit={handleShowAudit}
               isDeleting={deletingId === prophecy.id}
             />
           ))
@@ -670,6 +682,17 @@ export const RoundDetailClient = memo(function RoundDetailClient({
           </Button>
         </div>
       </Modal>
+
+      {/* Audit Log Modal */}
+      <ProphecyAuditModal
+        prophecyId={auditProphecyId}
+        prophecyTitle={
+          auditProphecyId
+            ? sortedProphecies.find((p) => p.id === auditProphecyId)?.title
+            : undefined
+        }
+        onClose={handleCloseAudit}
+      />
     </div>
   );
 });
@@ -686,6 +709,7 @@ interface ProphecyCardProps {
   onDelete: (id: string) => void;
   onRate: (id: string, value: number) => void;
   onResolve: (id: string, fulfilled: boolean) => void;
+  onShowAudit: (id: string) => void;
   isDeleting: boolean;
 }
 
@@ -701,6 +725,7 @@ const ProphecyCard = memo(function ProphecyCard({
   onDelete,
   onRate,
   onResolve,
+  onShowAudit,
   isDeleting,
 }: Readonly<ProphecyCardProps>) {
   // Get user's rating for this prophecy from store
@@ -810,6 +835,12 @@ const ProphecyCard = memo(function ProphecyCard({
               </button>
             </div>
           )}
+          <IconActionButton
+            variant="default"
+            icon={<IconHistory size={18} />}
+            onClick={() => onShowAudit(prophecy.id)}
+            title="Änderungsverlauf anzeigen"
+          />
         </div>
       </div>
 

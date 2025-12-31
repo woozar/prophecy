@@ -2,15 +2,22 @@
 
 import { memo, useCallback, useMemo, useState } from 'react';
 
-import { IconBolt, IconCircleDot, IconCircleOff, IconSparkles } from '@tabler/icons-react';
+import {
+  IconBolt,
+  IconCircleDashed,
+  IconCircleDot,
+  IconCircleOff,
+  IconSparkles,
+} from '@tabler/icons-react';
 
 import { Button } from '@/components/Button';
 import { AvatarPreview } from '@/components/UserAvatar';
 import { apiClient } from '@/lib/api-client';
 import { avatarColors } from '@/lib/schemas/user';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
+import { useUserStore } from '@/store/useUserStore';
 
-type AvatarEffect = 'glow' | 'particles' | 'lightning' | 'none';
+type AvatarEffect = 'glow' | 'particles' | 'lightning' | 'halo' | 'none';
 type AvatarColor = (typeof avatarColors)[number];
 
 interface AvatarEffectSelectorProps {
@@ -27,6 +34,7 @@ const EFFECTS: { value: AvatarEffect; label: string; icon: React.ReactNode }[] =
   { value: 'glow', label: 'Glow', icon: <IconSparkles size={18} /> },
   { value: 'particles', label: 'Partikel', icon: <IconCircleDot size={18} /> },
   { value: 'lightning', label: 'Blitze', icon: <IconBolt size={18} /> },
+  { value: 'halo', label: 'Heiligenschein', icon: <IconCircleDashed size={18} /> },
 ];
 
 const COLORS = [
@@ -90,6 +98,16 @@ export const AvatarEffectSelector = memo(function AvatarEffectSelector({
 
       if (error) {
         throw new Error((error as { error?: string }).error || 'Speichern fehlgeschlagen');
+      }
+
+      // Update the user store so the header avatar updates
+      const { currentUserId, users, setUser } = useUserStore.getState();
+      if (currentUserId && users[currentUserId]) {
+        setUser({
+          ...users[currentUserId],
+          avatarEffect: selectedEffect === 'none' ? null : selectedEffect,
+          avatarEffectColors: selectedColors,
+        });
       }
 
       onEffectChange(selectedEffect === 'none' ? null : selectedEffect, selectedColors);

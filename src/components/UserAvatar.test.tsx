@@ -121,6 +121,18 @@ describe('AvatarPreview with effects', () => {
     expect(wrapper).toHaveClass('relative');
   });
 
+  it('renders with halo effect', () => {
+    const { container } = render(
+      <AvatarPreview username="test" avatarEffect="halo" avatarEffectColors={['cyan']} />
+    );
+    // Halo wrapper uses SVG element for the ellipse ring
+    expect(container.querySelector('svg')).toBeInTheDocument();
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper).toHaveClass('relative');
+    // Should have ellipse elements for the halo ring
+    expect(container.querySelector('ellipse')).toBeInTheDocument();
+  });
+
   it('uses default cyan color when no colors provided for glow', () => {
     const { container } = render(
       <AvatarPreview username="test" avatarEffect="glow" avatarEffectColors={[]} />

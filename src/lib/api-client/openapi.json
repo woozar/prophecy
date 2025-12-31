@@ -30,6 +30,124 @@
         "type": "string",
         "enum": ["USER", "ADMIN"]
       },
+      "UserStatus": {
+        "type": "string",
+        "enum": ["PENDING", "APPROVED", "SUSPENDED"]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarEffect": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarEffectColors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "status": {
+            "$ref": "#/components/schemas/UserStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "_count": {
+            "type": "object",
+            "properties": {
+              "prophecies": {
+                "type": "number"
+              },
+              "ratings": {
+                "type": "number"
+              }
+            },
+            "required": ["prophecies", "ratings"]
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "displayName",
+          "avatarUrl",
+          "avatarEffect",
+          "avatarEffectColors",
+          "role",
+          "status",
+          "createdAt"
+        ]
+      },
+      "UsersListResponse": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          }
+        },
+        "required": ["users"]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          }
+        },
+        "required": ["error"]
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/UserStatus"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [true]
+          }
+        },
+        "required": ["success"]
+      },
+      "ResetPasswordResponse": {
+        "type": "object",
+        "properties": {
+          "temporaryPassword": {
+            "type": "string"
+          }
+        },
+        "required": ["temporaryPassword"]
+      },
       "LoginResponse": {
         "type": "object",
         "properties": {
@@ -79,16 +197,6 @@
           }
         },
         "required": ["user"]
-      },
-      "ErrorResponse": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "description": "Error message"
-          }
-        },
-        "required": ["error"]
       },
       "PasswordLoginRequest": {
         "type": "object",
@@ -149,16 +257,6 @@
           }
         },
         "required": ["username", "password"]
-      },
-      "SuccessResponse": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "enum": [true]
-          }
-        },
-        "required": ["success"]
       },
       "ChangePasswordRequest": {
         "type": "object",
@@ -480,118 +578,157 @@
         },
         "required": ["credential", "tempUserId", "username", "displayName"]
       },
-      "PasswordLoginStatus": {
-        "type": "object",
-        "properties": {
-          "passwordLoginEnabled": {
-            "type": "boolean"
-          },
-          "forcePasswordChange": {
-            "type": "boolean"
-          },
-          "hasPasskeys": {
-            "type": "boolean"
-          },
-          "canDisablePasswordLogin": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "passwordLoginEnabled",
-          "forcePasswordChange",
-          "hasPasskeys",
-          "canDisablePasswordLogin"
-        ]
-      },
-      "TogglePasswordLoginResponse": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean"
-          },
-          "passwordLoginEnabled": {
-            "type": "boolean"
-          },
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": ["success", "passwordLoginEnabled", "message"]
-      },
-      "TogglePasswordLoginRequest": {
-        "type": "object",
-        "properties": {
-          "enabled": {
-            "type": "boolean"
-          }
-        },
-        "required": ["enabled"]
-      },
-      "AvatarSettingsResponse": {
-        "type": "object",
-        "properties": {
-          "avatarEffect": {
-            "type": "string",
-            "nullable": true
-          },
-          "avatarEffectColors": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": ["avatarEffect", "avatarEffectColors"]
-      },
-      "UpdateAvatarSettingsRequest": {
-        "type": "object",
-        "properties": {
-          "avatarEffect": {
-            "type": "string",
-            "enum": ["glow", "particles", "lightning", "none"]
-          },
-          "avatarEffectColors": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": ["cyan", "teal", "violet", "emerald", "rose", "amber", "blue", "pink"]
-            }
-          }
-        }
-      },
-      "Passkey": {
+      "Prophecy": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string"
           },
-          "name": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
             "type": "string",
             "nullable": true
+          },
+          "creatorId": {
+            "type": "string"
+          },
+          "roundId": {
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "lastUsedAt": {
+          "fulfilled": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "resolvedAt": {
             "type": "string",
             "nullable": true,
             "format": "date-time"
+          },
+          "averageRating": {
+            "type": "number",
+            "nullable": true
+          },
+          "ratingCount": {
+            "type": "number"
           }
         },
-        "required": ["id", "name", "createdAt", "lastUsedAt"]
+        "required": [
+          "id",
+          "title",
+          "description",
+          "creatorId",
+          "roundId",
+          "createdAt",
+          "fulfilled",
+          "resolvedAt",
+          "averageRating",
+          "ratingCount"
+        ]
       },
-      "PasskeysListResponse": {
+      "PropheciesListResponse": {
         "type": "object",
         "properties": {
-          "passkeys": {
+          "prophecies": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Passkey"
+              "$ref": "#/components/schemas/Prophecy"
             }
           }
         },
-        "required": ["passkeys"]
+        "required": ["prophecies"]
+      },
+      "ProphecyDetailResponse": {
+        "type": "object",
+        "properties": {
+          "prophecy": {
+            "$ref": "#/components/schemas/Prophecy"
+          }
+        },
+        "required": ["prophecy"]
+      },
+      "CreateProphecyRequest": {
+        "type": "object",
+        "properties": {
+          "roundId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "default": ""
+          }
+        },
+        "required": ["roundId", "title"]
+      },
+      "UpdateProphecyRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "default": ""
+          }
+        },
+        "required": ["title"]
+      },
+      "Rating": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "prophecyId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["id", "value", "prophecyId", "userId", "createdAt"]
+      },
+      "RateRequest": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "minimum": -10,
+            "maximum": 10
+          }
+        },
+        "required": ["value"]
+      },
+      "ResolveRequest": {
+        "type": "object",
+        "properties": {
+          "fulfilled": {
+            "type": "boolean"
+          }
+        },
+        "required": ["fulfilled"]
       },
       "Round": {
         "type": "object",
@@ -784,179 +921,56 @@
           "topCreators"
         ]
       },
-      "Prophecy": {
+      "PasswordLoginStatus": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
+          "passwordLoginEnabled": {
+            "type": "boolean"
           },
-          "title": {
-            "type": "string"
+          "forcePasswordChange": {
+            "type": "boolean"
           },
-          "description": {
-            "type": "string",
-            "nullable": true
+          "hasPasskeys": {
+            "type": "boolean"
           },
-          "creatorId": {
-            "type": "string"
-          },
-          "roundId": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "fulfilled": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "resolvedAt": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "averageRating": {
-            "type": "number",
-            "nullable": true
-          },
-          "ratingCount": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "id",
-          "title",
-          "description",
-          "creatorId",
-          "roundId",
-          "createdAt",
-          "fulfilled",
-          "resolvedAt",
-          "averageRating",
-          "ratingCount"
-        ]
-      },
-      "PropheciesListResponse": {
-        "type": "object",
-        "properties": {
-          "prophecies": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Prophecy"
-            }
-          }
-        },
-        "required": ["prophecies"]
-      },
-      "ProphecyDetailResponse": {
-        "type": "object",
-        "properties": {
-          "prophecy": {
-            "$ref": "#/components/schemas/Prophecy"
-          }
-        },
-        "required": ["prophecy"]
-      },
-      "CreateProphecyRequest": {
-        "type": "object",
-        "properties": {
-          "roundId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "title": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 2000,
-            "default": ""
-          }
-        },
-        "required": ["roundId", "title"]
-      },
-      "UpdateProphecyRequest": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 2000,
-            "default": ""
-          }
-        },
-        "required": ["title"]
-      },
-      "Rating": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "value": {
-            "type": "number"
-          },
-          "prophecyId": {
-            "type": "string"
-          },
-          "userId": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": ["id", "value", "prophecyId", "userId", "createdAt"]
-      },
-      "RateRequest": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "integer",
-            "minimum": -10,
-            "maximum": 10
-          }
-        },
-        "required": ["value"]
-      },
-      "ResolveRequest": {
-        "type": "object",
-        "properties": {
-          "fulfilled": {
+          "canDisablePasswordLogin": {
             "type": "boolean"
           }
         },
-        "required": ["fulfilled"]
+        "required": [
+          "passwordLoginEnabled",
+          "forcePasswordChange",
+          "hasPasskeys",
+          "canDisablePasswordLogin"
+        ]
       },
-      "UserStatus": {
-        "type": "string",
-        "enum": ["PENDING", "APPROVED", "SUSPENDED"]
-      },
-      "User": {
+      "TogglePasswordLoginResponse": {
         "type": "object",
         "properties": {
-          "id": {
+          "success": {
+            "type": "boolean"
+          },
+          "passwordLoginEnabled": {
+            "type": "boolean"
+          },
+          "message": {
             "type": "string"
-          },
-          "username": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string",
-            "nullable": true
-          },
-          "avatarUrl": {
-            "type": "string",
-            "nullable": true
-          },
+          }
+        },
+        "required": ["success", "passwordLoginEnabled", "message"]
+      },
+      "TogglePasswordLoginRequest": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": ["enabled"]
+      },
+      "AvatarSettingsResponse": {
+        "type": "object",
+        "properties": {
           "avatarEffect": {
             "type": "string",
             "nullable": true
@@ -966,78 +980,375 @@
             "items": {
               "type": "string"
             }
+          }
+        },
+        "required": ["avatarEffect", "avatarEffectColors"]
+      },
+      "UpdateAvatarSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "avatarEffect": {
+            "type": "string",
+            "enum": ["glow", "particles", "lightning", "halo", "none"]
           },
-          "role": {
-            "$ref": "#/components/schemas/Role"
+          "avatarEffectColors": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["cyan", "teal", "violet", "emerald", "rose", "amber", "blue", "pink"]
+            }
+          }
+        }
+      },
+      "Passkey": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
           },
-          "status": {
-            "$ref": "#/components/schemas/UserStatus"
+          "name": {
+            "type": "string",
+            "nullable": true
           },
           "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "_count": {
-            "type": "object",
-            "properties": {
-              "prophecies": {
-                "type": "number"
-              },
-              "ratings": {
-                "type": "number"
-              }
-            },
-            "required": ["prophecies", "ratings"]
+          "lastUsedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
           }
         },
-        "required": [
-          "id",
-          "username",
-          "displayName",
-          "avatarUrl",
-          "avatarEffect",
-          "avatarEffectColors",
-          "role",
-          "status",
-          "createdAt"
-        ]
+        "required": ["id", "name", "createdAt", "lastUsedAt"]
       },
-      "UsersListResponse": {
+      "PasskeysListResponse": {
         "type": "object",
         "properties": {
-          "users": {
+          "passkeys": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/User"
+              "$ref": "#/components/schemas/Passkey"
             }
           }
         },
-        "required": ["users"]
-      },
-      "UpdateUserRequest": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "$ref": "#/components/schemas/UserStatus"
-          },
-          "role": {
-            "$ref": "#/components/schemas/Role"
-          }
-        }
-      },
-      "ResetPasswordResponse": {
-        "type": "object",
-        "properties": {
-          "temporaryPassword": {
-            "type": "string"
-          }
-        },
-        "required": ["temporaryPassword"]
+        "required": ["passkeys"]
       }
     },
     "parameters": {}
   },
   "paths": {
+    "/api/admin/users": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "List all users (Admin only)",
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (not admin)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get user details (Admin only)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "User ID"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "required": ["user"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (not admin)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Admin"],
+        "summary": "Update user status or role (Admin only)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "User ID"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "required": ["user"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (not admin)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Admin"],
+        "summary": "Delete user (Admin only)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "User ID"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot delete yourself",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (not admin)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/reset-password": {
+      "post": {
+        "tags": ["Admin"],
+        "summary": "Reset user password (Admin only)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "User ID"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Password reset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetPasswordResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (not admin)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/login/password": {
       "post": {
         "tags": ["Auth"],
@@ -1371,224 +1682,36 @@
         }
       }
     },
-    "/api/users/me/password-login": {
+    "/api/prophecies": {
       "get": {
-        "tags": ["User"],
-        "summary": "Get password login status",
+        "tags": ["Prophecies"],
+        "summary": "Get prophecies with optional filters",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "roundId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["mine", "toRate"]
+            },
+            "required": false,
+            "name": "filter",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Password login status",
+            "description": "List of prophecies",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PasswordLoginStatus"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": ["User"],
-        "summary": "Toggle password login",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TogglePasswordLoginRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Password login toggled",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TogglePasswordLoginResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Cannot disable without passkey",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/users/me/avatar": {
-      "post": {
-        "tags": ["User"],
-        "summary": "Upload avatar image",
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "avatar": {
-                    "type": "string",
-                    "description": "Avatar image file (JPEG, PNG, WebP, GIF, max 5MB)",
-                    "format": "binary"
-                  }
-                },
-                "required": ["avatar"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Avatar uploaded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "avatarUrl": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["avatarUrl"]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid file",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": ["User"],
-        "summary": "Delete avatar image",
-        "responses": {
-          "200": {
-            "description": "Avatar deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/users/me/avatar-settings": {
-      "patch": {
-        "tags": ["User"],
-        "summary": "Update avatar effect settings",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateAvatarSettingsRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Avatar settings updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AvatarSettingsResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid settings",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/users/me/passkeys": {
-      "get": {
-        "tags": ["User", "WebAuthn"],
-        "summary": "List user passkeys",
-        "responses": {
-          "200": {
-            "description": "List of passkeys",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PasskeysListResponse"
+                  "$ref": "#/components/schemas/PropheciesListResponse"
                 }
               }
             }
@@ -1606,74 +1729,30 @@
         }
       },
       "post": {
-        "tags": ["User", "WebAuthn"],
-        "summary": "Register new passkey (get options)",
-        "responses": {
-          "200": {
-            "description": "Registration options",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "options": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "nullable": true
-                      }
-                    }
-                  },
-                  "required": ["options"]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": ["User", "WebAuthn"],
-        "summary": "Rename passkey",
+        "tags": ["Prophecies"],
+        "summary": "Create a new prophecy",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  }
-                },
-                "required": ["id", "name"]
+                "$ref": "#/components/schemas/CreateProphecyRequest"
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "Passkey renamed",
+          "201": {
+            "description": "Prophecy created",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
+                  "$ref": "#/components/schemas/ProphecyDetailResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "ID and name required",
+            "description": "Validation error or submission deadline passed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1693,7 +1772,85 @@
             }
           },
           "404": {
-            "description": "Passkey not found",
+            "description": "Round not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prophecies/{id}": {
+      "put": {
+        "tags": ["Prophecies"],
+        "summary": "Update own prophecy",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Prophecy ID"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProphecyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prophecy updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProphecyDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or submission deadline passed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not your prophecy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Prophecy not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1705,45 +1862,32 @@
         }
       },
       "delete": {
-        "tags": ["User", "WebAuthn"],
-        "summary": "Delete passkey",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  }
-                },
-                "required": ["id"]
-              }
-            }
+        "tags": ["Prophecies"],
+        "summary": "Delete own prophecy",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Prophecy ID"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
           }
-        },
+        ],
         "responses": {
           "200": {
-            "description": "Passkey deleted",
+            "description": "Prophecy deleted",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "passkeys": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Passkey"
-                      }
-                    }
-                  },
-                  "required": ["passkeys"]
+                  "$ref": "#/components/schemas/SuccessResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "Cannot delete last authentication method",
+            "description": "Submission deadline passed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1754,6 +1898,194 @@
           },
           "401": {
             "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not your prophecy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Prophecy not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prophecies/{id}/rate": {
+      "post": {
+        "tags": ["Prophecies"],
+        "summary": "Rate a prophecy (-10 to +10)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Prophecy ID"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rating saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "prophecy": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "averageRating": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "ratingCount": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["id", "averageRating", "ratingCount"]
+                    },
+                    "rating": {
+                      "$ref": "#/components/schemas/Rating"
+                    }
+                  },
+                  "required": ["prophecy", "rating"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid rating or cannot rate own prophecy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Prophecy not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prophecies/{id}/resolve": {
+      "post": {
+        "tags": ["Prophecies"],
+        "summary": "Mark prophecy as fulfilled or not (Admin only)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Prophecy ID"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prophecy resolved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProphecyDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Rating phase not ended yet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (not admin)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Prophecy not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2205,36 +2537,17 @@
         }
       }
     },
-    "/api/prophecies": {
+    "/api/users/me/password-login": {
       "get": {
-        "tags": ["Prophecies"],
-        "summary": "Get prophecies with optional filters",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": false,
-            "name": "roundId",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": ["mine", "toRate"]
-            },
-            "required": false,
-            "name": "filter",
-            "in": "query"
-          }
-        ],
+        "tags": ["User"],
+        "summary": "Get password login status",
         "responses": {
           "200": {
-            "description": "List of prophecies",
+            "description": "Password login status",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PropheciesListResponse"
+                  "$ref": "#/components/schemas/PasswordLoginStatus"
                 }
               }
             }
@@ -2251,31 +2564,31 @@
           }
         }
       },
-      "post": {
-        "tags": ["Prophecies"],
-        "summary": "Create a new prophecy",
+      "put": {
+        "tags": ["User"],
+        "summary": "Toggle password login",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateProphecyRequest"
+                "$ref": "#/components/schemas/TogglePasswordLoginRequest"
               }
             }
           }
         },
         "responses": {
-          "201": {
-            "description": "Prophecy created",
+          "200": {
+            "description": "Password login toggled",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProphecyDetailResponse"
+                  "$ref": "#/components/schemas/TogglePasswordLoginResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "Validation error or submission deadline passed",
+            "description": "Cannot disable without passkey",
             "content": {
               "application/json": {
                 "schema": {
@@ -2286,16 +2599,6 @@
           },
           "401": {
             "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Round not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2307,43 +2610,46 @@
         }
       }
     },
-    "/api/prophecies/{id}": {
-      "put": {
-        "tags": ["Prophecies"],
-        "summary": "Update own prophecy",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "Prophecy ID"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
+    "/api/users/me/avatar": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Upload avatar image",
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateProphecyRequest"
+                "type": "object",
+                "properties": {
+                  "avatar": {
+                    "type": "string",
+                    "description": "Avatar image file (JPEG, PNG, WebP, GIF, max 5MB)",
+                    "format": "binary"
+                  }
+                },
+                "required": ["avatar"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Prophecy updated",
+            "description": "Avatar uploaded",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProphecyDetailResponse"
+                  "type": "object",
+                  "properties": {
+                    "avatarUrl": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["avatarUrl"]
                 }
               }
             }
           },
           "400": {
-            "description": "Validation error or submission deadline passed",
+            "description": "Invalid file",
             "content": {
               "application/json": {
                 "schema": {
@@ -2354,26 +2660,6 @@
           },
           "401": {
             "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Not your prophecy",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Prophecy not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2385,22 +2671,11 @@
         }
       },
       "delete": {
-        "tags": ["Prophecies"],
-        "summary": "Delete own prophecy",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "Prophecy ID"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
+        "tags": ["User"],
+        "summary": "Delete avatar image",
         "responses": {
           "200": {
-            "description": "Prophecy deleted",
+            "description": "Avatar deleted",
             "content": {
               "application/json": {
                 "schema": {
@@ -2409,8 +2684,45 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/avatar-settings": {
+      "patch": {
+        "tags": ["User"],
+        "summary": "Update avatar effect settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAvatarSettingsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Avatar settings updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvatarSettingsResponse"
+                }
+              }
+            }
+          },
           "400": {
-            "description": "Submission deadline passed",
+            "description": "Invalid settings",
             "content": {
               "application/json": {
                 "schema": {
@@ -2428,19 +2740,27 @@
                 }
               }
             }
-          },
-          "403": {
-            "description": "Not your prophecy",
+          }
+        }
+      }
+    },
+    "/api/users/me/passkeys": {
+      "get": {
+        "tags": ["User", "WebAuthn"],
+        "summary": "List user passkeys",
+        "responses": {
+          "200": {
+            "description": "List of passkeys",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/PasskeysListResponse"
                 }
               }
             }
           },
-          "404": {
-            "description": "Prophecy not found",
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "application/json": {
                 "schema": {
@@ -2450,268 +2770,32 @@
             }
           }
         }
-      }
-    },
-    "/api/prophecies/{id}/rate": {
+      },
       "post": {
-        "tags": ["Prophecies"],
-        "summary": "Rate a prophecy (-10 to +10)",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "Prophecy ID"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RateRequest"
-              }
-            }
-          }
-        },
+        "tags": ["User", "WebAuthn"],
+        "summary": "Register new passkey (get options)",
         "responses": {
           "200": {
-            "description": "Rating saved",
+            "description": "Registration options",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "prophecy": {
+                    "options": {
                       "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "averageRating": {
-                          "type": "number",
-                          "nullable": true
-                        },
-                        "ratingCount": {
-                          "type": "number"
-                        }
-                      },
-                      "required": ["id", "averageRating", "ratingCount"]
-                    },
-                    "rating": {
-                      "$ref": "#/components/schemas/Rating"
+                      "additionalProperties": {
+                        "nullable": true
+                      }
                     }
                   },
-                  "required": ["prophecy", "rating"]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid rating or cannot rate own prophecy",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "required": ["options"]
                 }
               }
             }
           },
           "401": {
             "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Prophecy not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/prophecies/{id}/resolve": {
-      "post": {
-        "tags": ["Prophecies"],
-        "summary": "Mark prophecy as fulfilled or not (Admin only)",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "Prophecy ID"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResolveRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Prophecy resolved",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProphecyDetailResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Rating phase not ended yet",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden (not admin)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Prophecy not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/users": {
-      "get": {
-        "tags": ["Admin"],
-        "summary": "List all users (Admin only)",
-        "responses": {
-          "200": {
-            "description": "List of users",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UsersListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden (not admin)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/users/{id}": {
-      "get": {
-        "tags": ["Admin"],
-        "summary": "Get user details (Admin only)",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "User ID"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User details",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "user": {
-                      "$ref": "#/components/schemas/User"
-                    }
-                  },
-                  "required": ["user"]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden (not admin)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2722,48 +2806,40 @@
           }
         }
       },
-      "put": {
-        "tags": ["Admin"],
-        "summary": "Update user status or role (Admin only)",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "User ID"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
+      "patch": {
+        "tags": ["User", "WebAuthn"],
+        "summary": "Rename passkey",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateUserRequest"
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": ["id", "name"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "User updated",
+            "description": "Passkey renamed",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "user": {
-                      "$ref": "#/components/schemas/User"
-                    }
-                  },
-                  "required": ["user"]
+                  "$ref": "#/components/schemas/SuccessResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "ID and name required",
             "content": {
               "application/json": {
                 "schema": {
@@ -2782,18 +2858,8 @@
               }
             }
           },
-          "403": {
-            "description": "Forbidden (not admin)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "User not found",
+            "description": "Passkey not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2805,32 +2871,45 @@
         }
       },
       "delete": {
-        "tags": ["Admin"],
-        "summary": "Delete user (Admin only)",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "User ID"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
+        "tags": ["User", "WebAuthn"],
+        "summary": "Delete passkey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": ["id"]
+              }
+            }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "User deleted",
+            "description": "Passkey deleted",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
+                  "type": "object",
+                  "properties": {
+                    "passkeys": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Passkey"
+                      }
+                    }
+                  },
+                  "required": ["passkeys"]
                 }
               }
             }
           },
           "400": {
-            "description": "Cannot delete yourself",
+            "description": "Cannot delete last authentication method",
             "content": {
               "application/json": {
                 "schema": {
@@ -2841,85 +2920,6 @@
           },
           "401": {
             "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden (not admin)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/users/{id}/reset-password": {
-      "post": {
-        "tags": ["Admin"],
-        "summary": "Reset user password (Admin only)",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "User ID"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Password reset",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResetPasswordResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden (not admin)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found",
             "content": {
               "application/json": {
                 "schema": {

@@ -4,6 +4,314 @@
  */
 
 export interface paths {
+  '/api/admin/users': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List all users (Admin only) */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description List of users */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['UsersListResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Forbidden (not admin) */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/users/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get user details (Admin only) */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description User details */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': {
+              user: components['schemas']['User'];
+            };
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Forbidden (not admin) */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description User not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    /** Update user status or role (Admin only) */
+    put: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/json': components['schemas']['UpdateUserRequest'];
+        };
+      };
+      responses: {
+        /** @description User updated */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': {
+              user: components['schemas']['User'];
+            };
+          };
+        };
+        /** @description Validation error */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Forbidden (not admin) */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description User not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    post?: never;
+    /** Delete user (Admin only) */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description User deleted */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['SuccessResponse'];
+          };
+        };
+        /** @description Cannot delete yourself */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Forbidden (not admin) */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description User not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/users/{id}/reset-password': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reset user password (Admin only) */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Password reset */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ResetPasswordResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Forbidden (not admin) */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description User not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/auth/login/password': {
     parameters: {
       query?: never;
@@ -428,30 +736,33 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/users/me/password-login': {
+  '/api/prophecies': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    /** Get password login status */
+    /** Get prophecies with optional filters */
     get: {
       parameters: {
-        query?: never;
+        query?: {
+          roundId?: string;
+          filter?: 'mine' | 'toRate';
+        };
         header?: never;
         path?: never;
         cookie?: never;
       };
       requestBody?: never;
       responses: {
-        /** @description Password login status */
+        /** @description List of prophecies */
         200: {
           headers: {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['PasswordLoginStatus'];
+            'application/json': components['schemas']['PropheciesListResponse'];
           };
         };
         /** @description Unauthorized */
@@ -465,66 +776,8 @@ export interface paths {
         };
       };
     };
-    /** Toggle password login */
-    put: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/json': components['schemas']['TogglePasswordLoginRequest'];
-        };
-      };
-      responses: {
-        /** @description Password login toggled */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['TogglePasswordLoginResponse'];
-          };
-        };
-        /** @description Cannot disable without passkey */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/users/me/avatar': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
     put?: never;
-    /** Upload avatar image */
+    /** Create a new prophecy */
     post: {
       parameters: {
         query?: never;
@@ -534,28 +787,20 @@ export interface paths {
       };
       requestBody?: {
         content: {
-          'multipart/form-data': {
-            /**
-             * Format: binary
-             * @description Avatar image file (JPEG, PNG, WebP, GIF, max 5MB)
-             */
-            avatar: string;
-          };
+          'application/json': components['schemas']['CreateProphecyRequest'];
         };
       };
       responses: {
-        /** @description Avatar uploaded */
-        200: {
+        /** @description Prophecy created */
+        201: {
           headers: {
             [name: string]: unknown;
           };
           content: {
-            'application/json': {
-              avatarUrl: string;
-            };
+            'application/json': components['schemas']['ProphecyDetailResponse'];
           };
         };
-        /** @description Invalid file */
+        /** @description Validation error or submission deadline passed */
         400: {
           headers: {
             [name: string]: unknown;
@@ -573,267 +818,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
-      };
-    };
-    /** Delete avatar image */
-    delete: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Avatar deleted */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['SuccessResponse'];
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/users/me/avatar-settings': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /** Update avatar effect settings */
-    patch: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/json': components['schemas']['UpdateAvatarSettingsRequest'];
-        };
-      };
-      responses: {
-        /** @description Avatar settings updated */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['AvatarSettingsResponse'];
-          };
-        };
-        /** @description Invalid settings */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    trace?: never;
-  };
-  '/api/users/me/passkeys': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** List user passkeys */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description List of passkeys */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['PasskeysListResponse'];
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    put?: never;
-    /** Register new passkey (get options) */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Registration options */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': {
-              options: {
-                [key: string]: unknown;
-              };
-            };
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    /** Delete passkey */
-    delete: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/json': {
-            id: string;
-          };
-        };
-      };
-      responses: {
-        /** @description Passkey deleted */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': {
-              passkeys: components['schemas']['Passkey'][];
-            };
-          };
-        };
-        /** @description Cannot delete last authentication method */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    options?: never;
-    head?: never;
-    /** Rename passkey */
-    patch: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/json': {
-            id: string;
-            name: string;
-          };
-        };
-      };
-      responses: {
-        /** @description Passkey renamed */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['SuccessResponse'];
-          };
-        };
-        /** @description ID and name required */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Passkey not found */
+        /** @description Round not found */
         404: {
           headers: {
             [name: string]: unknown;
@@ -844,6 +829,300 @@ export interface paths {
         };
       };
     };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/prophecies/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Update own prophecy */
+    put: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/json': components['schemas']['UpdateProphecyRequest'];
+        };
+      };
+      responses: {
+        /** @description Prophecy updated */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ProphecyDetailResponse'];
+          };
+        };
+        /** @description Validation error or submission deadline passed */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Not your prophecy */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Prophecy not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    post?: never;
+    /** Delete own prophecy */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Prophecy deleted */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['SuccessResponse'];
+          };
+        };
+        /** @description Submission deadline passed */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Not your prophecy */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Prophecy not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/prophecies/{id}/rate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Rate a prophecy (-10 to +10) */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/json': components['schemas']['RateRequest'];
+        };
+      };
+      responses: {
+        /** @description Rating saved */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': {
+              prophecy: {
+                id: string;
+                averageRating: number | null;
+                ratingCount: number;
+              };
+              rating: components['schemas']['Rating'];
+            };
+          };
+        };
+        /** @description Invalid rating or cannot rate own prophecy */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Prophecy not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/prophecies/{id}/resolve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Mark prophecy as fulfilled or not (Admin only) */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/json': components['schemas']['ResolveRequest'];
+        };
+      };
+      responses: {
+        /** @description Prophecy resolved */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ProphecyDetailResponse'];
+          };
+        };
+        /** @description Rating phase not ended yet */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Forbidden (not admin) */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Prophecy not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
     trace?: never;
   };
   '/api/rounds': {
@@ -1288,33 +1567,30 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/prophecies': {
+  '/api/users/me/password-login': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    /** Get prophecies with optional filters */
+    /** Get password login status */
     get: {
       parameters: {
-        query?: {
-          roundId?: string;
-          filter?: 'mine' | 'toRate';
-        };
+        query?: never;
         header?: never;
         path?: never;
         cookie?: never;
       };
       requestBody?: never;
       responses: {
-        /** @description List of prophecies */
+        /** @description Password login status */
         200: {
           headers: {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['PropheciesListResponse'];
+            'application/json': components['schemas']['PasswordLoginStatus'];
           };
         };
         /** @description Unauthorized */
@@ -1328,9 +1604,8 @@ export interface paths {
         };
       };
     };
-    put?: never;
-    /** Create a new prophecy */
-    post: {
+    /** Toggle password login */
+    put: {
       parameters: {
         query?: never;
         header?: never;
@@ -1339,88 +1614,20 @@ export interface paths {
       };
       requestBody?: {
         content: {
-          'application/json': components['schemas']['CreateProphecyRequest'];
+          'application/json': components['schemas']['TogglePasswordLoginRequest'];
         };
       };
       responses: {
-        /** @description Prophecy created */
-        201: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ProphecyDetailResponse'];
-          };
-        };
-        /** @description Validation error or submission deadline passed */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Round not found */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/prophecies/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    /** Update own prophecy */
-    put: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          id: string;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/json': components['schemas']['UpdateProphecyRequest'];
-        };
-      };
-      responses: {
-        /** @description Prophecy updated */
+        /** @description Password login toggled */
         200: {
           headers: {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['ProphecyDetailResponse'];
+            'application/json': components['schemas']['TogglePasswordLoginResponse'];
           };
         };
-        /** @description Validation error or submission deadline passed */
+        /** @description Cannot disable without passkey */
         400: {
           headers: {
             [name: string]: unknown;
@@ -1431,24 +1638,6 @@ export interface paths {
         };
         /** @description Unauthorized */
         401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Not your prophecy */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Prophecy not found */
-        404: {
           headers: {
             [name: string]: unknown;
           };
@@ -1459,28 +1648,53 @@ export interface paths {
       };
     };
     post?: never;
-    /** Delete own prophecy */
-    delete: {
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/users/me/avatar': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Upload avatar image */
+    post: {
       parameters: {
         query?: never;
         header?: never;
-        path: {
-          id: string;
-        };
+        path?: never;
         cookie?: never;
       };
-      requestBody?: never;
+      requestBody?: {
+        content: {
+          'multipart/form-data': {
+            /**
+             * Format: binary
+             * @description Avatar image file (JPEG, PNG, WebP, GIF, max 5MB)
+             */
+            avatar: string;
+          };
+        };
+      };
       responses: {
-        /** @description Prophecy deleted */
+        /** @description Avatar uploaded */
         200: {
           headers: {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['SuccessResponse'];
+            'application/json': {
+              avatarUrl: string;
+            };
           };
         };
-        /** @description Submission deadline passed */
+        /** @description Invalid file */
         400: {
           headers: {
             [name: string]: unknown;
@@ -1498,17 +1712,29 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
-        /** @description Not your prophecy */
-        403: {
+      };
+    };
+    /** Delete avatar image */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Avatar deleted */
+        200: {
           headers: {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['ErrorResponse'];
+            'application/json': components['schemas']['SuccessResponse'];
           };
         };
-        /** @description Prophecy not found */
-        404: {
+        /** @description Unauthorized */
+        401: {
           headers: {
             [name: string]: unknown;
           };
@@ -1523,7 +1749,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/prophecies/{id}/rate': {
+  '/api/users/me/avatar-settings': {
     parameters: {
       query?: never;
       header?: never;
@@ -1532,47 +1758,116 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Rate a prophecy (-10 to +10) */
-    post: {
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update avatar effect settings */
+    patch: {
       parameters: {
         query?: never;
         header?: never;
-        path: {
-          id: string;
-        };
+        path?: never;
         cookie?: never;
       };
       requestBody?: {
         content: {
-          'application/json': components['schemas']['RateRequest'];
+          'application/json': components['schemas']['UpdateAvatarSettingsRequest'];
         };
       };
       responses: {
-        /** @description Rating saved */
+        /** @description Avatar settings updated */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['AvatarSettingsResponse'];
+          };
+        };
+        /** @description Invalid settings */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    trace?: never;
+  };
+  '/api/users/me/passkeys': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List user passkeys */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description List of passkeys */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['PasskeysListResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    put?: never;
+    /** Register new passkey (get options) */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Registration options */
         200: {
           headers: {
             [name: string]: unknown;
           };
           content: {
             'application/json': {
-              prophecy: {
-                id: string;
-                averageRating: number | null;
-                ratingCount: number;
+              options: {
+                [key: string]: unknown;
               };
-              rating: components['schemas']['Rating'];
             };
           };
         };
-        /** @description Invalid rating or cannot rate own prophecy */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
         /** @description Unauthorized */
         401: {
           headers: {
@@ -1582,242 +1877,36 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
-        /** @description Prophecy not found */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
       };
     };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/prophecies/{id}/resolve': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Mark prophecy as fulfilled or not (Admin only) */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          id: string;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/json': components['schemas']['ResolveRequest'];
-        };
-      };
-      responses: {
-        /** @description Prophecy resolved */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ProphecyDetailResponse'];
-          };
-        };
-        /** @description Rating phase not ended yet */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden (not admin) */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Prophecy not found */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/users': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** List all users (Admin only) */
-    get: {
+    /** Delete passkey */
+    delete: {
       parameters: {
         query?: never;
         header?: never;
         path?: never;
         cookie?: never;
       };
-      requestBody?: never;
-      responses: {
-        /** @description List of users */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['UsersListResponse'];
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden (not admin) */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/users/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Get user details (Admin only) */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          id: string;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description User details */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': {
-              user: components['schemas']['User'];
-            };
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden (not admin) */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description User not found */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    /** Update user status or role (Admin only) */
-    put: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          id: string;
-        };
-        cookie?: never;
-      };
       requestBody?: {
         content: {
-          'application/json': components['schemas']['UpdateUserRequest'];
+          'application/json': {
+            id: string;
+          };
         };
       };
       responses: {
-        /** @description User updated */
+        /** @description Passkey deleted */
         200: {
           headers: {
             [name: string]: unknown;
           };
           content: {
             'application/json': {
-              user: components['schemas']['User'];
+              passkeys: components['schemas']['Passkey'][];
             };
           };
         };
-        /** @description Validation error */
+        /** @description Cannot delete last authentication method */
         400: {
           headers: {
             [name: string]: unknown;
@@ -1835,40 +1924,28 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
-        /** @description Forbidden (not admin) */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description User not found */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
       };
     };
-    post?: never;
-    /** Delete user (Admin only) */
-    delete: {
+    options?: never;
+    head?: never;
+    /** Rename passkey */
+    patch: {
       parameters: {
         query?: never;
         header?: never;
-        path: {
-          id: string;
-        };
+        path?: never;
         cookie?: never;
       };
-      requestBody?: never;
+      requestBody?: {
+        content: {
+          'application/json': {
+            id: string;
+            name: string;
+          };
+        };
+      };
       responses: {
-        /** @description User deleted */
+        /** @description Passkey renamed */
         200: {
           headers: {
             [name: string]: unknown;
@@ -1877,7 +1954,7 @@ export interface paths {
             'application/json': components['schemas']['SuccessResponse'];
           };
         };
-        /** @description Cannot delete yourself */
+        /** @description ID and name required */
         400: {
           headers: {
             [name: string]: unknown;
@@ -1895,16 +1972,7 @@ export interface paths {
             'application/json': components['schemas']['ErrorResponse'];
           };
         };
-        /** @description Forbidden (not admin) */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description User not found */
+        /** @description Passkey not found */
         404: {
           headers: {
             [name: string]: unknown;
@@ -1915,74 +1983,6 @@ export interface paths {
         };
       };
     };
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/admin/users/{id}/reset-password': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Reset user password (Admin only) */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          id: string;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Password reset */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ResetPasswordResponse'];
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Forbidden (not admin) */
-        403: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description User not found */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
     trace?: never;
   };
 }
@@ -1991,6 +1991,42 @@ export interface components {
   schemas: {
     /** @enum {string} */
     Role: 'USER' | 'ADMIN';
+    /** @enum {string} */
+    UserStatus: 'PENDING' | 'APPROVED' | 'SUSPENDED';
+    User: {
+      id: string;
+      username: string;
+      displayName: string | null;
+      avatarUrl: string | null;
+      avatarEffect: string | null;
+      avatarEffectColors: string[];
+      role: components['schemas']['Role'];
+      status: components['schemas']['UserStatus'];
+      /** Format: date-time */
+      createdAt: string;
+      _count?: {
+        prophecies: number;
+        ratings: number;
+      };
+    };
+    UsersListResponse: {
+      users: components['schemas']['User'][];
+    };
+    ErrorResponse: {
+      /** @description Error message */
+      error: string;
+    };
+    UpdateUserRequest: {
+      status?: components['schemas']['UserStatus'];
+      role?: components['schemas']['Role'];
+    };
+    SuccessResponse: {
+      /** @enum {boolean} */
+      success: true;
+    };
+    ResetPasswordResponse: {
+      temporaryPassword: string;
+    };
     LoginResponse: {
       user: {
         id: string;
@@ -2002,10 +2038,6 @@ export interface components {
         avatarEffectColors: string[];
       };
       forcePasswordChange?: boolean;
-    };
-    ErrorResponse: {
-      /** @description Error message */
-      error: string;
     };
     PasswordLoginRequest: {
       username: string;
@@ -2025,10 +2057,6 @@ export interface components {
       username: string;
       password: string;
       displayName?: string;
-    };
-    SuccessResponse: {
-      /** @enum {boolean} */
-      success: true;
     };
     ChangePasswordRequest: {
       currentPassword?: string;
@@ -2135,48 +2163,50 @@ export interface components {
       username: string;
       displayName: string;
     };
-    PasswordLoginStatus: {
-      passwordLoginEnabled: boolean;
-      forcePasswordChange: boolean;
-      hasPasskeys: boolean;
-      canDisablePasswordLogin: boolean;
-    };
-    TogglePasswordLoginResponse: {
-      success: boolean;
-      passwordLoginEnabled: boolean;
-      message: string;
-    };
-    TogglePasswordLoginRequest: {
-      enabled: boolean;
-    };
-    AvatarSettingsResponse: {
-      avatarEffect: string | null;
-      avatarEffectColors: string[];
-    };
-    UpdateAvatarSettingsRequest: {
-      /** @enum {string} */
-      avatarEffect?: 'glow' | 'particles' | 'lightning' | 'none';
-      avatarEffectColors?: (
-        | 'cyan'
-        | 'teal'
-        | 'violet'
-        | 'emerald'
-        | 'rose'
-        | 'amber'
-        | 'blue'
-        | 'pink'
-      )[];
-    };
-    Passkey: {
+    Prophecy: {
       id: string;
-      name: string | null;
+      title: string;
+      description: string | null;
+      creatorId: string;
+      roundId: string;
       /** Format: date-time */
       createdAt: string;
+      fulfilled: boolean | null;
       /** Format: date-time */
-      lastUsedAt: string | null;
+      resolvedAt: string | null;
+      averageRating: number | null;
+      ratingCount: number;
     };
-    PasskeysListResponse: {
-      passkeys: components['schemas']['Passkey'][];
+    PropheciesListResponse: {
+      prophecies: components['schemas']['Prophecy'][];
+    };
+    ProphecyDetailResponse: {
+      prophecy: components['schemas']['Prophecy'];
+    };
+    CreateProphecyRequest: {
+      roundId: string;
+      title: string;
+      /** @default  */
+      description: string;
+    };
+    UpdateProphecyRequest: {
+      title: string;
+      /** @default  */
+      description: string;
+    };
+    Rating: {
+      id: string;
+      value: number;
+      prophecyId: string;
+      userId: string;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    RateRequest: {
+      value: number;
+    };
+    ResolveRequest: {
+      fulfilled: boolean;
     };
     Round: {
       id: string;
@@ -2230,78 +2260,48 @@ export interface components {
         averageRating: number | null;
       }[];
     };
-    Prophecy: {
-      id: string;
-      title: string;
-      description: string | null;
-      creatorId: string;
-      roundId: string;
-      /** Format: date-time */
-      createdAt: string;
-      fulfilled: boolean | null;
-      /** Format: date-time */
-      resolvedAt: string | null;
-      averageRating: number | null;
-      ratingCount: number;
+    PasswordLoginStatus: {
+      passwordLoginEnabled: boolean;
+      forcePasswordChange: boolean;
+      hasPasskeys: boolean;
+      canDisablePasswordLogin: boolean;
     };
-    PropheciesListResponse: {
-      prophecies: components['schemas']['Prophecy'][];
+    TogglePasswordLoginResponse: {
+      success: boolean;
+      passwordLoginEnabled: boolean;
+      message: string;
     };
-    ProphecyDetailResponse: {
-      prophecy: components['schemas']['Prophecy'];
+    TogglePasswordLoginRequest: {
+      enabled: boolean;
     };
-    CreateProphecyRequest: {
-      roundId: string;
-      title: string;
-      /** @default  */
-      description: string;
-    };
-    UpdateProphecyRequest: {
-      title: string;
-      /** @default  */
-      description: string;
-    };
-    Rating: {
-      id: string;
-      value: number;
-      prophecyId: string;
-      userId: string;
-      /** Format: date-time */
-      createdAt: string;
-    };
-    RateRequest: {
-      value: number;
-    };
-    ResolveRequest: {
-      fulfilled: boolean;
-    };
-    /** @enum {string} */
-    UserStatus: 'PENDING' | 'APPROVED' | 'SUSPENDED';
-    User: {
-      id: string;
-      username: string;
-      displayName: string | null;
-      avatarUrl: string | null;
+    AvatarSettingsResponse: {
       avatarEffect: string | null;
       avatarEffectColors: string[];
-      role: components['schemas']['Role'];
-      status: components['schemas']['UserStatus'];
+    };
+    UpdateAvatarSettingsRequest: {
+      /** @enum {string} */
+      avatarEffect?: 'glow' | 'particles' | 'lightning' | 'halo' | 'none';
+      avatarEffectColors?: (
+        | 'cyan'
+        | 'teal'
+        | 'violet'
+        | 'emerald'
+        | 'rose'
+        | 'amber'
+        | 'blue'
+        | 'pink'
+      )[];
+    };
+    Passkey: {
+      id: string;
+      name: string | null;
       /** Format: date-time */
       createdAt: string;
-      _count?: {
-        prophecies: number;
-        ratings: number;
-      };
+      /** Format: date-time */
+      lastUsedAt: string | null;
     };
-    UsersListResponse: {
-      users: components['schemas']['User'][];
-    };
-    UpdateUserRequest: {
-      status?: components['schemas']['UserStatus'];
-      role?: components['schemas']['Role'];
-    };
-    ResetPasswordResponse: {
-      temporaryPassword: string;
+    PasskeysListResponse: {
+      passkeys: components['schemas']['Passkey'][];
     };
   };
   responses: never;

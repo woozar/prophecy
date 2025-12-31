@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useUser } from '@/hooks/useUser';
 
 type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
-export type AvatarEffect = 'glow' | 'particles' | 'lightning' | 'none';
+export type AvatarEffect = 'glow' | 'particles' | 'lightning' | 'halo' | 'none';
 
 interface UserData {
   username: string;
@@ -124,6 +124,46 @@ function updateSparklesWithNew(
   return [...limited, newSparkle];
 }
 
+interface SparkleElementProps {
+  sparkle: Sparkle;
+  currentTime: number;
+  center: number;
+  offset: number;
+  size: number;
+}
+
+/**
+ * Single sparkle element with 4-point star shape
+ */
+const SparkleElement = memo(function SparkleElement({
+  sparkle,
+  currentTime,
+  center,
+  offset,
+  size,
+}: SparkleElementProps) {
+  const age = currentTime - sparkle.createdAt;
+  const opacity = Math.max(0, 1 - age / SPARKLE_LIFETIME);
+  const rad = (sparkle.angle * Math.PI) / 180;
+  const x = center + offset + Math.cos(rad) * sparkle.distance;
+  const y = center + offset + Math.sin(rad) * sparkle.distance;
+  const colorHex = EFFECT_COLORS[sparkle.color]?.hex || '#22d3ee';
+  const s = sparkle.size;
+
+  return (
+    <g style={{ opacity }}>
+      {/* 4-point star shape */}
+      <path
+        d={`M ${x} ${y - s} L ${x + s * 0.3} ${y - s * 0.3} L ${x + s} ${y} L ${x + s * 0.3} ${y + s * 0.3} L ${x} ${y + s} L ${x - s * 0.3} ${y + s * 0.3} L ${x - s} ${y} L ${x - s * 0.3} ${y - s * 0.3} Z`}
+        fill={colorHex}
+        filter={`url(#sparkle-glow-${size})`}
+      />
+      {/* Bright center */}
+      <circle cx={x} cy={y} r={s * 0.3} fill="#ffffff" style={{ opacity: 0.9 }} />
+    </g>
+  );
+});
+
 /**
  * Sparkle effect wrapper - twinkling stars around the avatar
  */
@@ -186,6 +226,8 @@ const SparkleWrapper = memo(function SparkleWrapper({
   const svgSize = size + 24;
   const offset = 12;
 
+  const visibleSparkles = sparkles.filter((s) => currentTime - s.createdAt < SPARKLE_LIFETIME);
+
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg
@@ -207,30 +249,16 @@ const SparkleWrapper = memo(function SparkleWrapper({
             </feMerge>
           </filter>
         </defs>
-        {sparkles
-          .filter((sparkle) => currentTime - sparkle.createdAt < SPARKLE_LIFETIME)
-          .map((sparkle) => {
-            const age = currentTime - sparkle.createdAt;
-            const opacity = Math.max(0, 1 - age / SPARKLE_LIFETIME);
-            const rad = (sparkle.angle * Math.PI) / 180;
-            const x = center + offset + Math.cos(rad) * sparkle.distance;
-            const y = center + offset + Math.sin(rad) * sparkle.distance;
-            const colorHex = EFFECT_COLORS[sparkle.color]?.hex || '#22d3ee';
-            const s = sparkle.size;
-
-            return (
-              <g key={sparkle.id} style={{ opacity }}>
-                {/* 4-point star shape */}
-                <path
-                  d={`M ${x} ${y - s} L ${x + s * 0.3} ${y - s * 0.3} L ${x + s} ${y} L ${x + s * 0.3} ${y + s * 0.3} L ${x} ${y + s} L ${x - s * 0.3} ${y + s * 0.3} L ${x - s} ${y} L ${x - s * 0.3} ${y - s * 0.3} Z`}
-                  fill={colorHex}
-                  filter={`url(#sparkle-glow-${size})`}
-                />
-                {/* Bright center */}
-                <circle cx={x} cy={y} r={s * 0.3} fill="#ffffff" style={{ opacity: 0.9 }} />
-              </g>
-            );
-          })}
+        {visibleSparkles.map((sparkle) => (
+          <SparkleElement
+            key={sparkle.id}
+            sparkle={sparkle}
+            currentTime={currentTime}
+            center={center}
+            offset={offset}
+            size={size}
+          />
+        ))}
       </svg>
       {children}
     </div>
@@ -393,6 +421,243 @@ const GlowWrapper = memo(function GlowWrapper({
   );
 });
 
+type HaloSparkle = {
+  id: number;
+  angle: number;
+  color: string;
+  createdAt: number;
+};
+
+const HALO_SPARKLE_LIFETIME = 600; // ms
+
+interface HaloSparkleElementProps {
+  sparkle: HaloSparkle;
+  currentTime: number;
+  centerX: number;
+  centerY: number;
+  haloWidth: number;
+  haloHeight: number;
+  size: number;
+  fallbackColorHex: string;
+}
+
+/**
+ * Single sparkle element on the halo ring
+ */
+const HaloSparkleElement = memo(function HaloSparkleElement({
+  sparkle,
+  currentTime,
+  centerX,
+  centerY,
+  haloWidth,
+  haloHeight,
+  size,
+  fallbackColorHex,
+}: HaloSparkleElementProps) {
+  const age = currentTime - sparkle.createdAt;
+  const opacity = Math.max(0, 1 - age / HALO_SPARKLE_LIFETIME);
+  const rad = (sparkle.angle * Math.PI) / 180;
+
+  const x = centerX + Math.cos(rad) * (haloWidth / 2);
+  const y = centerY + Math.sin(rad) * (haloHeight / 2);
+  const sparkleColorHex = EFFECT_COLORS[sparkle.color]?.hex || fallbackColorHex;
+
+  return (
+    <g style={{ opacity }}>
+      <circle
+        cx={x}
+        cy={y}
+        r={2}
+        fill={sparkleColorHex}
+        filter={`url(#halo-sparkle-glow-${size})`}
+      />
+      <circle cx={x} cy={y} r={0.8} fill="#ffffff" style={{ opacity: 0.9 }} />
+    </g>
+  );
+});
+
+/**
+ * Halo effect wrapper - renders a glowing halo ring above the avatar
+ */
+const HaloWrapper = memo(function HaloWrapper({
+  children,
+  colors,
+  size,
+}: {
+  children: React.ReactNode;
+  colors: string[];
+  size: number;
+}) {
+  const [currentColorIndex, setCurrentColorIndex] = useState(0);
+  const [pulsePhase, setPulsePhase] = useState(0);
+  const [sparkles, setSparkles] = useState<HaloSparkle[]>([]);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+  const idCounterRef = useRef(0);
+
+  // Color cycling
+  useEffect(() => {
+    if (colors.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentColorIndex((prev) => (prev + 1) % colors.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [colors.length]);
+
+  // Pulse animation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPulsePhase((prev) => (prev + 0.05) % (Math.PI * 2));
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Sparkle creation along the halo
+  useEffect(() => {
+    const createSparkle = () => {
+      const now = Date.now();
+      const angle = Math.random() * 360;
+      const color = colors[Math.floor(Math.random() * colors.length)] || 'cyan';
+
+      const newSparkle: HaloSparkle = {
+        id: idCounterRef.current++,
+        angle,
+        color,
+        createdAt: now,
+      };
+
+      setSparkles((prev) => {
+        const filtered = prev.filter((s) => now - s.createdAt < HALO_SPARKLE_LIFETIME);
+        return [...filtered.slice(-5), newSparkle];
+      });
+    };
+
+    createSparkle();
+    const interval = setInterval(createSparkle, 300);
+    return () => clearInterval(interval);
+  }, [colors]);
+
+  // Animation loop for sparkle opacity
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentColor = colors[currentColorIndex] || 'cyan';
+  const colorHex = EFFECT_COLORS[currentColor]?.hex || '#22d3ee';
+
+  // Halo dimensions
+  const haloWidth = size * 0.9;
+  const haloHeight = size * 0.25; // Perspectively flattened
+  const haloOffsetY = -size * 0.45; // Position well above avatar head
+
+  const svgSize = size + 40;
+  const offset = 20;
+  const centerX = svgSize / 2;
+  const centerY = svgSize / 2 + haloOffsetY;
+
+  // Pulse opacity (0.4 to 0.9)
+  const pulseOpacity = 0.65 + Math.sin(pulsePhase) * 0.25;
+
+  const visibleSparkles = sparkles.filter((s) => currentTime - s.createdAt < HALO_SPARKLE_LIFETIME);
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      {children}
+      <svg
+        className="absolute pointer-events-none"
+        width={svgSize}
+        height={svgSize}
+        style={{
+          top: -offset,
+          left: -offset,
+          overflow: 'visible',
+          zIndex: 10,
+        }}
+      >
+        <defs>
+          <filter id={`halo-glow-${size}`} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id={`halo-sparkle-glow-${size}`} x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="1" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Outer glow layer */}
+        <ellipse
+          cx={centerX}
+          cy={centerY}
+          rx={haloWidth / 2 + 2}
+          ry={haloHeight / 2 + 1}
+          fill="none"
+          stroke={colorHex}
+          strokeWidth={4}
+          style={{
+            opacity: pulseOpacity * 0.3,
+            filter: 'blur(4px)',
+          }}
+        />
+
+        {/* Main halo ring */}
+        <ellipse
+          cx={centerX}
+          cy={centerY}
+          rx={haloWidth / 2}
+          ry={haloHeight / 2}
+          fill="none"
+          stroke={colorHex}
+          strokeWidth={2.5}
+          filter={`url(#halo-glow-${size})`}
+          style={{
+            opacity: pulseOpacity,
+            transition: 'stroke 1s ease-in-out',
+          }}
+        />
+
+        {/* Bright core */}
+        <ellipse
+          cx={centerX}
+          cy={centerY}
+          rx={haloWidth / 2}
+          ry={haloHeight / 2}
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth={1}
+          style={{
+            opacity: pulseOpacity * 0.6,
+          }}
+        />
+
+        {/* Sparkles along the halo */}
+        {visibleSparkles.map((sparkle) => (
+          <HaloSparkleElement
+            key={sparkle.id}
+            sparkle={sparkle}
+            currentTime={currentTime}
+            centerX={centerX}
+            centerY={centerY}
+            haloWidth={haloWidth}
+            haloHeight={haloHeight}
+            size={size}
+            fallbackColorHex={colorHex}
+          />
+        ))}
+      </svg>
+    </div>
+  );
+});
+
 /**
  * AvatarImage - Internal component for avatar image with loading state
  * Using a separate component allows React to reset state when key (src) changes
@@ -509,6 +774,14 @@ export const AvatarPreview = memo(function AvatarPreview({
       <LightningWrapper colors={effectColors} size={pixelSize}>
         {avatarContent}
       </LightningWrapper>
+    );
+  }
+
+  if (effect === 'halo') {
+    return (
+      <HaloWrapper colors={effectColors} size={pixelSize}>
+        {avatarContent}
+      </HaloWrapper>
     );
   }
 

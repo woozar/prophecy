@@ -36,7 +36,11 @@ const adminItems = [
   { href: '/admin/rounds', label: 'Runden verwalten', icon: 'settings' },
 ];
 
-export const Header = memo(function Header({ user }: Readonly<HeaderProps>) {
+export const Header = memo(function Header({ user: serverUser }: Readonly<HeaderProps>) {
+  // Use store user if available (for live updates), fallback to server user
+  const { currentUserId, users } = useUserStore();
+  const storeUser = currentUserId ? users[currentUserId] : undefined;
+  const user = storeUser ?? serverUser;
   const router = useRouter();
   const pathname = usePathname();
   const [isLoggingOut, setIsLoggingOut] = useState(false);

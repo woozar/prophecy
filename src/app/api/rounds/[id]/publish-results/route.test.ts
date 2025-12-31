@@ -175,6 +175,7 @@ describe('POST /api/rounds/[id]/publish-results', () => {
   });
 
   it('returns 500 on database error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(getSession).mockResolvedValue(mockAdmin);
     vi.mocked(prisma.round.findUnique).mockRejectedValue(new Error('DB Error'));
 
@@ -186,6 +187,7 @@ describe('POST /api/rounds/[id]/publish-results', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Veröffentlichen der Ergebnisse');
+    consoleSpy.mockRestore();
   });
 });
 
@@ -281,6 +283,7 @@ describe('DELETE /api/rounds/[id]/publish-results', () => {
   });
 
   it('returns 500 on database error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(getSession).mockResolvedValue(mockAdmin);
     vi.mocked(prisma.round.findUnique).mockRejectedValue(new Error('DB Error'));
 
@@ -292,5 +295,6 @@ describe('DELETE /api/rounds/[id]/publish-results', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Zurückziehen der Ergebnisse');
+    consoleSpy.mockRestore();
   });
 });

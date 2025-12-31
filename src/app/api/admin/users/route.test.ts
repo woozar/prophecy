@@ -70,6 +70,7 @@ describe('GET /api/admin/users', () => {
   });
 
   it('returns 500 on database error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(getSession).mockResolvedValue(mockAdmin);
     vi.mocked(prisma.user.findMany).mockRejectedValue(new Error('DB Error'));
 
@@ -78,5 +79,6 @@ describe('GET /api/admin/users', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Laden der Benutzer');
+    consoleSpy.mockRestore();
   });
 });

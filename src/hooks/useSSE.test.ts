@@ -70,9 +70,12 @@ describe('useSSE', () => {
     close: ReturnType<typeof vi.fn>;
     addEventListener: ReturnType<typeof vi.fn>;
   }>;
+  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(async () => {
     createdInstances = [];
+    // Mock console.log to suppress SSE connection logs during tests
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     mockIsInitialized = false;
 
     // Reset all mocks
@@ -165,6 +168,7 @@ describe('useSSE', () => {
   });
 
   afterEach(() => {
+    consoleLogSpy.mockRestore();
     vi.unstubAllGlobals();
     vi.useRealTimers(); // In case any test used fake timers
   });

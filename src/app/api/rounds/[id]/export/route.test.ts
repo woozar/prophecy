@@ -217,6 +217,7 @@ describe('GET /api/rounds/[id]/export', () => {
   });
 
   it('returns 500 on database error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.round.findUnique).mockRejectedValue(new Error('DB Error'));
 
@@ -226,9 +227,11 @@ describe('GET /api/rounds/[id]/export', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Exportieren der Runde');
+    consoleSpy.mockRestore();
   });
 
   it('returns 500 on excel generation error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.round.findUnique).mockResolvedValue(createMockRound() as never);
     vi.mocked(generateRoundExcel).mockRejectedValue(new Error('Excel Error'));
@@ -239,5 +242,6 @@ describe('GET /api/rounds/[id]/export', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Exportieren der Runde');
+    consoleSpy.mockRestore();
   });
 });

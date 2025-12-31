@@ -20,6 +20,9 @@ export interface CreateAuditLogParams {
  */
 export async function createAuditLog(params: CreateAuditLogParams): Promise<void> {
   try {
+    const oldValue = params.oldValue === undefined ? null : JSON.stringify(params.oldValue);
+    const newValue = params.newValue === undefined ? null : JSON.stringify(params.newValue);
+
     await prisma.auditLog.create({
       data: {
         entityType: params.entityType,
@@ -27,8 +30,8 @@ export async function createAuditLog(params: CreateAuditLogParams): Promise<void
         action: params.action,
         prophecyId: params.prophecyId,
         userId: params.userId,
-        oldValue: params.oldValue !== undefined ? JSON.stringify(params.oldValue) : null,
-        newValue: params.newValue !== undefined ? JSON.stringify(params.newValue) : null,
+        oldValue,
+        newValue,
         context: params.context,
       },
     });

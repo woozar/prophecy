@@ -106,13 +106,13 @@ const ChangeDetail = memo(function ChangeDetail({ label, oldValue, newValue }: C
       <div className="mt-1 space-y-1">
         <div className="flex gap-2">
           <span className="text-red-400 shrink-0">−</span>
-          <span className="text-red-400/80 line-through break-words">
+          <span className="text-red-400/80 line-through wrap-break-word">
             {oldValue || <em className="text-(--text-muted)">(leer)</em>}
           </span>
         </div>
         <div className="flex gap-2">
           <span className="text-green-400 shrink-0">+</span>
-          <span className="text-green-400/80 break-words">
+          <span className="text-green-400/80 wrap-break-word">
             {newValue || <em className="text-(--text-muted)">(leer)</em>}
           </span>
         </div>
@@ -121,50 +121,68 @@ const ChangeDetail = memo(function ChangeDetail({ label, oldValue, newValue }: C
   );
 });
 
+function formatRatingValue(value: number): string {
+  return value > 0 ? `+${value}` : String(value);
+}
+
+function getRatingDescription(log: AuditLogEntry, userName: string): string | null {
+  if (log.action === 'BULK_DELETE') {
+    const oldData = log.oldValue ? JSON.parse(log.oldValue) : {};
+    const count = oldData.count || 'Alle';
+    const plural = oldData.count === 1 ? '' : 'en';
+    return `${count} Bewertung${plural} wurden zurückgesetzt`;
+  }
+
+  const newData = log.newValue ? JSON.parse(log.newValue) : {};
+  const oldData = log.oldValue ? JSON.parse(log.oldValue) : {};
+
+  switch (log.action) {
+    case 'CREATE':
+      return `${userName} hat mit ${formatRatingValue(newData.value)} bewertet`;
+    case 'UPDATE':
+      return `${userName} hat Bewertung von ${formatRatingValue(oldData.value)} auf ${formatRatingValue(newData.value)} geändert`;
+    case 'DELETE':
+      return `${userName} hat Bewertung entfernt`;
+    default:
+      return null;
+  }
+}
+
+function getProphecyDescription(log: AuditLogEntry, userName: string): string | null {
+  switch (log.action) {
+    case 'CREATE':
+      return `${userName} hat die Prophezeiung erstellt`;
+    case 'UPDATE':
+      return `${userName} hat die Prophezeiung bearbeitet`;
+    case 'DELETE':
+      return `${userName} hat die Prophezeiung gelöscht`;
+    default:
+      return null;
+  }
+}
+
+function getLogDescription(log: AuditLogEntry): string {
+  const userName = log.user?.displayName || log.user?.username || 'Unbekannt';
+
+  if (log.entityType === 'RATING') {
+    const description = getRatingDescription(log, userName);
+    if (description) return description;
+  }
+
+  if (log.entityType === 'PROPHECY') {
+    const description = getProphecyDescription(log, userName);
+    if (description) return description;
+  }
+
+  return `${userName} hat eine Änderung vorgenommen`;
+}
+
 interface AuditLogEntryItemProps {
   log: AuditLogEntry;
 }
 
 const AuditLogEntryItem = memo(function AuditLogEntryItem({ log }: AuditLogEntryItemProps) {
-  const description = useMemo(() => {
-    const userName = log.user?.displayName || log.user?.username || 'Unbekannt';
-
-    if (log.entityType === 'RATING') {
-      if (log.action === 'BULK_DELETE') {
-        const oldData = log.oldValue ? JSON.parse(log.oldValue) : {};
-        return `${oldData.count || 'Alle'} Bewertung${oldData.count !== 1 ? 'en' : ''} wurden zurückgesetzt`;
-      }
-      const newData = log.newValue ? JSON.parse(log.newValue) : {};
-      const oldData = log.oldValue ? JSON.parse(log.oldValue) : {};
-
-      if (log.action === 'CREATE') {
-        const valueStr = newData.value > 0 ? `+${newData.value}` : String(newData.value);
-        return `${userName} hat mit ${valueStr} bewertet`;
-      }
-      if (log.action === 'UPDATE') {
-        const oldValueStr = oldData.value > 0 ? `+${oldData.value}` : String(oldData.value);
-        const newValueStr = newData.value > 0 ? `+${newData.value}` : String(newData.value);
-        return `${userName} hat Bewertung von ${oldValueStr} auf ${newValueStr} geändert`;
-      }
-      if (log.action === 'DELETE') {
-        return `${userName} hat Bewertung entfernt`;
-      }
-    }
-
-    if (log.entityType === 'PROPHECY') {
-      if (log.action === 'CREATE') {
-        return `${userName} hat die Prophezeiung erstellt`;
-      }
-      if (log.action === 'UPDATE') {
-        return `${userName} hat die Prophezeiung bearbeitet`;
-      }
-      if (log.action === 'DELETE') {
-        return `${userName} hat die Prophezeiung gelöscht`;
-      }
-    }
-
-    return `${userName} hat eine Änderung vorgenommen`;
-  }, [log]);
+  const description = useMemo(() => getLogDescription(log), [log]);
 
   const prophecyChanges = useMemo(() => {
     if (log.entityType === 'PROPHECY' && log.action === 'UPDATE') {
@@ -177,7 +195,7 @@ const AuditLogEntryItem = memo(function AuditLogEntryItem({ log }: AuditLogEntry
 
   return (
     <div className="flex gap-3 py-3 border-b border-[rgba(98,125,152,0.2)] last:border-b-0">
-      <div className="flex-shrink-0 mt-0.5">
+      <div className="shrink-0 mt-0.5">
         <ActionIcon action={log.action} />
       </div>
       <div className="flex-1 min-w-0">

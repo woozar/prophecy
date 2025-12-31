@@ -174,6 +174,7 @@ describe('POST /api/prophecies/[id]/resolve', () => {
   });
 
   it('returns 500 on database error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.prophecy.findUnique).mockRejectedValue(new Error('DB Error'));
 
@@ -186,5 +187,6 @@ describe('POST /api/prophecies/[id]/resolve', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Auflösen der Prophezeiung');
+    consoleSpy.mockRestore();
   });
 });

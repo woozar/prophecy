@@ -54,18 +54,26 @@ export const ProphecyAuditModal = memo(function ProphecyAuditModal({
 
   const title = prophecyTitle ? `Verlauf: ${prophecyTitle}` : 'Änderungsverlauf';
 
-  return (
-    <Modal opened={!!prophecyId} onClose={onClose} title={title} size="lg" showCloseButton>
-      {isLoading ? (
+  const renderContent = () => {
+    if (isLoading) {
+      return (
         <div className="flex items-center justify-center py-8 gap-2 text-(--text-muted)">
           <IconLoader2 size={20} className="animate-spin" />
           <span>Laden...</span>
         </div>
-      ) : error ? (
-        <p className="text-sm text-red-400 text-center py-4">{error}</p>
-      ) : (
-        <AuditLogTimeline logs={logs} />
-      )}
+      );
+    }
+
+    if (error) {
+      return <p className="text-sm text-red-400 text-center py-4">{error}</p>;
+    }
+
+    return <AuditLogTimeline logs={logs} />;
+  };
+
+  return (
+    <Modal opened={!!prophecyId} onClose={onClose} title={title} size="lg" showCloseButton>
+      {renderContent()}
     </Modal>
   );
 });

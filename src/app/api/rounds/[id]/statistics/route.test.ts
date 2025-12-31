@@ -122,6 +122,7 @@ describe('GET /api/rounds/[id]/statistics', () => {
   });
 
   it('returns 500 on database error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(getSession).mockResolvedValue(mockAdmin);
     vi.mocked(prisma.round.findUnique).mockRejectedValue(new Error('DB Error'));
 
@@ -131,5 +132,6 @@ describe('GET /api/rounds/[id]/statistics', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Laden der Statistiken');
+    consoleSpy.mockRestore();
   });
 });

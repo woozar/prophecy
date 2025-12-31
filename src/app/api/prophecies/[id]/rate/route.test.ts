@@ -261,6 +261,7 @@ describe('POST /api/prophecies/[id]/rate', () => {
   });
 
   it('returns 500 on database error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(getSession).mockResolvedValue(mockUser);
     vi.mocked(prisma.prophecy.findUnique).mockRejectedValue(new Error('DB Error'));
 
@@ -273,5 +274,6 @@ describe('POST /api/prophecies/[id]/rate', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Bewerten der Prophezeiung');
+    consoleSpy.mockRestore();
   });
 });

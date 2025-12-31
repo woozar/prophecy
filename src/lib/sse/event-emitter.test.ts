@@ -1,23 +1,35 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { sseEmitter } from './event-emitter';
 
+interface MockController {
+  enqueue: Mock<(chunk: Uint8Array) => number>;
+  close: Mock;
+  error: Mock;
+  chunks: Uint8Array[];
+}
+
 describe('SSEEventEmitter', () => {
-  const createMockController = () => {
+  const createMockController = (): MockController => {
     const chunks: Uint8Array[] = [];
     return {
       enqueue: vi.fn((chunk: Uint8Array) => chunks.push(chunk)),
       close: vi.fn(),
       error: vi.fn(),
       chunks,
-    } as unknown as ReadableStreamDefaultController<Uint8Array>;
+    };
   };
 
   // We need to manually track and remove clients since sseEmitter is a singleton
   const addedClients: string[] = [];
+  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     vi.useFakeTimers();
+    // Mock console.log and console.error to suppress test output
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     // Clean up any previously added clients
     addedClients.forEach((id) => sseEmitter.removeClient(id));
     addedClients.length = 0;
@@ -27,6 +39,8 @@ describe('SSEEventEmitter', () => {
     // Clean up clients added during this test
     addedClients.forEach((id) => sseEmitter.removeClient(id));
     addedClients.length = 0;
+    consoleLogSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
     vi.useRealTimers();
   });
 
@@ -35,12 +49,16 @@ describe('SSEEventEmitter', () => {
     return id;
   };
 
+  // Helper to cast mock controller for addClient
+  const asController = (mock: MockController) =>
+    mock as unknown as ReadableStreamDefaultController<Uint8Array>;
+
   describe('addClient', () => {
     it('adds a client and increments count', () => {
       const controller = createMockController();
       const initialCount = sseEmitter.getClientCount();
 
-      sseEmitter.addClient(trackClient('test-client-1'), controller);
+      sseEmitter.addClient(trackClient('test-client-1'), asController(controller));
 
       expect(sseEmitter.getClientCount()).toBe(initialCount + 1);
     });
@@ -48,9 +66,9 @@ describe('SSEEventEmitter', () => {
     it('adds multiple clients', () => {
       const initialCount = sseEmitter.getClientCount();
 
-      sseEmitter.addClient(trackClient('test-client-1'), createMockController());
-      sseEmitter.addClient(trackClient('test-client-2'), createMockController());
-      sseEmitter.addClient(trackClient('test-client-3'), createMockController());
+      sseEmitter.addClient(trackClient('test-client-1'), asController(createMockController()));
+      sseEmitter.addClient(trackClient('test-client-2'), asController(createMockController()));
+      sseEmitter.addClient(trackClient('test-client-3'), asController(createMockController()));
 
       expect(sseEmitter.getClientCount()).toBe(initialCount + 3);
     });
@@ -60,9 +78,9 @@ describe('SSEEventEmitter', () => {
       const controller2 = createMockController();
       const initialCount = sseEmitter.getClientCount();
 
-      sseEmitter.addClient(trackClient('test-client-1'), controller1);
+      sseEmitter.addClient(trackClient('test-client-1'), asController(controller1));
       const countAfterFirst = sseEmitter.getClientCount();
-      sseEmitter.addClient('test-client-1', controller2);
+      sseEmitter.addClient('test-client-1', asController(controller2));
 
       expect(sseEmitter.getClientCount()).toBe(countAfterFirst);
       expect(sseEmitter.getClientCount()).toBe(initialCount + 1);
@@ -72,7 +90,7 @@ describe('SSEEventEmitter', () => {
   describe('removeClient', () => {
     it('removes a client and decrements count', () => {
       const id = trackClient('test-client-remove');
-      sseEmitter.addClient(id, createMockController());
+      sseEmitter.addClient(id, asController(createMockController()));
       const countWithClient = sseEmitter.getClientCount();
 
       sseEmitter.removeClient(id);
@@ -88,8 +106,8 @@ describe('SSEEventEmitter', () => {
     });
 
     it('only removes the specified client', () => {
-      sseEmitter.addClient(trackClient('test-client-a'), createMockController());
-      sseEmitter.addClient(trackClient('test-client-b'), createMockController());
+      sseEmitter.addClient(trackClient('test-client-a'), asController(createMockController()));
+      sseEmitter.addClient(trackClient('test-client-b'), asController(createMockController()));
       const countWithBoth = sseEmitter.getClientCount();
 
       sseEmitter.removeClient('test-client-a');
@@ -104,8 +122,8 @@ describe('SSEEventEmitter', () => {
       const controller1 = createMockController();
       const controller2 = createMockController();
 
-      sseEmitter.addClient(trackClient('bc-client-1'), controller1);
-      sseEmitter.addClient(trackClient('bc-client-2'), controller2);
+      sseEmitter.addClient(trackClient('bc-client-1'), asController(controller1));
+      sseEmitter.addClient(trackClient('bc-client-2'), asController(controller2));
 
       sseEmitter.broadcast({
         type: 'round:created',
@@ -118,7 +136,7 @@ describe('SSEEventEmitter', () => {
 
     it('formats event correctly as SSE message', () => {
       const controller = createMockController();
-      sseEmitter.addClient(trackClient('format-client'), controller);
+      sseEmitter.addClient(trackClient('format-client'), asController(controller));
 
       sseEmitter.broadcast({
         type: 'prophecy:updated',
@@ -161,7 +179,7 @@ describe('SSEEventEmitter', () => {
       const failId = trackClient('fail-client');
       const workId = trackClient('work-client');
       sseEmitter.addClient(failId, failingController);
-      sseEmitter.addClient(workId, workingController);
+      sseEmitter.addClient(workId, asController(workingController));
       const countBefore = sseEmitter.getClientCount();
 
       sseEmitter.broadcast({ type: 'user:created', data: { id: 'user-1' } });
@@ -179,8 +197,8 @@ describe('SSEEventEmitter', () => {
       const controller1 = createMockController();
       const controller2 = createMockController();
 
-      sseEmitter.addClient(trackClient('send-client-1'), controller1);
-      sseEmitter.addClient(trackClient('send-client-2'), controller2);
+      sseEmitter.addClient(trackClient('send-client-1'), asController(controller1));
+      sseEmitter.addClient(trackClient('send-client-2'), asController(controller2));
 
       sseEmitter.sendToClient('send-client-1', {
         type: 'rating:created',
@@ -193,7 +211,7 @@ describe('SSEEventEmitter', () => {
 
     it('ignores non-existent client', () => {
       const controller = createMockController();
-      sseEmitter.addClient(trackClient('existing-client'), controller);
+      sseEmitter.addClient(trackClient('existing-client'), asController(controller));
 
       // Should not throw
       expect(() =>
@@ -231,15 +249,15 @@ describe('SSEEventEmitter', () => {
     it('returns count after adding clients', () => {
       const initialCount = sseEmitter.getClientCount();
 
-      sseEmitter.addClient(trackClient('count-client-1'), createMockController());
-      sseEmitter.addClient(trackClient('count-client-2'), createMockController());
+      sseEmitter.addClient(trackClient('count-client-1'), asController(createMockController()));
+      sseEmitter.addClient(trackClient('count-client-2'), asController(createMockController()));
 
       expect(sseEmitter.getClientCount()).toBe(initialCount + 2);
     });
 
     it('returns correct count after removing clients', () => {
-      sseEmitter.addClient(trackClient('rem-count-1'), createMockController());
-      sseEmitter.addClient(trackClient('rem-count-2'), createMockController());
+      sseEmitter.addClient(trackClient('rem-count-1'), asController(createMockController()));
+      sseEmitter.addClient(trackClient('rem-count-2'), asController(createMockController()));
       const countWithBoth = sseEmitter.getClientCount();
 
       sseEmitter.removeClient('rem-count-1');
@@ -249,7 +267,9 @@ describe('SSEEventEmitter', () => {
     });
   });
 
-  // Note: heartbeat tests are skipped because the SSEEventEmitter singleton
-  // starts its interval at module load time, before we can set up fake timers.
-  // The heartbeat behavior is implicitly tested through integration tests.
+  // Note: Heartbeat tests are skipped because the SSEEventEmitter singleton
+  // starts its interval at module load time with real timers. Fake timers
+  // set up in tests cannot intercept this already-running interval.
+  // The heartbeat functionality is tested indirectly through error handling
+  // in broadcast and sendToClient tests.
 });

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import type { Prisma } from '@prisma/client';
 import { verifyAuthenticationResponse } from '@simplewebauthn/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setSessionCookie } from '@/lib/auth/session';
 import { clearChallenge, getChallenge } from '@/lib/auth/webauthn';
@@ -78,8 +78,11 @@ describe('POST /api/auth/login/verify', () => {
     },
   };
 
+  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     mockLoginSuccessResponse.mockImplementation((user) =>
       NextResponse.json({ success: true, user })
     );
@@ -87,6 +90,10 @@ describe('POST /api/auth/login/verify', () => {
       console.error(message, error);
       return NextResponse.json({ error: 'Login fehlgeschlagen' }, { status: 500 });
     });
+  });
+
+  afterEach(() => {
+    consoleLogSpy.mockRestore();
   });
 
   it('returns 400 when credential is missing', async () => {

@@ -191,6 +191,7 @@ describe('POST /api/users/me/avatar', () => {
   });
 
   it('returns 500 when database error occurs during processing', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(getSession).mockResolvedValue({
       userId: 'user-1',
       username: 'testuser',
@@ -212,6 +213,7 @@ describe('POST /api/users/me/avatar', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Hochladen des Avatars');
+    consoleSpy.mockRestore();
   });
 
   describe('allowed image types', () => {
@@ -292,6 +294,7 @@ describe('DELETE /api/users/me/avatar', () => {
   });
 
   it('returns 500 when database error occurs', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(getSession).mockResolvedValue({
       userId: 'user-1',
       username: 'testuser',
@@ -305,5 +308,6 @@ describe('DELETE /api/users/me/avatar', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Löschen des Avatars');
+    consoleSpy.mockRestore();
   });
 });

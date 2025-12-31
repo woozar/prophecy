@@ -54,6 +54,7 @@ describe('GET /api/rounds', () => {
   });
 
   it('returns 500 on database error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(getSession).mockResolvedValue(mockUser);
     vi.mocked(prisma.round.findMany).mockRejectedValue(new Error('DB Error'));
 
@@ -62,6 +63,7 @@ describe('GET /api/rounds', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Laden der Runden');
+    consoleSpy.mockRestore();
   });
 });
 
@@ -140,6 +142,7 @@ describe('POST /api/rounds', () => {
   });
 
   it('returns 500 on database error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(getSession).mockResolvedValue(mockAdmin);
     vi.mocked(prisma.round.create).mockRejectedValue(new Error('DB Error'));
 
@@ -158,5 +161,6 @@ describe('POST /api/rounds', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Erstellen der Runde');
+    consoleSpy.mockRestore();
   });
 });

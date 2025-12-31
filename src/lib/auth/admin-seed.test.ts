@@ -135,9 +135,11 @@ describe('ensureAdminExists', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     await ensureAdminExists();
 
     expect(bcrypt.default.hash).toHaveBeenCalledWith('admin-password', 12);
+    consoleSpy.mockRestore();
   });
 });

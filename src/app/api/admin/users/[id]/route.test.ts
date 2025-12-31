@@ -159,6 +159,7 @@ describe('PUT /api/admin/users/[id]', () => {
   });
 
   it('returns 500 on database error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(getSession).mockResolvedValue(mockAdmin);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(
       createMockUser({ id: 'admin-1', status: 'APPROVED', role: 'ADMIN' })
@@ -174,6 +175,7 @@ describe('PUT /api/admin/users/[id]', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Aktualisieren des Benutzers');
+    consoleSpy.mockRestore();
   });
 });
 
@@ -262,6 +264,7 @@ describe('DELETE /api/admin/users/[id]', () => {
   });
 
   it('returns 500 on database error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(getSession).mockResolvedValue(mockAdmin);
     vi.mocked(prisma.user.findUnique)
       .mockResolvedValueOnce(createMockUser({ id: 'admin-1', status: 'APPROVED', role: 'ADMIN' }))
@@ -276,5 +279,6 @@ describe('DELETE /api/admin/users/[id]', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Löschen des Benutzers');
+    consoleSpy.mockRestore();
   });
 });

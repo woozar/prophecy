@@ -123,6 +123,7 @@ describe('GET /api/prophecies', () => {
   });
 
   it('returns 500 on database error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(getSession).mockResolvedValue(mockUser);
     vi.mocked(prisma.prophecy.findMany).mockRejectedValue(new Error('DB Error'));
 
@@ -132,6 +133,7 @@ describe('GET /api/prophecies', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Laden der Prophezeiungen');
+    consoleSpy.mockRestore();
   });
 });
 
@@ -226,6 +228,7 @@ describe('POST /api/prophecies', () => {
   });
 
   it('returns 500 on database error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(getSession).mockResolvedValue(mockUser);
     vi.mocked(prisma.round.findUnique).mockResolvedValue(createMockRound());
     vi.mocked(prisma.prophecy.create).mockRejectedValue(new Error('DB Error'));
@@ -239,5 +242,6 @@ describe('POST /api/prophecies', () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Erstellen der Prophezeiung');
+    consoleSpy.mockRestore();
   });
 });

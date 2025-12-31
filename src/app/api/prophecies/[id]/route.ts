@@ -71,6 +71,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     // Create audit log for prophecy update
+    const deletedRatingsCount = ratingsToDelete.length;
+    const ratingPlural = deletedRatingsCount === 1 ? '' : 'en';
+    const auditContext =
+      deletedRatingsCount > 0
+        ? `${deletedRatingsCount} Bewertung${ratingPlural} zurückgesetzt`
+        : undefined;
+
     await createAuditLog({
       entityType: 'PROPHECY',
       entityId: id,
@@ -79,10 +86,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       userId: session.userId,
       oldValue: { title: oldProphecy.title, description: oldProphecy.description },
       newValue: { title, description },
-      context:
-        ratingsToDelete.length > 0
-          ? `${ratingsToDelete.length} Bewertung${ratingsToDelete.length !== 1 ? 'en' : ''} zurückgesetzt`
-          : undefined,
+      context: auditContext,
     });
 
     const prophecyData = transformProphecyToResponse(updatedProphecy);

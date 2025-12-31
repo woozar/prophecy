@@ -2567,8 +2567,10 @@ describe('RoundDetailClient', () => {
           expect(screen.getByText('Exportieren...')).toBeInTheDocument();
         });
 
-        // Cleanup
-        resolveExport!({ data: null, error: { error: 'cancelled' } });
+        // Cleanup - wrap in act to handle state update
+        await act(async () => {
+          resolveExport!({ data: null, error: { error: 'cancelled' } });
+        });
       });
 
       it('shows error toast on export failure', async () => {

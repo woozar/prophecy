@@ -525,10 +525,9 @@ const HaloWrapper = memo(function HaloWrapper({
         createdAt: now,
       };
 
-      setSparkles((prev) => {
-        const filtered = prev.filter((s) => now - s.createdAt < HALO_SPARKLE_LIFETIME);
-        return [...filtered.slice(-5), newSparkle];
-      });
+      const isSparkleActive = (s: HaloSparkle) => now - s.createdAt < HALO_SPARKLE_LIFETIME;
+
+      setSparkles((prev) => [...prev.filter(isSparkleActive).slice(-5), newSparkle]);
     };
 
     createSparkle();

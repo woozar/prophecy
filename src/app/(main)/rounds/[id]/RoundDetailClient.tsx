@@ -34,6 +34,7 @@ import { RoundStatusBadge } from '@/components/RoundStatusBadge';
 import { TextInput } from '@/components/TextInput';
 import { Textarea } from '@/components/Textarea';
 import { UserAvatar } from '@/components/UserAvatar';
+import { useExportRound } from '@/hooks/useExportRound';
 import { useCurrentUser, useUser } from '@/hooks/useUser';
 import { apiClient } from '@/lib/api-client';
 import { formatDate } from '@/lib/formatting/date';
@@ -107,7 +108,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const isAdmin = currentUser?.role === 'ADMIN';
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
+  const { exportRound, isExporting } = useExportRound();
 
   // Get user's ratings from store
   const getUserRating = useCallback(
@@ -357,35 +358,6 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     }
   }, [round.id]);
 
-  const handleExportRound = useCallback(async () => {
-    setIsExporting(true);
-    try {
-      const { data, error } = await apiClient.rounds.export(round.id);
-
-      if (error) {
-        throw new Error((error as { error?: string }).error || 'Fehler beim Exportieren');
-      }
-
-      if (data) {
-        // Trigger download via Blob URL
-        const url = URL.createObjectURL(data.blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = data.filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-
-        showSuccessToast('Export erfolgreich');
-      }
-    } catch (error) {
-      showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
-    } finally {
-      setIsExporting(false);
-    }
-  }, [round.id]);
-
   const handleShowAudit = useCallback((prophecyId: string) => {
     setAuditProphecyId(prophecyId);
   }, []);
@@ -475,7 +447,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
 
           {/* Export Button - Admin only */}
           {isAdmin && (
-            <Button variant="outline" onClick={handleExportRound} disabled={isExporting}>
+            <Button variant="outline" onClick={() => exportRound(round.id)} disabled={isExporting}>
               <div className="flex flex-row gap-2 items-center">
                 <IconDownload size={18} />
                 <span>{isExporting ? 'Exportieren...' : 'Excel Export'}</span>

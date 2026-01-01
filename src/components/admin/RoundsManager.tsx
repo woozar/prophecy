@@ -2,16 +2,18 @@
 
 import { memo, useCallback, useMemo, useState } from 'react';
 
-import { IconCalendar, IconEdit, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconCalendar, IconDownload, IconEdit, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { DateTimePicker } from '@/components/DateTimePicker';
+import { IconActionButton } from '@/components/IconActionButton';
 import { Modal } from '@/components/Modal';
 import { RoundStatusBadge } from '@/components/RoundStatusBadge';
 import { TextInput } from '@/components/TextInput';
+import { useExportRound } from '@/hooks/useExportRound';
 import { createRoundSchema, updateRoundSchema } from '@/lib/schemas/round';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 import { type Round, useRoundStore } from '@/store/useRoundStore';
@@ -25,6 +27,7 @@ export const RoundsManager = memo(function RoundsManager() {
     )
   );
   const { removeRound } = useRoundStore();
+  const { exportRound, exportingRoundId } = useExportRound();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingRound, setEditingRound] = useState<Round | null>(null);
   const [deletingRoundId, setDeletingRoundId] = useState<string | null>(null);
@@ -215,50 +218,55 @@ export const RoundsManager = memo(function RoundsManager() {
         ) : (
           rounds.map((round) => (
             <Card key={round.id} padding="p-5">
-              <div className="flex flex-row items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-white truncate">{round.title}</h3>
-                    <RoundStatusBadge round={round} variant="full" />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-                    <div className="flex items-center gap-2 text-(--text-muted)">
-                      <IconCalendar size={14} className="text-cyan-400 shrink-0" />
-                      <span>Einreichung: {formatDate(round.submissionDeadline)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-(--text-muted)">
-                      <IconCalendar size={14} className="text-teal-400 shrink-0" />
-                      <span>Bewertung: {formatDate(round.ratingDeadline)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-(--text-muted)">
-                      <IconCalendar size={14} className="text-violet-400 shrink-0" />
-                      <span>Stichtag: {formatDate(round.fulfillmentDate)}</span>
-                    </div>
-                  </div>
-
-                  <p className="mt-2 text-sm text-(--text-muted)">
-                    {round._count?.prophecies || 0} Prophezeiung(en)
-                  </p>
+              <div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                  <h3 className="text-lg font-semibold text-white truncate">{round.title}</h3>
+                  <RoundStatusBadge round={round} variant="full" />
                 </div>
 
-                <div className="flex flex-col gap-2 shrink-0">
-                  <Button
-                    variant="ghost"
-                    onClick={() => openEditModal(round)}
-                    className="p-2.5 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-cyan-400 hover:border-cyan-400/50 hover:shadow-[0_0_12px_rgba(6,182,212,0.3)]"
-                    title="Bearbeiten"
-                  >
-                    <IconEdit size={18} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setDeletingRoundId(round.id)}
-                    className="p-2.5 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-red-400 hover:border-red-400/50 hover:shadow-[0_0_12px_rgba(239,68,68,0.3)]"
-                    title="Löschen"
-                  >
-                    <IconTrash size={18} />
-                  </Button>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-(--text-muted)">
+                    <IconCalendar size={14} className="text-cyan-400 shrink-0" />
+                    <span>Einreichung: {formatDate(round.submissionDeadline)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-(--text-muted)">
+                    <IconCalendar size={14} className="text-teal-400 shrink-0" />
+                    <span>Bewertung: {formatDate(round.ratingDeadline)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-(--text-muted)">
+                    <IconCalendar size={14} className="text-violet-400 shrink-0" />
+                    <span>Stichtag: {formatDate(round.fulfillmentDate)}</span>
+                  </div>
+                </div>
+
+                <div className="mt-2 flex items-center justify-between">
+                  <p className="text-sm text-(--text-muted)">
+                    {round._count?.prophecies || 0} Prophezeiung(en)
+                  </p>
+                  <div className="flex flex-row gap-1.5">
+                    <IconActionButton
+                      variant="export"
+                      size="sm"
+                      onClick={() => exportRound(round.id)}
+                      disabled={exportingRoundId === round.id}
+                      title="Excel Export"
+                      icon={<IconDownload size={14} />}
+                    />
+                    <IconActionButton
+                      variant="edit"
+                      size="sm"
+                      onClick={() => openEditModal(round)}
+                      title="Bearbeiten"
+                      icon={<IconEdit size={14} />}
+                    />
+                    <IconActionButton
+                      variant="delete"
+                      size="sm"
+                      onClick={() => setDeletingRoundId(round.id)}
+                      title="Löschen"
+                      icon={<IconTrash size={14} />}
+                    />
+                  </div>
                 </div>
               </div>
             </Card>

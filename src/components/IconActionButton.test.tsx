@@ -1,4 +1,12 @@
-import { IconBan, IconCheck, IconPencil, IconShield, IconTrash, IconX } from '@tabler/icons-react';
+import {
+  IconBan,
+  IconCheck,
+  IconDownload,
+  IconPencil,
+  IconShield,
+  IconTrash,
+  IconX,
+} from '@tabler/icons-react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -59,6 +67,21 @@ describe('IconActionButton', () => {
 
   it('renders with admin variant', () => {
     render(<IconActionButton variant="admin" icon={<IconShield />} />);
+    expect(screen.getByRole('button')).toBeInTheDocument();
+  });
+
+  it('renders with export variant', () => {
+    render(<IconActionButton variant="export" icon={<IconDownload />} />);
+    expect(screen.getByRole('button')).toBeInTheDocument();
+  });
+
+  it('renders with default size', () => {
+    render(<IconActionButton icon={<IconPencil />} size="default" />);
+    expect(screen.getByRole('button')).toBeInTheDocument();
+  });
+
+  it('renders with sm size', () => {
+    render(<IconActionButton icon={<IconPencil />} size="sm" />);
     expect(screen.getByRole('button')).toBeInTheDocument();
   });
 

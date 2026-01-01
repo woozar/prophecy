@@ -277,19 +277,20 @@ const LightningWrapper = memo(function LightningWrapper({
   colors: string[];
   size: number;
 }) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [phase, setPhase] = useState(0); // 0=aus, 1=Seg1, 2=Seg1+2, 3=alle
   const [rotation, setRotation] = useState(0);
   const [currentColor, setCurrentColor] = useState(colors[0] || 'cyan');
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // Blitz kurz anzeigen, dann ausblenden
-      setIsVisible(true);
       setRotation(Math.random() * 360); // Zufällige Position
       setCurrentColor(colors[Math.floor(Math.random() * colors.length)] || 'cyan');
 
-      // Nach 150ms ausblenden
-      setTimeout(() => setIsVisible(false), 150);
+      // Sequenzielles Wachsen von innen nach außen
+      setPhase(1); // t=0: Segment 1
+      setTimeout(() => setPhase(2), 50); // t=50ms: + Segment 2
+      setTimeout(() => setPhase(3), 100); // t=100ms: alle Segmente
+      setTimeout(() => setPhase(0), 200); // t=200ms: alle weg
     }, 800);
     return () => clearInterval(interval);
   }, [colors]);
@@ -298,18 +299,31 @@ const LightningWrapper = memo(function LightningWrapper({
   const offset = 20;
   const svgCenter = svgSize / 2;
 
-  // Blitz-Pfad der direkt am Avatar-Rand beginnt
-  const lightningPath = useMemo(() => {
-    // Startpunkt: oberer Rand des Avatars (vom SVG-Mittelpunkt aus gesehen)
+  // Blitz-Pfade für sequenzielles Wachsen (von innen nach außen)
+  const currentPath = useMemo(() => {
     const startY = svgCenter - size / 2;
+    const points = [
+      [svgCenter, startY], // Start (am Avatar-Rand)
+      [svgCenter + 4, startY - 4], // P1
+      [svgCenter - 3, startY - 8], // P2
+      [svgCenter + 5, startY - 12], // P3
+      [svgCenter - 2, startY - 16], // P4
+    ];
 
-    // Zickzack-Blitz nach außen (nach oben = negative Y-Richtung)
-    return `M ${svgCenter} ${startY}
-            L ${svgCenter + 4} ${startY - 4}
-            L ${svgCenter - 3} ${startY - 8}
-            L ${svgCenter + 5} ${startY - 12}
-            L ${svgCenter - 2} ${startY - 16}`;
-  }, [size, svgCenter]);
+    if (phase === 1) {
+      // Nur Segment 1
+      return `M ${points[0][0]} ${points[0][1]} L ${points[1][0]} ${points[1][1]}`;
+    } else if (phase === 2) {
+      // Segment 1 + 2
+      return `M ${points[0][0]} ${points[0][1]} L ${points[1][0]} ${points[1][1]} L ${points[2][0]} ${points[2][1]}`;
+    } else if (phase === 3) {
+      // Alle Segmente
+      return `M ${points[0][0]} ${points[0][1]} L ${points[1][0]} ${points[1][1]} L ${points[2][0]} ${points[2][1]} L ${points[3][0]} ${points[3][1]} L ${points[4][0]} ${points[4][1]}`;
+    }
+    return '';
+  }, [size, svgCenter, phase]);
+
+  const isVisible = phase > 0;
 
   const colorHex = EFFECT_COLORS[currentColor]?.hex || '#22d3ee';
 
@@ -338,7 +352,7 @@ const LightningWrapper = memo(function LightningWrapper({
         <g transform={`rotate(${rotation} ${svgSize / 2} ${svgSize / 2})`}>
           {/* Glow layer */}
           <path
-            d={lightningPath}
+            d={currentPath}
             fill="none"
             stroke={colorHex}
             strokeWidth={isVisible ? 4 : 0}
@@ -351,7 +365,7 @@ const LightningWrapper = memo(function LightningWrapper({
           />
           {/* Main bolt */}
           <path
-            d={lightningPath}
+            d={currentPath}
             fill="none"
             stroke={colorHex}
             strokeWidth={isVisible ? 2 : 0}
@@ -364,7 +378,7 @@ const LightningWrapper = memo(function LightningWrapper({
           />
           {/* Bright core */}
           <path
-            d={lightningPath}
+            d={currentPath}
             fill="none"
             stroke="#ffffff"
             strokeWidth={isVisible ? 1 : 0}

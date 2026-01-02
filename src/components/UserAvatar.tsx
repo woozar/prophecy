@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useUser } from '@/hooks/useUser';
 
 type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
-export type AvatarEffect = 'glow' | 'particles' | 'lightning' | 'halo' | 'none';
+export type AvatarEffect = 'glow' | 'particles' | 'lightning' | 'halo' | 'fire' | 'none';
 
 interface UserData {
   username: string;
@@ -673,6 +673,202 @@ const HaloWrapper = memo(function HaloWrapper({
   );
 });
 
+type FireParticle = {
+  id: number;
+  x: number; // horizontal offset from center (-1 to 1)
+  progress: number; // 0 = bottom, 1 = top
+  size: number;
+  color: string;
+  wobbleOffset: number; // phase offset for sine wave
+  createdAt: number;
+};
+
+const FIRE_PARTICLE_LIFETIME = 900; // ms
+
+interface FireParticleElementProps {
+  particle: FireParticle;
+  currentTime: number;
+  center: number;
+  avatarSize: number;
+  offset: number;
+}
+
+/**
+ * Single fire particle element - stylized teardrop/flame shape
+ */
+const FireParticleElement = memo(function FireParticleElement({
+  particle,
+  currentTime,
+  center,
+  avatarSize,
+  offset,
+}: FireParticleElementProps) {
+  const age = currentTime - particle.createdAt;
+  const progress = Math.min(1, age / FIRE_PARTICLE_LIFETIME);
+
+  // Opacity fades as it rises (1 at bottom, 0 at top)
+  const opacity = Math.max(0, 1 - progress * 1.2);
+
+  // Size shrinks slightly as it rises
+  const currentSize = particle.size * (1 - progress * 0.3);
+
+  // Wobble effect - sinusoidal horizontal movement
+  const wobble = Math.sin(progress * Math.PI * 3 + particle.wobbleOffset) * 4;
+
+  // Position calculation
+  const startY = center + offset + avatarSize / 2 - 2; // Start at bottom of avatar
+  const endY = center + offset - avatarSize / 2 - 15; // End above avatar
+  const y = startY - progress * (startY - endY);
+  const x = center + offset + particle.x * (avatarSize / 3) + wobble;
+
+  const colorHex = EFFECT_COLORS[particle.color]?.hex || '#22d3ee';
+
+  // Stylized flame/teardrop shape pointing upward
+  const flameHeight = currentSize * 2.5;
+  const flameWidth = currentSize;
+
+  return (
+    <g style={{ opacity }}>
+      {/* Outer glow */}
+      <path
+        d={`M ${x} ${y}
+            Q ${x - flameWidth} ${y + flameHeight * 0.4} ${x} ${y + flameHeight}
+            Q ${x + flameWidth} ${y + flameHeight * 0.4} ${x} ${y}
+            Z`}
+        fill={colorHex}
+        style={{ filter: 'blur(3px)', opacity: 0.5 }}
+      />
+      {/* Main flame */}
+      <path
+        d={`M ${x} ${y}
+            Q ${x - flameWidth * 0.7} ${y + flameHeight * 0.4} ${x} ${y + flameHeight * 0.85}
+            Q ${x + flameWidth * 0.7} ${y + flameHeight * 0.4} ${x} ${y}
+            Z`}
+        fill={colorHex}
+        filter={`url(#fire-glow-${avatarSize})`}
+      />
+      {/* Bright core */}
+      <path
+        d={`M ${x} ${y + flameHeight * 0.15}
+            Q ${x - flameWidth * 0.3} ${y + flameHeight * 0.4} ${x} ${y + flameHeight * 0.7}
+            Q ${x + flameWidth * 0.3} ${y + flameHeight * 0.4} ${x} ${y + flameHeight * 0.15}
+            Z`}
+        fill="#ffffff"
+        style={{ opacity: 0.7 }}
+      />
+    </g>
+  );
+});
+
+/**
+ * Fire effect wrapper - renders rising flame particles around the avatar
+ */
+const FireWrapper = memo(function FireWrapper({
+  children,
+  colors,
+  size,
+}: {
+  children: React.ReactNode;
+  colors: string[];
+  size: number;
+}) {
+  const maxParticles = size >= 48 ? 8 : 6;
+  const idCounterRef = useRef(0);
+  const [particles, setParticles] = useState<FireParticle[]>([]);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+
+  // Create new particles
+  useEffect(() => {
+    const createParticle = () => {
+      const now = Date.now();
+      const x = (Math.random() - 0.5) * 1.6; // -0.8 to 0.8
+      const particleSize = 3 + Math.random() * 3;
+      const color = colors[Math.floor(Math.random() * colors.length)] || 'cyan';
+      const wobbleOffset = Math.random() * Math.PI * 2;
+
+      const newParticle: FireParticle = {
+        id: idCounterRef.current++,
+        x,
+        progress: 0,
+        size: particleSize,
+        color,
+        wobbleOffset,
+        createdAt: now,
+      };
+
+      setParticles((prev) => {
+        const filtered = prev.filter((p) => now - p.createdAt < FIRE_PARTICLE_LIFETIME);
+        const limited = filtered.slice(-maxParticles + 1);
+        return [...limited, newParticle];
+      });
+    };
+
+    // Initial particles with staggered start
+    createParticle();
+    const t1 = setTimeout(createParticle, 100);
+    const t2 = setTimeout(createParticle, 200);
+
+    const interval = setInterval(createParticle, 250);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearInterval(interval);
+    };
+  }, [colors, maxParticles]);
+
+  // Animation loop for position/opacity updates
+  useEffect(() => {
+    const animationInterval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 30); // ~33fps for smooth animation
+    return () => clearInterval(animationInterval);
+  }, []);
+
+  const center = size / 2;
+  const svgSize = size + 40;
+  const offset = 20;
+
+  const visibleParticles = particles.filter(
+    (p) => currentTime - p.createdAt < FIRE_PARTICLE_LIFETIME
+  );
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg
+        className="absolute pointer-events-none"
+        width={svgSize}
+        height={svgSize}
+        style={{
+          top: -offset,
+          left: -offset,
+          overflow: 'visible',
+        }}
+      >
+        <defs>
+          <filter id={`fire-glow-${size}`} x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="1.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        {visibleParticles.map((particle) => (
+          <FireParticleElement
+            key={particle.id}
+            particle={particle}
+            currentTime={currentTime}
+            center={center}
+            avatarSize={size}
+            offset={offset}
+          />
+        ))}
+      </svg>
+      {children}
+    </div>
+  );
+});
+
 /**
  * AvatarImage - Internal component for avatar image with loading state
  * Using a separate component allows React to reset state when key (src) changes
@@ -797,6 +993,14 @@ export const AvatarPreview = memo(function AvatarPreview({
       <HaloWrapper colors={effectColors} size={pixelSize}>
         {avatarContent}
       </HaloWrapper>
+    );
+  }
+
+  if (effect === 'fire') {
+    return (
+      <FireWrapper colors={effectColors} size={pixelSize}>
+        {avatarContent}
+      </FireWrapper>
     );
   }
 

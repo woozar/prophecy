@@ -133,6 +133,16 @@ describe('AvatarPreview with effects', () => {
     expect(container.querySelector('ellipse')).toBeInTheDocument();
   });
 
+  it('renders with fire effect', () => {
+    const { container } = render(
+      <AvatarPreview username="test" avatarEffect="fire" avatarEffectColors={['cyan']} />
+    );
+    // Fire wrapper uses SVG element for flame particles
+    expect(container.querySelector('svg')).toBeInTheDocument();
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper).toHaveClass('relative');
+  });
+
   it('uses default cyan color when no colors provided for glow', () => {
     const { container } = render(
       <AvatarPreview username="test" avatarEffect="glow" avatarEffectColors={[]} />

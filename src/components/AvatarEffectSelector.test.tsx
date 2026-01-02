@@ -63,6 +63,7 @@ describe('AvatarEffectSelector', () => {
       expect(screen.getByText('Partikel')).toBeInTheDocument();
       expect(screen.getByText('Blitze')).toBeInTheDocument();
       expect(screen.getByText('Heiligenschein')).toBeInTheDocument();
+      expect(screen.getByText('Funken')).toBeInTheDocument();
     });
 
     it('renders color selection when effect is not none', () => {

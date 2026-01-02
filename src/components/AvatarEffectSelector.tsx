@@ -7,6 +7,7 @@ import {
   IconCircleDashed,
   IconCircleDot,
   IconCircleOff,
+  IconFlame,
   IconSparkles,
 } from '@tabler/icons-react';
 
@@ -17,7 +18,7 @@ import { avatarColors } from '@/lib/schemas/user';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 import { useUserStore } from '@/store/useUserStore';
 
-type AvatarEffect = 'glow' | 'particles' | 'lightning' | 'halo' | 'none';
+type AvatarEffect = 'glow' | 'particles' | 'lightning' | 'halo' | 'fire' | 'none';
 type AvatarColor = (typeof avatarColors)[number];
 
 interface AvatarEffectSelectorProps {
@@ -35,6 +36,7 @@ const EFFECTS: { value: AvatarEffect; label: string; icon: React.ReactNode }[] =
   { value: 'particles', label: 'Partikel', icon: <IconCircleDot size={18} /> },
   { value: 'lightning', label: 'Blitze', icon: <IconBolt size={18} /> },
   { value: 'halo', label: 'Heiligenschein', icon: <IconCircleDashed size={18} /> },
+  { value: 'fire', label: 'Funken', icon: <IconFlame size={18} /> },
 ];
 
 const COLORS = [

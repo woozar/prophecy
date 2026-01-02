@@ -989,7 +989,7 @@
         "properties": {
           "avatarEffect": {
             "type": "string",
-            "enum": ["glow", "particles", "lightning", "halo", "none"]
+            "enum": ["glow", "particles", "lightning", "halo", "fire", "none"]
           },
           "avatarEffectColors": {
             "type": "array",
@@ -2500,6 +2500,67 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (not admin)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Round not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rounds/{id}/export": {
+      "get": {
+        "tags": ["Rounds"],
+        "summary": "Export round as Excel file (Admin only)",
+        "description": "Downloads an Excel file with two sheets: Prophezeiungen (prophecies with statistics) and Bewertungen (individual ratings with usernames)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Round ID"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Excel file download",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }

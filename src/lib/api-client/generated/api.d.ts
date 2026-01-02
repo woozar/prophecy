@@ -1567,6 +1567,74 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/rounds/{id}/export': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Export round as Excel file (Admin only)
+     * @description Downloads an Excel file with two sheets: Prophezeiungen (prophecies with statistics) and Bewertungen (individual ratings with usernames)
+     */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Excel file download */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': string;
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Forbidden (not admin) */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Round not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/users/me/password-login': {
     parameters: {
       query?: never;
@@ -2280,7 +2348,7 @@ export interface components {
     };
     UpdateAvatarSettingsRequest: {
       /** @enum {string} */
-      avatarEffect?: 'glow' | 'particles' | 'lightning' | 'halo' | 'none';
+      avatarEffect?: 'glow' | 'particles' | 'lightning' | 'halo' | 'fire' | 'none';
       avatarEffectColors?: (
         | 'cyan'
         | 'teal'

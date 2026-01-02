@@ -74,7 +74,7 @@ export const togglePasswordLoginResponseSchema = z
 // Avatar Settings
 // ============================================================================
 
-const avatarEffects = ['glow', 'particles', 'lightning', 'halo', 'none'] as const;
+const avatarEffects = ['glow', 'particles', 'lightning', 'halo', 'fire', 'none'] as const;
 const avatarColors = [
   'cyan',
   'teal',

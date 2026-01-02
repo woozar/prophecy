@@ -20,8 +20,6 @@ describe('useProphecyStore', () => {
     createdAt: '2025-01-01T00:00:00Z',
     fulfilled: null,
     resolvedAt: null,
-    averageRating: null,
-    ratingCount: 0,
   };
 
   const mockProphecy2: Prophecy = {
@@ -33,8 +31,6 @@ describe('useProphecyStore', () => {
     createdAt: '2025-01-02T00:00:00Z',
     fulfilled: true,
     resolvedAt: '2025-02-01T00:00:00Z',
-    averageRating: 4.5,
-    ratingCount: 10,
   };
 
   const mockProphecy3: Prophecy = {
@@ -46,8 +42,6 @@ describe('useProphecyStore', () => {
     createdAt: '2025-01-03T00:00:00Z',
     fulfilled: false,
     resolvedAt: '2025-02-02T00:00:00Z',
-    averageRating: 2.5,
-    ratingCount: 5,
   };
 
   beforeEach(() => {

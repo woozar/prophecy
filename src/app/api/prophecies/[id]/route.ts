@@ -52,8 +52,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       data: {
         title,
         description,
-        averageRating: null,
-        ratingCount: 0,
       },
     });
 

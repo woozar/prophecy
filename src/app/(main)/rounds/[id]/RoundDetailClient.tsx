@@ -26,6 +26,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { FilterButton } from '@/components/FilterButton';
 import { GlowBadge } from '@/components/GlowBadge';
 import { IconActionButton } from '@/components/IconActionButton';
+import { type IndividualRating, IndividualRatingsBox } from '@/components/IndividualRatingsBox';
 import { Modal } from '@/components/Modal';
 import { ProphecyAuditModal } from '@/components/ProphecyAuditModal';
 import { RatingDisplay } from '@/components/RatingDisplay';
@@ -41,8 +42,9 @@ import { formatDate } from '@/lib/formatting/date';
 import { createProphecySchema, updateProphecySchema } from '@/lib/schemas/prophecy';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 import { type Prophecy, useProphecyStore } from '@/store/useProphecyStore';
-import { selectUserRatingForProphecy, useRatingStore } from '@/store/useRatingStore';
+import { type Rating, selectUserRatingForProphecy, useRatingStore } from '@/store/useRatingStore';
 import { type Round } from '@/store/useRoundStore';
+import { useUserStore } from '@/store/useUserStore';
 
 interface RoundDetailClientProps {
   round: Round;
@@ -217,7 +219,10 @@ export const RoundDetailClient = memo(function RoundDetailClient({
 
   const handleStartEdit = useCallback(
     (prophecy: Prophecy) => {
-      if (prophecy.ratingCount > 0) {
+      // Check if prophecy has ratings from the rating store
+      const prophecyRatings = useRatingStore.getState().ratingsByProphecy[prophecy.id] || [];
+      const hasRatings = prophecyRatings.some((r) => r.value !== 0);
+      if (hasRatings) {
         setConfirmEditProphecy(prophecy);
       } else {
         openEditModal(prophecy);
@@ -225,6 +230,13 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     },
     [openEditModal]
   );
+
+  // Get rating count for the prophecy being confirmed for edit
+  const confirmEditRatingCount = useMemo(() => {
+    if (!confirmEditProphecy) return 0;
+    const ratings = useRatingStore.getState().ratingsByProphecy[confirmEditProphecy.id] || [];
+    return ratings.filter((r: Rating) => r.value !== 0).length;
+  }, [confirmEditProphecy]);
 
   const handleConfirmEdit = useCallback(() => {
     if (confirmEditProphecy) {
@@ -281,16 +293,9 @@ export const RoundDetailClient = memo(function RoundDetailClient({
           throw new Error((error as { error?: string }).error || 'Fehler beim Bewerten');
         }
 
-        // Update prophecy with new average - merge with existing prophecy since API returns partial data
+        // Update prophecy in store if API returns it
         if (data?.prophecy) {
-          const existingProphecy = useProphecyStore.getState().prophecies[prophecyId];
-          if (existingProphecy) {
-            setProphecy({
-              ...existingProphecy,
-              averageRating: data.prophecy.averageRating,
-              ratingCount: data.prophecy.ratingCount,
-            });
-          }
+          setProphecy(data.prophecy);
         }
         // Update rating in store
         if (data?.rating) {
@@ -596,13 +601,9 @@ export const RoundDetailClient = memo(function RoundDetailClient({
         confirmText="Trotzdem bearbeiten"
         variant="warning"
       >
-        <p className="mb-2">Diese Prophezeiung hat bereits Bewertungen erhalten.</p>
-        {confirmEditProphecy && (
-          <p className="text-white font-medium mb-4">
-            {confirmEditProphecy.ratingCount}{' '}
-            {confirmEditProphecy.ratingCount === 1 ? 'Bewertung' : 'Bewertungen'}
-          </p>
-        )}
+        <p className="mb-2">
+          {`Diese Prophezeiung hat bereits ${confirmEditRatingCount} ${confirmEditRatingCount === 1 ? 'Bewertung' : 'Bewertungen'} erhalten.`}
+        </p>
         <p className="text-sm">Beim Speichern werden alle Bewertungen gelöscht.</p>
       </ConfirmModal>
 
@@ -708,6 +709,26 @@ const ProphecyCard = memo(function ProphecyCard({
   );
   const userRating = useRatingStore(userRatingSelector);
 
+  // Get all ratings for this prophecy (for individual ratings display)
+  const allRatings = useRatingStore(
+    useShallow((state) => state.ratingsByProphecy[prophecy.id] || [])
+  );
+
+  // Get all users for mapping ratings to user data
+  const users = useUserStore(useShallow((state) => state.users));
+
+  // Calculate rating count and average from ratings (excluding zero values and bots)
+  const { ratingCount, averageRating } = useMemo(() => {
+    const nonZeroRatings = allRatings.filter((r) => r.value !== 0);
+    const humanRatings = nonZeroRatings.filter((r) => !users[r.userId]?.isBot);
+    const count = nonZeroRatings.length;
+    const avg =
+      humanRatings.length > 0
+        ? humanRatings.reduce((sum, r) => sum + r.value, 0) / humanRatings.length
+        : null;
+    return { ratingCount: count, averageRating: avg };
+  }, [allRatings, users]);
+
   const [localRating, setLocalRating] = useState<number | null>(null);
 
   // Compute displayed rating: use local if changed, otherwise store value
@@ -729,6 +750,29 @@ const ProphecyCard = memo(function ProphecyCard({
   const creatorName = creator?.displayName || creator?.username || 'Unbekannt';
 
   const isOwn = prophecy.creatorId === currentUserId;
+
+  // Visibility: Author always sees average, others only after rating period
+  const showAverage = isOwn || isRatingClosed;
+
+  // Build individual ratings list for display (only when rating is closed)
+  const individualRatings: IndividualRating[] = useMemo(() => {
+    if (!isRatingClosed) return [];
+
+    return allRatings
+      .filter((r) => r.value !== 0) // Filter out zero ratings (unrated)
+      .map((rating) => {
+        const user = users[rating.userId];
+        return {
+          id: rating.id,
+          userId: rating.userId,
+          value: rating.value,
+          username: user?.username || 'Unbekannt',
+          displayName: user?.displayName || null,
+          avatarUrl: user?.avatarUrl,
+          isBot: user?.isBot || false,
+        };
+      });
+  }, [isRatingClosed, allRatings, users]);
 
   return (
     <Card padding="p-5">
@@ -816,10 +860,18 @@ const ProphecyCard = memo(function ProphecyCard({
         </div>
       </div>
 
-      {/* Average Rating Display */}
-      {prophecy.ratingCount > 0 && prophecy.averageRating !== null && (
+      {/* Rating Count and Average Display */}
+      {ratingCount > 0 && (
         <div className="mt-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
-          <RatingDisplay value={prophecy.averageRating} ratingCount={prophecy.ratingCount} />
+          <RatingDisplay
+            value={averageRating ?? 0}
+            ratingCount={ratingCount}
+            showAverage={showAverage}
+          />
+          {/* Individual ratings (only visible after rating period) */}
+          {isRatingClosed && individualRatings.length > 0 && (
+            <IndividualRatingsBox ratings={individualRatings} currentUserId={currentUserId} />
+          )}
         </div>
       )}
 
@@ -835,18 +887,6 @@ const ProphecyCard = memo(function ProphecyCard({
             savedValue={userRating?.value ?? 0}
             onSave={handleSaveRating}
           />
-        </div>
-      )}
-
-      {/* Show user's rating when rating is closed */}
-      {!isSubmissionOpen && !isRatingOpen && userRating && (
-        <div className="mt-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
-          <p className="text-sm text-(--text-muted)">
-            Deine Bewertung:{' '}
-            <span className="text-cyan-400 font-medium">
-              {userRating.value > 0 ? `+${userRating.value}` : userRating.value}
-            </span>
-          </p>
         </div>
       )}
     </Card>

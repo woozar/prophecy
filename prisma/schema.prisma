@@ -74,8 +74,6 @@ model Prophecy {
   resolvedAt  DateTime?
 
   ratings       Rating[]
-  averageRating Float?
-  ratingCount   Int      @default(0)
   auditLogs     AuditLog[]
 }
 

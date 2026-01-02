@@ -14,8 +14,6 @@ describe('transformProphecyToResponse', () => {
     updatedAt: new Date('2025-01-15T10:30:00.000Z'),
     fulfilled: null,
     resolvedAt: null,
-    averageRating: null,
-    ratingCount: 0,
     ...overrides,
   });
 
@@ -33,8 +31,6 @@ describe('transformProphecyToResponse', () => {
       createdAt: '2025-01-15T10:30:00.000Z',
       fulfilled: null,
       resolvedAt: null,
-      averageRating: null,
-      ratingCount: 0,
     });
   });
 
@@ -101,17 +97,5 @@ describe('transformProphecyToResponse', () => {
     const result = transformProphecyToResponse(prophecy);
 
     expect(result.description).toBe('');
-  });
-
-  it('includes rating data correctly', () => {
-    const prophecy = createMockProphecy({
-      averageRating: 4.5,
-      ratingCount: 10,
-    });
-
-    const result = transformProphecyToResponse(prophecy);
-
-    expect(result.averageRating).toBe(4.5);
-    expect(result.ratingCount).toBe(10);
   });
 });

@@ -9,8 +9,6 @@ export interface ProphecyResponse {
   createdAt: string;
   fulfilled: boolean | null;
   resolvedAt: string | null;
-  averageRating: number | null;
-  ratingCount: number;
 }
 
 export function transformProphecyToResponse(prophecy: Prophecy): ProphecyResponse {
@@ -23,7 +21,5 @@ export function transformProphecyToResponse(prophecy: Prophecy): ProphecyRespons
     createdAt: prophecy.createdAt.toISOString(),
     fulfilled: prophecy.fulfilled,
     resolvedAt: prophecy.resolvedAt?.toISOString() ?? null,
-    averageRating: prophecy.averageRating,
-    ratingCount: prophecy.ratingCount,
   };
 }

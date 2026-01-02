@@ -122,27 +122,6 @@ async function shouldSkipRating(
 }
 
 /**
- * Berechnet average rating und count für eine Prophezeiung (ohne Bot-Bewertungen)
- */
-async function recalculateAverageRating(prophecyId: string) {
-  const ratings = await prisma.rating.findMany({
-    where: { prophecyId },
-    select: { value: true, user: { select: { isBot: true } } },
-  });
-
-  // Filter out zero-value ratings (unrated) and bot ratings
-  const humanNonZeroRatings = ratings.filter((r) => r.value !== 0 && !r.user.isBot);
-  const ratingCount = humanNonZeroRatings.length;
-  const averageRating =
-    ratingCount > 0 ? humanNonZeroRatings.reduce((sum, r) => sum + r.value, 0) / ratingCount : null;
-
-  return prisma.prophecy.update({
-    where: { id: prophecyId },
-    data: { averageRating, ratingCount },
-  });
-}
-
-/**
  * Erstellt Rating und sendet SSE-Updates
  */
 async function createRatingAndBroadcast(
@@ -173,12 +152,17 @@ async function createRatingAndBroadcast(
     context: auditContext,
   });
 
-  const updatedProphecy = await recalculateAverageRating(prophecy.id);
-
-  sseEmitter.broadcast({
-    type: 'prophecy:updated',
-    data: transformProphecyToResponse(updatedProphecy),
+  // Fetch the prophecy to broadcast the update
+  const updatedProphecy = await prisma.prophecy.findUnique({
+    where: { id: prophecy.id },
   });
+
+  if (updatedProphecy) {
+    sseEmitter.broadcast({
+      type: 'prophecy:updated',
+      data: transformProphecyToResponse(updatedProphecy),
+    });
+  }
 
   sseEmitter.broadcast({
     type: 'rating:created',

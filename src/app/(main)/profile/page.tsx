@@ -1,47 +1,81 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import { Card } from '@/components/Card';
 import { GlowBadge } from '@/components/GlowBadge';
-import { PasskeyManager } from '@/components/PasskeyManager';
+import { type Passkey, PasskeyManager } from '@/components/PasskeyManager';
 import { PasswordManagement } from '@/components/PasswordManagement';
 import { ProfileAvatarSection } from '@/components/ProfileAvatarSection';
 import { UserAvatar } from '@/components/UserAvatar';
-import { getSession } from '@/lib/auth/session';
-import { prisma } from '@/lib/db/prisma';
+import { useCurrentUser } from '@/hooks/useUser';
+import { useProphecyStore } from '@/store/useProphecyStore';
+import { useRatingStore } from '@/store/useRatingStore';
 
-export default async function ProfilePage() {
-  const session = await getSession();
+export default function ProfilePage() {
+  const currentUser = useCurrentUser();
+  const [passkeys, setPasskeys] = useState<Passkey[]>([]);
+  const [isLoadingPasskeys, setIsLoadingPasskeys] = useState(true);
 
-  const user = await prisma.user.findUnique({
-    where: { id: session!.userId },
-    select: {
-      id: true,
-      username: true,
-      displayName: true,
-      avatarUrl: true,
-      avatarEffect: true,
-      avatarEffectColors: true,
-      role: true,
-      status: true,
-      createdAt: true,
-      authenticators: {
-        select: {
-          id: true,
-          name: true,
-          createdAt: true,
-          lastUsedAt: true,
-          credentialDeviceType: true,
-        },
-        orderBy: { createdAt: 'desc' },
-      },
-      _count: {
-        select: {
-          prophecies: true,
-          ratings: true,
-        },
-      },
-    },
-  });
+  // Get prophecy count from store
+  const prophecyCount = useProphecyStore(
+    useCallback(
+      (state) =>
+        currentUser
+          ? Object.values(state.prophecies).filter((p) => p.creatorId === currentUser.id).length
+          : 0,
+      [currentUser]
+    )
+  );
 
-  if (!user) {
+  // Get rating count from store
+  const ratingCount = useRatingStore(
+    useCallback(
+      (state) =>
+        currentUser
+          ? Object.values(state.ratings).filter((r) => r.userId === currentUser.id).length
+          : 0,
+      [currentUser]
+    )
+  );
+
+  // Load passkeys on mount
+  useEffect(() => {
+    async function loadPasskeys() {
+      try {
+        const response = await fetch('/api/users/me/passkeys');
+        if (response.ok) {
+          const data = await response.json();
+          setPasskeys(data);
+        }
+      } finally {
+        setIsLoadingPasskeys(false);
+      }
+    }
+    loadPasskeys();
+  }, []);
+
+  const avatarEffectColors = useMemo(() => {
+    if (!currentUser?.avatarEffectColors) return [];
+    if (Array.isArray(currentUser.avatarEffectColors)) return currentUser.avatarEffectColors;
+    try {
+      return JSON.parse(currentUser.avatarEffectColors as unknown as string);
+    } catch {
+      return [];
+    }
+  }, [currentUser?.avatarEffectColors]);
+
+  const formattedCreatedAt = useMemo(() => {
+    if (!currentUser?.createdAt) return '';
+    const date = new Date(currentUser.createdAt);
+    return date.toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+  }, [currentUser?.createdAt]);
+
+  if (!currentUser) {
     return null;
   }
 
@@ -52,15 +86,15 @@ export default async function ProfilePage() {
       {/* User Info */}
       <Card padding="p-6">
         <div className="flex items-center gap-4 mb-6">
-          <UserAvatar userId={user.id} size="xl" />
+          <UserAvatar userId={currentUser.id} size="xl" />
           <div>
             <h2 className="text-xl font-semibold text-white">
-              {user.displayName || user.username}
+              {currentUser.displayName || currentUser.username}
             </h2>
-            <p className="text-(--text-muted)">@{user.username}</p>
+            <p className="text-(--text-muted)">@{currentUser.username}</p>
             <div className="mt-1">
               <GlowBadge size="sm">
-                {user.role === 'ADMIN' ? 'Administrator' : 'Benutzer'}
+                {currentUser.role === 'ADMIN' ? 'Administrator' : 'Benutzer'}
               </GlowBadge>
             </div>
           </div>
@@ -68,11 +102,11 @@ export default async function ProfilePage() {
 
         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
           <div className="text-center">
-            <p className="text-2xl font-bold text-cyan-400">{user._count.prophecies}</p>
+            <p className="text-2xl font-bold text-cyan-400">{prophecyCount}</p>
             <p className="text-sm text-(--text-muted)">Prophezeiungen</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-cyan-400">{user._count.ratings}</p>
+            <p className="text-2xl font-bold text-cyan-400">{ratingCount}</p>
             <p className="text-sm text-(--text-muted)">Bewertungen</p>
           </div>
         </div>
@@ -80,26 +114,18 @@ export default async function ProfilePage() {
 
       {/* Avatar Upload & Effects */}
       <ProfileAvatarSection
-        username={user.username}
-        displayName={user.displayName}
-        avatarUrl={user.avatarUrl}
-        avatarEffect={user.avatarEffect}
-        avatarEffectColors={user.avatarEffectColors ? JSON.parse(user.avatarEffectColors) : []}
+        username={currentUser.username}
+        displayName={currentUser.displayName}
+        avatarUrl={currentUser.avatarUrl}
+        avatarEffect={currentUser.avatarEffect}
+        avatarEffectColors={avatarEffectColors}
       />
 
       {/* Passkeys */}
-      <PasskeyManager
-        initialPasskeys={user.authenticators.map((p) => ({
-          id: p.id,
-          name: p.name,
-          createdAt: p.createdAt.toISOString(),
-          lastUsedAt: p.lastUsedAt?.toISOString() || null,
-          credentialDeviceType: p.credentialDeviceType || 'singleDevice',
-        }))}
-      />
+      {!isLoadingPasskeys && <PasskeyManager initialPasskeys={passkeys} />}
 
       {/* Password Management */}
-      <PasswordManagement hasPasskeys={user.authenticators.length > 0} />
+      <PasswordManagement hasPasskeys={passkeys.length > 0} />
 
       {/* Account Info */}
       <Card padding="p-6">
@@ -107,13 +133,7 @@ export default async function ProfilePage() {
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
             <span className="text-(--text-muted)">Mitglied seit</span>
-            <span className="text-(--text-secondary)">
-              {user.createdAt.toLocaleDateString('de-DE', {
-                day: '2-digit',
-                month: 'long',
-                year: 'numeric',
-              })}
-            </span>
+            <span className="text-(--text-secondary)">{formattedCreatedAt}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-(--text-muted)">Status</span>

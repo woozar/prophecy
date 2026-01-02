@@ -180,8 +180,13 @@ registry.registerPath({
           schema: z.object({
             prophecy: z.object({
               id: z.string(),
-              averageRating: z.number().nullable(),
-              ratingCount: z.number(),
+              title: z.string(),
+              description: z.string().nullable(),
+              creatorId: z.string(),
+              roundId: z.string(),
+              createdAt: z.string(),
+              fulfilled: z.boolean().nullable(),
+              resolvedAt: z.string().nullable(),
             }),
             rating: ratingResponseSchema,
           }),

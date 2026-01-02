@@ -1005,8 +1005,13 @@ export interface paths {
             'application/json': {
               prophecy: {
                 id: string;
-                averageRating: number | null;
-                ratingCount: number;
+                title: string;
+                description: string | null;
+                creatorId: string;
+                roundId: string;
+                createdAt: string;
+                fulfilled: boolean | null;
+                resolvedAt: string | null;
               };
               rating: components['schemas']['Rating'];
             };
@@ -2242,8 +2247,6 @@ export interface components {
       fulfilled: boolean | null;
       /** Format: date-time */
       resolvedAt: string | null;
-      averageRating: number | null;
-      ratingCount: number;
     };
     PropheciesListResponse: {
       prophecies: components['schemas']['Prophecy'][];

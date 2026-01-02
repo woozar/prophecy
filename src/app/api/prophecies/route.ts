@@ -55,29 +55,37 @@ export async function GET(request: NextRequest) {
           },
         },
         ratings: {
-          where: { userId: session.userId },
-          select: { value: true },
-        },
-        _count: {
-          select: { ratings: true },
+          select: { value: true, userId: true, user: { select: { isBot: true } } },
         },
       },
     });
 
-    // Transform to include user's rating if exists
-    const transformedProphecies = prophecies.map((p) => ({
-      id: p.id,
-      title: p.title,
-      description: p.description,
-      createdAt: p.createdAt,
-      creator: p.creator,
-      averageRating: p.averageRating,
-      ratingCount: p._count.ratings,
-      userRating: p.ratings[0]?.value ?? null,
-      isOwn: p.creatorId === session.userId,
-      fulfilled: p.fulfilled,
-      resolvedAt: p.resolvedAt,
-    }));
+    // Transform to include calculated rating stats and user's rating
+    const transformedProphecies = prophecies.map((p) => {
+      // Calculate averageRating from ratings (excluding zero values and bot ratings)
+      const nonZeroRatings = p.ratings.filter((r) => r.value !== 0);
+      const humanRatings = nonZeroRatings.filter((r) => !r.user.isBot);
+      const ratingCount = nonZeroRatings.length;
+      const averageRating =
+        humanRatings.length > 0
+          ? humanRatings.reduce((sum, r) => sum + r.value, 0) / humanRatings.length
+          : null;
+      const userRating = p.ratings.find((r) => r.userId === session.userId)?.value ?? null;
+
+      return {
+        id: p.id,
+        title: p.title,
+        description: p.description,
+        createdAt: p.createdAt,
+        creator: p.creator,
+        averageRating,
+        ratingCount,
+        userRating,
+        isOwn: p.creatorId === session.userId,
+        fulfilled: p.fulfilled,
+        resolvedAt: p.resolvedAt,
+      };
+    });
 
     return NextResponse.json({ prophecies: transformedProphecies });
   } catch (error) {

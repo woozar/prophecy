@@ -8,6 +8,8 @@ interface RatingDisplayProps {
   value: number;
   label?: string;
   ratingCount?: number;
+  /** Whether to show the average value and scale bar (default: true) */
+  showAverage?: boolean;
 }
 
 function getDisplayColor(value: number): string {
@@ -18,6 +20,7 @@ export const RatingDisplay = memo(function RatingDisplay({
   value,
   label,
   ratingCount,
+  showAverage = true,
 }: Readonly<RatingDisplayProps>) {
   const color = useMemo(() => getDisplayColor(value), [value]);
 
@@ -31,14 +34,32 @@ export const RatingDisplay = memo(function RatingDisplay({
 
   const displayLabel = useMemo(() => {
     if (!label && ratingCount === undefined) return null;
-    if (label && ratingCount !== undefined) {
-      return `${label} (${ratingCount} ${ratingCount === 1 ? 'Bewertung' : 'Bewertungen'})`;
+
+    const countText =
+      ratingCount !== undefined
+        ? `${ratingCount} ${ratingCount === 1 ? 'Bewertung' : 'Bewertungen'}`
+        : null;
+
+    // If not showing average, only show count
+    if (!showAverage) {
+      return countText;
     }
-    if (ratingCount !== undefined) {
-      return `Durchschnitt (${ratingCount} ${ratingCount === 1 ? 'Bewertung' : 'Bewertungen'})`;
+
+    if (label && countText) {
+      return `${label} (${countText})`;
+    }
+    if (countText) {
+      return `Durchschnitt (${countText})`;
     }
     return label;
-  }, [label, ratingCount]);
+  }, [label, ratingCount, showAverage]);
+
+  // If not showing average, just show the count label
+  if (!showAverage) {
+    return (
+      <div>{displayLabel && <p className="text-sm text-(--text-muted)">{displayLabel}</p>}</div>
+    );
+  }
 
   return (
     <div>

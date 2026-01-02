@@ -1,22 +1,20 @@
+'use client';
+
 import { redirect } from 'next/navigation';
 
 import { UsersManager } from '@/components/admin/UsersManager';
-import { getSession } from '@/lib/auth/session';
-import { prisma } from '@/lib/db/prisma';
+import { useCurrentUser } from '@/hooks/useUser';
 
-export default async function AdminUsersPage() {
-  const session = await getSession();
+export default function AdminUsersPage() {
+  const currentUser = useCurrentUser();
 
-  if (!session) {
-    redirect('/login');
+  // Wait for user data to load
+  if (!currentUser) {
+    return null;
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId },
-    select: { role: true },
-  });
-
-  if (user?.role !== 'ADMIN') {
+  // Redirect non-admins
+  if (currentUser.role !== 'ADMIN') {
     redirect('/');
   }
 

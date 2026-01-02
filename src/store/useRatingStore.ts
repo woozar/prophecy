@@ -106,3 +106,30 @@ export const selectRatingsByUserId = (userId: string) => (state: RatingState) =>
 export const selectUserRatingForProphecy =
   (prophecyId: string, userId: string) => (state: RatingState) =>
     (state.ratingsByProphecy[prophecyId] || []).find((r) => r.userId === userId);
+
+// Calculate rating count (all non-zero ratings)
+export const selectRatingCountByProphecyId =
+  (prophecyId: string) =>
+  (state: RatingState): number => {
+    const ratings = state.ratingsByProphecy[prophecyId] || [];
+    return ratings.filter((r) => r.value !== 0).length;
+  };
+
+// Calculate human rating count (exclude bots for average calculation)
+export const selectHumanRatingCountByProphecyId =
+  (prophecyId: string, botUserIds: Set<string>) =>
+  (state: RatingState): number => {
+    const ratings = state.ratingsByProphecy[prophecyId] || [];
+    return ratings.filter((r) => r.value !== 0 && !botUserIds.has(r.userId)).length;
+  };
+
+// Calculate average rating (excluding bots and zero-value ratings)
+export const selectAverageRatingByProphecyId =
+  (prophecyId: string, botUserIds: Set<string>) =>
+  (state: RatingState): number | null => {
+    const ratings = state.ratingsByProphecy[prophecyId] || [];
+    const humanNonZeroRatings = ratings.filter((r) => r.value !== 0 && !botUserIds.has(r.userId));
+    if (humanNonZeroRatings.length === 0) return null;
+    const sum = humanNonZeroRatings.reduce((acc, r) => acc + r.value, 0);
+    return sum / humanNonZeroRatings.length;
+  };

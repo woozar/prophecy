@@ -50,8 +50,6 @@ export const prophecyResponseSchema = z
     createdAt: z.string().datetime(),
     fulfilled: z.boolean().nullable(),
     resolvedAt: z.string().datetime().nullable(),
-    averageRating: z.number().nullable(),
-    ratingCount: z.number(),
   })
   .openapi('Prophecy');
 

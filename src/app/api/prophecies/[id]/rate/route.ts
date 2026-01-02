@@ -92,30 +92,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       newValue: { value: rating.value },
     });
 
-    // Recalculate average rating (excluding value=0 and bot ratings)
-    const ratings = await prisma.rating.findMany({
-      where: { prophecyId: id },
-      select: { value: true, user: { select: { isBot: true } } },
-    });
-
-    // Filter out zero-value ratings (unrated) and bot ratings
-    const humanNonZeroRatings = ratings.filter((r) => r.value !== 0 && !r.user.isBot);
-    const ratingCount = humanNonZeroRatings.length;
-    const averageRating =
-      ratingCount > 0
-        ? humanNonZeroRatings.reduce((sum, r) => sum + r.value, 0) / ratingCount
-        : null;
-
-    // Update prophecy with new average
-    const updatedProphecy = await prisma.prophecy.update({
-      where: { id },
-      data: {
-        averageRating,
-        ratingCount,
-      },
-    });
-
-    const prophecyData = transformProphecyToResponse(updatedProphecy);
+    const prophecyData = transformProphecyToResponse(prophecy);
 
     const ratingData = {
       id: rating.id,

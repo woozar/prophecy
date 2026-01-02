@@ -609,13 +609,6 @@
             "type": "string",
             "nullable": true,
             "format": "date-time"
-          },
-          "averageRating": {
-            "type": "number",
-            "nullable": true
-          },
-          "ratingCount": {
-            "type": "number"
           }
         },
         "required": [
@@ -626,9 +619,7 @@
           "roundId",
           "createdAt",
           "fulfilled",
-          "resolvedAt",
-          "averageRating",
-          "ratingCount"
+          "resolvedAt"
         ]
       },
       "PropheciesListResponse": {
@@ -1967,15 +1958,41 @@
                         "id": {
                           "type": "string"
                         },
-                        "averageRating": {
-                          "type": "number",
+                        "title": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string",
                           "nullable": true
                         },
-                        "ratingCount": {
-                          "type": "number"
+                        "creatorId": {
+                          "type": "string"
+                        },
+                        "roundId": {
+                          "type": "string"
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "fulfilled": {
+                          "type": "boolean",
+                          "nullable": true
+                        },
+                        "resolvedAt": {
+                          "type": "string",
+                          "nullable": true
                         }
                       },
-                      "required": ["id", "averageRating", "ratingCount"]
+                      "required": [
+                        "id",
+                        "title",
+                        "description",
+                        "creatorId",
+                        "roundId",
+                        "createdAt",
+                        "fulfilled",
+                        "resolvedAt"
+                      ]
                     },
                     "rating": {
                       "$ref": "#/components/schemas/Rating"

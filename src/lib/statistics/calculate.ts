@@ -10,13 +10,19 @@ interface UserInfo {
 }
 
 interface ProphecyWithRelations {
-  averageRating: number | null;
   fulfilled: boolean | null;
   creator: UserInfo;
   ratings: Array<{
     value: number;
-    user: UserInfo;
+    user: UserInfo & { isBot?: boolean };
   }>;
+}
+
+// Calculate average rating from ratings (excluding zero values and bot ratings)
+function calculateAverageRating(ratings: ProphecyWithRelations['ratings']): number | null {
+  const humanNonZeroRatings = ratings.filter((r) => r.value !== 0 && !r.user.isBot);
+  if (humanNonZeroRatings.length === 0) return null;
+  return humanNonZeroRatings.reduce((sum, r) => sum + r.value, 0) / humanNonZeroRatings.length;
 }
 
 function createCreatorStats(user: UserInfo): CreatorStats {
@@ -52,20 +58,22 @@ function createRaterStats(user: UserInfo): RaterStats {
 }
 
 function isAcceptedProphecy(prophecy: ProphecyWithRelations): boolean {
-  return prophecy.averageRating !== null && prophecy.averageRating > 0;
+  const avgRating = calculateAverageRating(prophecy.ratings);
+  return avgRating !== null && avgRating > 0;
 }
 
 function updateCreatorStatsForProphecy(stats: CreatorStats, prophecy: ProphecyWithRelations): void {
   stats.totalProphecies++;
 
-  if (!isAcceptedProphecy(prophecy)) return;
+  const avgRating = calculateAverageRating(prophecy.ratings);
+  if (avgRating === null || avgRating <= 0) return;
 
   stats.acceptedProphecies++;
-  stats.maxPossibleScore += prophecy.averageRating!;
+  stats.maxPossibleScore += avgRating;
 
   if (prophecy.fulfilled === true) {
     stats.fulfilledProphecies++;
-    stats.totalScore += prophecy.averageRating!;
+    stats.totalScore += avgRating;
   }
 }
 
@@ -166,7 +174,7 @@ export async function calculateRoundStatistics(roundId: string): Promise<RoundSt
       ratings: {
         include: {
           user: {
-            select: { id: true, username: true, displayName: true, avatarUrl: true },
+            select: { id: true, username: true, displayName: true, avatarUrl: true, isBot: true },
           },
         },
       },

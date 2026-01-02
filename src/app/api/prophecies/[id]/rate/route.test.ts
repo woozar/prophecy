@@ -16,8 +16,6 @@ const createMockProphecy = (overrides = {}) => ({
   description: 'Test Description',
   roundId: 'round-1',
   creatorId: 'other-user',
-  averageRating: null,
-  ratingCount: 0,
   fulfilled: null,
   resolvedAt: null,
   createdAt: new Date(),
@@ -161,17 +159,6 @@ describe('POST /api/prophecies/[id]/rate', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    vi.mocked(prisma.rating.findMany).mockResolvedValue([
-      {
-        value: 5,
-        user: { isBot: false },
-      },
-    ] as never);
-    vi.mocked(prisma.prophecy.update).mockResolvedValue({
-      ...createMockProphecy(),
-      averageRating: 5,
-      ratingCount: 1,
-    });
 
     const request = new NextRequest('http://localhost/api/prophecies/prophecy-1/rate', {
       method: 'POST',
@@ -181,8 +168,7 @@ describe('POST /api/prophecies/[id]/rate', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.prophecy.averageRating).toBe(5);
-    expect(data.prophecy.ratingCount).toBe(1);
+    expect(data.prophecy.id).toBe('prophecy-1');
     expect(data.rating.id).toBe('rating-1');
     expect(data.rating.value).toBe(5);
     expect(data.rating.prophecyId).toBe('prophecy-1');
@@ -192,46 +178,6 @@ describe('POST /api/prophecies/[id]/rate', () => {
     );
     expect(sseEmitter.broadcast).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'rating:created' })
-    );
-  });
-
-  it('calculates average rating correctly', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockUser);
-    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy());
-    vi.mocked(prisma.rating.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.rating.upsert).mockResolvedValue({
-      id: 'rating-1',
-      prophecyId: 'prophecy-1',
-      userId: 'user-1',
-      value: 8,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    vi.mocked(prisma.rating.findMany).mockResolvedValue([
-      { value: 8, user: { isBot: false } },
-      { value: 4, user: { isBot: false } },
-      { value: 6, user: { isBot: false } },
-    ] as never);
-    vi.mocked(prisma.prophecy.update).mockResolvedValue({
-      ...createMockProphecy(),
-      averageRating: 6,
-      ratingCount: 3,
-    });
-
-    const request = new NextRequest('http://localhost/api/prophecies/prophecy-1/rate', {
-      method: 'POST',
-      body: JSON.stringify({ value: 8 }),
-    });
-    const response = await POST(request, createRouteParams('prophecy-1'));
-
-    expect(response.status).toBe(200);
-    expect(prisma.prophecy.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          averageRating: 6,
-          ratingCount: 3,
-        }),
-      })
     );
   });
 
@@ -250,48 +196,5 @@ describe('POST /api/prophecies/[id]/rate', () => {
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Bewerten der Prophezeiung');
     consoleSpy.mockRestore();
-  });
-
-  it('excludes bot ratings from average calculation', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockUser);
-    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy());
-    vi.mocked(prisma.rating.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.rating.upsert).mockResolvedValue({
-      id: 'rating-1',
-      prophecyId: 'prophecy-1',
-      userId: 'user-1',
-      value: 8,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    // Mix of human and bot ratings - only human ratings should count
-    vi.mocked(prisma.rating.findMany).mockResolvedValue([
-      { value: 8, user: { isBot: false } }, // Human: 8
-      { value: -10, user: { isBot: true } }, // Bot (ignored)
-      { value: 4, user: { isBot: false } }, // Human: 4
-      { value: 5, user: { isBot: true } }, // Bot (ignored)
-    ] as never);
-    vi.mocked(prisma.prophecy.update).mockResolvedValue({
-      ...createMockProphecy(),
-      averageRating: 6,
-      ratingCount: 2,
-    });
-
-    const request = new NextRequest('http://localhost/api/prophecies/prophecy-1/rate', {
-      method: 'POST',
-      body: JSON.stringify({ value: 8 }),
-    });
-    const response = await POST(request, createRouteParams('prophecy-1'));
-
-    expect(response.status).toBe(200);
-    // Average should be (8 + 4) / 2 = 6, not including bot ratings
-    expect(prisma.prophecy.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          averageRating: 6,
-          ratingCount: 2,
-        }),
-      })
-    );
   });
 });

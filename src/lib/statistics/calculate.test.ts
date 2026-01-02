@@ -29,8 +29,6 @@ const createMockProphecy = (overrides = {}) => ({
   createdAt: new Date(),
   fulfilled: null,
   resolvedAt: null,
-  averageRating: null,
-  ratingCount: 0,
   creator: createMockUser('user-1', 'creator1'),
   ratings: [],
   ...overrides,
@@ -58,21 +56,21 @@ describe('calculateRoundStatistics', () => {
     vi.mocked(prisma.prophecy.findMany).mockResolvedValue([
       createMockProphecy({
         id: 'p1',
-        averageRating: 5,
         fulfilled: true,
         creator: createMockUser('user-1', 'creator1'),
+        ratings: [{ value: 5, user: createMockUser('rater-1', 'rater1') }],
       }),
       createMockProphecy({
         id: 'p2',
-        averageRating: 3,
         fulfilled: false,
         creator: createMockUser('user-1', 'creator1'),
+        ratings: [{ value: 3, user: createMockUser('rater-1', 'rater1') }],
       }),
       createMockProphecy({
         id: 'p3',
-        averageRating: null,
         fulfilled: null,
         creator: createMockUser('user-1', 'creator1'),
+        ratings: [], // No ratings = not accepted
       }),
     ] as never);
 
@@ -89,10 +87,10 @@ describe('calculateRoundStatistics', () => {
   });
 
   it('calculates rater stats correctly', async () => {
+    // Note: Only prophecies with positive average AND resolved status are used for rater stats
     vi.mocked(prisma.prophecy.findMany).mockResolvedValue([
       createMockProphecy({
         id: 'p1',
-        averageRating: 5,
         fulfilled: true,
         ratings: [
           { value: 3, user: createMockUser('rater-1', 'rater1') },
@@ -101,11 +99,11 @@ describe('calculateRoundStatistics', () => {
       }),
       createMockProphecy({
         id: 'p2',
-        averageRating: 3,
         fulfilled: false,
         ratings: [
+          // Avg must be positive for prophecy to be "accepted" and included in rater stats
           { value: -4, user: createMockUser('rater-1', 'rater1') },
-          { value: 2, user: createMockUser('rater-2', 'rater2') },
+          { value: 6, user: createMockUser('rater-2', 'rater2') },
         ],
       }),
     ] as never);
@@ -121,19 +119,18 @@ describe('calculateRoundStatistics', () => {
     expect(rater1!.incorrectPoints).toBe(0);
     expect(rater1!.netScore).toBe(7);
 
-    // rater-2: -2 incorrect (fulfilled), +2 incorrect (not fulfilled) = 0 correct, 4 incorrect
+    // rater-2: -2 incorrect (fulfilled), +6 incorrect (not fulfilled) = 0 correct, 8 incorrect
     const rater2 = result.raterStats.find((r) => r.userId === 'rater-2');
     expect(rater2).toBeDefined();
     expect(rater2!.correctPoints).toBe(0);
-    expect(rater2!.incorrectPoints).toBe(4);
-    expect(rater2!.netScore).toBe(-4);
+    expect(rater2!.incorrectPoints).toBe(8);
+    expect(rater2!.netScore).toBe(-8);
   });
 
   it('excludes zero ratings from rater stats', async () => {
     vi.mocked(prisma.prophecy.findMany).mockResolvedValue([
       createMockProphecy({
         id: 'p1',
-        averageRating: 5,
         fulfilled: true,
         ratings: [
           { value: 0, user: createMockUser('rater-1', 'rater1') },
@@ -152,15 +149,15 @@ describe('calculateRoundStatistics', () => {
     vi.mocked(prisma.prophecy.findMany).mockResolvedValue([
       createMockProphecy({
         id: 'p1',
-        averageRating: 5,
         fulfilled: true,
         creator: createMockUser('user-1', 'lowScore'),
+        ratings: [{ value: 5, user: createMockUser('rater-1', 'rater1') }],
       }),
       createMockProphecy({
         id: 'p2',
-        averageRating: 10,
         fulfilled: true,
         creator: createMockUser('user-2', 'highScore'),
+        ratings: [{ value: 10, user: createMockUser('rater-1', 'rater1') }],
       }),
     ] as never);
 
@@ -174,7 +171,6 @@ describe('calculateRoundStatistics', () => {
     vi.mocked(prisma.prophecy.findMany).mockResolvedValue([
       createMockProphecy({
         id: 'p1',
-        averageRating: 5,
         fulfilled: true,
         ratings: [
           { value: 2, user: createMockUser('rater-1', 'low') },
@@ -191,8 +187,16 @@ describe('calculateRoundStatistics', () => {
 
   it('calculates isComplete correctly', async () => {
     vi.mocked(prisma.prophecy.findMany).mockResolvedValue([
-      createMockProphecy({ id: 'p1', averageRating: 5, fulfilled: true }),
-      createMockProphecy({ id: 'p2', averageRating: 3, fulfilled: null }),
+      createMockProphecy({
+        id: 'p1',
+        fulfilled: true,
+        ratings: [{ value: 5, user: createMockUser('rater-1', 'rater1') }],
+      }),
+      createMockProphecy({
+        id: 'p2',
+        fulfilled: null,
+        ratings: [{ value: 3, user: createMockUser('rater-1', 'rater1') }],
+      }),
     ] as never);
 
     const result = await calculateRoundStatistics('round-1');
@@ -204,8 +208,16 @@ describe('calculateRoundStatistics', () => {
 
   it('marks as complete when all prophecies resolved', async () => {
     vi.mocked(prisma.prophecy.findMany).mockResolvedValue([
-      createMockProphecy({ id: 'p1', averageRating: 5, fulfilled: true }),
-      createMockProphecy({ id: 'p2', averageRating: 3, fulfilled: false }),
+      createMockProphecy({
+        id: 'p1',
+        fulfilled: true,
+        ratings: [{ value: 5, user: createMockUser('rater-1', 'rater1') }],
+      }),
+      createMockProphecy({
+        id: 'p2',
+        fulfilled: false,
+        ratings: [{ value: 3, user: createMockUser('rater-1', 'rater1') }],
+      }),
     ] as never);
 
     const result = await calculateRoundStatistics('round-1');

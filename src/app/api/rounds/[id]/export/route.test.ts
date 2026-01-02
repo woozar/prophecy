@@ -45,8 +45,6 @@ const createMockRound = (overrides = {}) => ({
       id: 'prophecy-1',
       title: 'Test Prophezeiung',
       description: 'Beschreibung',
-      ratingCount: 3,
-      averageRating: 2.5,
       fulfilled: null,
       createdAt: new Date(),
       creator: {
@@ -55,11 +53,21 @@ const createMockRound = (overrides = {}) => ({
       },
       ratings: [
         {
-          value: 5,
+          value: 2,
           createdAt: new Date(),
           user: {
             username: 'rater1',
             displayName: 'Rater Eins',
+            isBot: false,
+          },
+        },
+        {
+          value: 3,
+          createdAt: new Date(),
+          user: {
+            username: 'rater2',
+            displayName: 'Rater Zwei',
+            isBot: false,
           },
         },
       ],
@@ -179,7 +187,7 @@ describe('GET /api/rounds/[id]/export', () => {
             description: 'Beschreibung',
             creatorUsername: 'testuser',
             creatorDisplayName: 'Test User',
-            ratingCount: 3,
+            ratingCount: 2,
             averageRating: 2.5,
             fulfilled: null,
           }),
@@ -190,7 +198,14 @@ describe('GET /api/rounds/[id]/export', () => {
             prophecyTitle: 'Test Prophezeiung',
             raterUsername: 'rater1',
             raterDisplayName: 'Rater Eins',
-            value: 5,
+            value: 2,
+          }),
+          expect.objectContaining({
+            prophecyId: 'prophecy-1',
+            prophecyTitle: 'Test Prophezeiung',
+            raterUsername: 'rater2',
+            raterDisplayName: 'Rater Zwei',
+            value: 3,
           }),
         ],
       })

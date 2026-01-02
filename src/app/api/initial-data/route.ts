@@ -44,8 +44,6 @@ export async function GET() {
         createdAt: true,
         fulfilled: true,
         resolvedAt: true,
-        averageRating: true,
-        ratingCount: true,
       },
     }),
     prisma.rating.findMany({

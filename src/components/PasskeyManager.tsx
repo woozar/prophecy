@@ -14,7 +14,7 @@ import { Button } from './Button';
 import { Card } from './Card';
 import { Modal } from './Modal';
 
-interface Passkey {
+export interface Passkey {
   id: string;
   name: string;
   createdAt: string;

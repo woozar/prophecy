@@ -11,7 +11,7 @@ vi.mock('@/lib/db/prisma', () => ({
     round: { findUnique: vi.fn() },
     user: { findMany: vi.fn() },
     rating: { findUnique: vi.fn(), create: vi.fn(), findMany: vi.fn() },
-    prophecy: { update: vi.fn() },
+    prophecy: { findUnique: vi.fn() },
   },
 }));
 
@@ -109,15 +109,17 @@ describe('runBotRatingsForRound', () => {
     vi.mocked(prisma.rating.findMany).mockResolvedValue([
       { value: 5, user: { isBot: false } },
     ] as never);
-    vi.mocked(prisma.prophecy.update).mockImplementation((({ where }: { where: { id: string } }) =>
+    vi.mocked(prisma.prophecy.findUnique).mockImplementation((({
+      where,
+    }: {
+      where: { id: string };
+    }) =>
       Promise.resolve({
         id: where.id,
         title: 'Test',
         description: null,
         creatorId: 'user-1',
         roundId: 'round-1',
-        averageRating: 5,
-        ratingCount: 1,
         fulfilled: null,
         resolvedAt: null,
         createdAt: new Date(),
@@ -172,7 +174,17 @@ describe('runBotRatingsForRound', () => {
     vi.mocked(prisma.rating.findMany).mockResolvedValue([
       { value: 5, user: { isBot: false } },
     ] as never);
-    vi.mocked(prisma.prophecy.update).mockResolvedValue({} as never);
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue({
+      id: 'prophecy-1',
+      title: 'Bot Prophecy',
+      description: null,
+      creatorId: 'bot-randolf',
+      roundId: 'round-1',
+      fulfilled: null,
+      resolvedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as never);
     vi.mocked(kimberlyAi.generateKimberlyRating).mockResolvedValue({
       rating: 0,
       reasoning: null,
@@ -204,14 +216,12 @@ describe('runBotRatingsForRound', () => {
     vi.mocked(prisma.rating.findMany).mockResolvedValue([
       { value: 5, user: { isBot: false } },
     ] as never);
-    vi.mocked(prisma.prophecy.update).mockResolvedValue({
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue({
       id: 'prophecy-1',
       title: 'Test',
       description: null,
       creatorId: 'user-1',
       roundId: 'round-1',
-      averageRating: 5,
-      ratingCount: 1,
       fulfilled: null,
       resolvedAt: null,
       createdAt: new Date(),
@@ -253,7 +263,17 @@ describe('runBotRatingsForRound', () => {
     vi.mocked(prisma.rating.findMany).mockResolvedValue([
       { value: 5, user: { isBot: false } },
     ] as never);
-    vi.mocked(prisma.prophecy.update).mockResolvedValue({} as never);
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue({
+      id: 'prophecy-1',
+      title: 'Prophezeiung 1',
+      description: 'Desc 1',
+      creatorId: 'user-1',
+      roundId: 'round-1',
+      fulfilled: null,
+      resolvedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as never);
 
     await runBotRatingsForRound('round-1');
 
@@ -292,7 +312,17 @@ describe('runBotRatingsForRound', () => {
       { value: 7, user: { isBot: false } },
       { value: -10, user: { isBot: true } }, // Bot rating should be ignored
     ] as never);
-    vi.mocked(prisma.prophecy.update).mockResolvedValue({} as never);
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue({
+      id: 'prophecy-1',
+      title: 'Prophezeiung 1',
+      description: 'Desc 1',
+      creatorId: 'user-1',
+      roundId: 'round-1',
+      fulfilled: null,
+      resolvedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as never);
 
     await runBotRatingsForRound('round-1');
 
@@ -328,7 +358,17 @@ describe('runBotRatingsForRound', () => {
       { value: 3, user: { isBot: false } },
       { value: 4, user: { isBot: false } },
     ] as never);
-    vi.mocked(prisma.prophecy.update).mockResolvedValue({} as never);
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue({
+      id: 'prophecy-1',
+      title: 'Prophezeiung 1',
+      description: 'Desc 1',
+      creatorId: 'user-1',
+      roundId: 'round-1',
+      fulfilled: null,
+      resolvedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as never);
 
     await runBotRatingsForRound('round-1');
 
@@ -363,7 +403,17 @@ describe('runBotRatingsForRound', () => {
     vi.mocked(prisma.rating.findMany).mockResolvedValue([
       { value: 5, user: { isBot: true } },
     ] as never);
-    vi.mocked(prisma.prophecy.update).mockResolvedValue({} as never);
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue({
+      id: 'prophecy-1',
+      title: 'Prophezeiung 1',
+      description: 'Desc 1',
+      creatorId: 'user-1',
+      roundId: 'round-1',
+      fulfilled: null,
+      resolvedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as never);
 
     await runBotRatingsForRound('round-1');
 

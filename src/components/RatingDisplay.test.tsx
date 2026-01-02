@@ -86,4 +86,33 @@ describe('RatingDisplay', () => {
     render(<RatingDisplay value={3.75} />);
     expect(screen.getByText('+3.8')).toBeInTheDocument();
   });
+
+  describe('showAverage prop', () => {
+    it('shows value and scale when showAverage is true (default)', () => {
+      render(<RatingDisplay value={5} ratingCount={3} />);
+      expect(screen.getByText('+5.0')).toBeInTheDocument();
+      expect(screen.getByText('Sicher')).toBeInTheDocument();
+      expect(screen.getByText('Unmöglich')).toBeInTheDocument();
+      expect(screen.getByText('Durchschnitt (3 Bewertungen)')).toBeInTheDocument();
+    });
+
+    it('hides value and scale when showAverage is false', () => {
+      render(<RatingDisplay value={5} ratingCount={3} showAverage={false} />);
+      // Value should not be visible
+      expect(screen.queryByText('+5.0')).not.toBeInTheDocument();
+      // Scale labels should not be visible
+      expect(screen.queryByText('Sicher')).not.toBeInTheDocument();
+      expect(screen.queryByText('Unmöglich')).not.toBeInTheDocument();
+    });
+
+    it('shows only count when showAverage is false', () => {
+      render(<RatingDisplay value={5} ratingCount={3} showAverage={false} />);
+      expect(screen.getByText('3 Bewertungen')).toBeInTheDocument();
+    });
+
+    it('shows singular count when showAverage is false and count is 1', () => {
+      render(<RatingDisplay value={5} ratingCount={1} showAverage={false} />);
+      expect(screen.getByText('1 Bewertung')).toBeInTheDocument();
+    });
+  });
 });

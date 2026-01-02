@@ -9,8 +9,6 @@ export interface Prophecy {
   createdAt: string;
   fulfilled: boolean | null;
   resolvedAt: string | null;
-  averageRating: number | null;
-  ratingCount: number;
 }
 
 interface ProphecyState {

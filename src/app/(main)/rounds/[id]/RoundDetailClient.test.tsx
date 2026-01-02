@@ -151,7 +151,32 @@ describe('RoundDetailClient', () => {
       if (ratings.length > 0) {
         ratingStore.setRatings(ratings);
       }
+
+      // Also set up users for each unique rating userId
+      const raterIds = [...new Set(ratings.map((r) => r.userId))];
+      raterIds.forEach((raterId, index) => {
+        if (!userStore.users[raterId]) {
+          userStore.setUser({
+            id: raterId,
+            username: `rater${index + 1}`,
+            displayName: `Rater ${index + 1}`,
+            role: 'user',
+            status: 'active',
+          });
+        }
+      });
     });
+  };
+
+  // Helper to create ratings for a prophecy with a specific count and values
+  const createRatingsForProphecy = (prophecyId: string, values: number[]): Rating[] => {
+    return values.map((value, index) => ({
+      id: `rating-${prophecyId}-${index}`,
+      value,
+      prophecyId,
+      userId: `rater-${index}`,
+      createdAt: new Date().toISOString(),
+    }));
   };
 
   beforeEach(async () => {
@@ -404,7 +429,7 @@ describe('RoundDetailClient', () => {
     expect(screen.getByText('Noch keine Prophezeiungen vorhanden.')).toBeInTheDocument();
   });
 
-  it('displays average rating for prophecy', async () => {
+  it('displays only rating count during rating phase for non-authors', async () => {
     const prophecies = [
       {
         id: 'p1',
@@ -412,16 +437,67 @@ describe('RoundDetailClient', () => {
         title: 'Deutschland wird Weltmeister',
         description: 'Bei der nächsten WM wird Deutschland gewinnen',
         createdAt: new Date().toISOString(),
-        creatorId: 'user1',
-        averageRating: 5.5,
-        ratingCount: 4,
+        creatorId: 'user1', // Not the current user
         fulfilled: null,
         resolvedAt: null,
       },
     ];
 
-    await setupStores(prophecies);
+    // 4 ratings with values that average to 5.5: (5 + 5 + 6 + 6) / 4 = 5.5
+    const ratings = createRatingsForProphecy('p1', [5, 5, 6, 6]);
+
+    await setupStores(prophecies, ratings);
     await renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} />);
+    // Average should NOT be visible for non-authors during rating phase
+    expect(screen.queryByText('+5.5')).not.toBeInTheDocument();
+    // But rating count should be visible
+    expect(screen.getByText('4 Bewertungen')).toBeInTheDocument();
+  });
+
+  it('displays average rating for own prophecy during rating phase', async () => {
+    const prophecies = [
+      {
+        id: 'p1',
+        roundId: '2',
+        title: 'Deutschland wird Weltmeister',
+        description: 'Bei der nächsten WM wird Deutschland gewinnen',
+        createdAt: new Date().toISOString(),
+        creatorId: currentUserId, // Current user is author
+        fulfilled: null,
+        resolvedAt: null,
+      },
+    ];
+
+    // 4 ratings with values that average to 5.5: (5 + 5 + 6 + 6) / 4 = 5.5
+    const ratings = createRatingsForProphecy('p1', [5, 5, 6, 6]);
+
+    await setupStores(prophecies, ratings);
+    await renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} />);
+    // Author can see average even during rating phase
+    expect(screen.getByText('+5.5')).toBeInTheDocument();
+    expect(screen.getByText(/Durchschnitt \(4 Bewertungen\)/)).toBeInTheDocument();
+  });
+
+  it('displays average rating after rating deadline for non-authors', async () => {
+    const prophecies = [
+      {
+        id: 'p1',
+        roundId: '3',
+        title: 'Deutschland wird Weltmeister',
+        description: 'Bei der nächsten WM wird Deutschland gewinnen',
+        createdAt: new Date().toISOString(),
+        creatorId: 'user1', // Not the current user
+        fulfilled: null,
+        resolvedAt: null,
+      },
+    ];
+
+    // 4 ratings with values that average to 5.5: (5 + 5 + 6 + 6) / 4 = 5.5
+    const ratings = createRatingsForProphecy('p1', [5, 5, 6, 6]);
+
+    await setupStores(prophecies, ratings);
+    await renderWithMantine(<RoundDetailClient round={mockRoundClosed} />);
+    // After rating deadline, everyone can see the average
     expect(screen.getByText('+5.5')).toBeInTheDocument();
     expect(screen.getByText(/Durchschnitt \(4 Bewertungen\)/)).toBeInTheDocument();
   });
@@ -906,7 +982,7 @@ describe('RoundDetailClient', () => {
     expect(screen.getByText('Keine Prophezeiungen mehr zu bewerten.')).toBeInTheDocument();
   });
 
-  it('shows user rating in closed round', async () => {
+  it('shows user rating in closed round with "Meine" tag in individual ratings', async () => {
     const prophecies = [
       {
         id: 'p3',
@@ -935,7 +1011,13 @@ describe('RoundDetailClient', () => {
     await setupStores(prophecies, ratings);
     await renderWithMantine(<RoundDetailClient round={mockRoundClosed} />);
 
-    expect(screen.getByText(/\+7/)).toBeInTheDocument();
+    // Expand individual ratings
+    const expandButton = screen.getByText('Einzelbewertungen anzeigen');
+    fireEvent.click(expandButton);
+
+    // User's rating should be tagged with "Meine"
+    expect(screen.getByText('Meine')).toBeInTheDocument();
+    expect(screen.getByText('+7')).toBeInTheDocument();
   });
 
   it('shows "to rate" filter during submission phase (ratings possible from start)', async () => {
@@ -960,7 +1042,7 @@ describe('RoundDetailClient', () => {
     expect(screen.getByText(/Noch zu bewerten/)).toBeInTheDocument();
   });
 
-  it('shows rating count text correctly', async () => {
+  it('shows rating count text correctly during rating phase for non-authors', async () => {
     const prophecies = [
       {
         id: 'p3',
@@ -968,18 +1050,21 @@ describe('RoundDetailClient', () => {
         title: 'Bereits bewertete Prophezeiung',
         description: 'Diese habe ich schon bewertet',
         createdAt: new Date().toISOString(),
-        creatorId: 'user2',
-        averageRating: 3.0,
-        ratingCount: 2,
+        creatorId: 'user2', // Not current user
         fulfilled: null,
         resolvedAt: null,
       },
     ];
 
-    await setupStores(prophecies);
+    // 2 ratings
+    const ratings = createRatingsForProphecy('p3', [3, 3]);
+
+    await setupStores(prophecies, ratings);
     await renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} />);
 
-    expect(screen.getByText(/Durchschnitt \(2 Bewertungen\)/)).toBeInTheDocument();
+    // During rating phase, non-authors only see the count (no average)
+    expect(screen.getByText('2 Bewertungen')).toBeInTheDocument();
+    expect(screen.queryByText(/Durchschnitt/)).not.toBeInTheDocument();
   });
 
   describe('Rating functionality', () => {
@@ -1149,7 +1234,7 @@ describe('RoundDetailClient', () => {
       expect(screen.queryByText('Bewerte diese Prophezeiung')).not.toBeInTheDocument();
     });
 
-    it('displays user rating with positive sign in closed round', async () => {
+    it('displays user rating with positive sign in individual ratings', async () => {
       const prophecyWithPositiveRating = [
         {
           id: 'p3',
@@ -1178,10 +1263,15 @@ describe('RoundDetailClient', () => {
       await setupStores(prophecyWithPositiveRating, ratings);
       await renderWithMantine(<RoundDetailClient round={mockRoundClosed} />);
 
+      // Expand individual ratings
+      fireEvent.click(screen.getByText('Einzelbewertungen anzeigen'));
+
+      // User's rating should be tagged with "Meine" and show +5
+      expect(screen.getByText('Meine')).toBeInTheDocument();
       expect(screen.getByText('+5')).toBeInTheDocument();
     });
 
-    it('displays negative user rating without plus sign in closed round', async () => {
+    it('displays negative user rating without plus sign in individual ratings', async () => {
       const prophecyWithNegativeRating = [
         {
           id: 'p3',
@@ -1210,6 +1300,11 @@ describe('RoundDetailClient', () => {
       await setupStores(prophecyWithNegativeRating, ratings);
       await renderWithMantine(<RoundDetailClient round={mockRoundClosed} />);
 
+      // Expand individual ratings
+      fireEvent.click(screen.getByText('Einzelbewertungen anzeigen'));
+
+      // User's rating should be tagged with "Meine" and show -3
+      expect(screen.getByText('Meine')).toBeInTheDocument();
       expect(screen.getByText('-3')).toBeInTheDocument();
     });
 
@@ -1250,7 +1345,7 @@ describe('RoundDetailClient', () => {
       });
     });
 
-    it('updates prophecy rating after successful save', async () => {
+    it('updates prophecy rating count after successful save', async () => {
       const prophecies = [
         {
           id: 'p1',
@@ -1258,20 +1353,26 @@ describe('RoundDetailClient', () => {
           title: 'Deutschland wird Weltmeister',
           description: 'Bei der nächsten WM wird Deutschland gewinnen',
           createdAt: new Date().toISOString(),
-          creatorId: 'user1',
-          averageRating: 5.5,
-          ratingCount: 4,
+          creatorId: 'user1', // Not current user
           fulfilled: null,
           resolvedAt: null,
         },
       ];
 
+      // Start with 4 ratings
+      const initialRatings = createRatingsForProphecy('p1', [5, 5, 6, 6]);
+
       mockPropheciesRate.mockResolvedValue({
         data: {
           prophecy: {
             id: 'p1',
-            averageRating: 6.0,
-            ratingCount: 5,
+            roundId: '2',
+            title: 'Deutschland wird Weltmeister',
+            description: 'Bei der nächsten WM wird Deutschland gewinnen',
+            createdAt: new Date().toISOString(),
+            creatorId: 'user1',
+            fulfilled: null,
+            resolvedAt: null,
           },
           rating: {
             id: 'r-new',
@@ -1284,7 +1385,7 @@ describe('RoundDetailClient', () => {
         error: null,
       });
 
-      await setupStores(prophecies);
+      await setupStores(prophecies, initialRatings);
       await renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} />);
 
       const sliders = screen.getAllByRole('slider');
@@ -1293,8 +1394,10 @@ describe('RoundDetailClient', () => {
       const saveButton = await screen.findByRole('button', { name: 'Bewertung speichern' });
       fireEvent.click(saveButton);
 
+      // During rating phase, non-authors only see count (not average)
+      // After saving, there should be 5 ratings (4 initial + 1 new)
       await waitFor(() => {
-        expect(screen.getByText(/Durchschnitt \(5 Bewertungen\)/)).toBeInTheDocument();
+        expect(screen.getByText('5 Bewertungen')).toBeInTheDocument();
       });
     });
 
@@ -1376,7 +1479,7 @@ describe('RoundDetailClient', () => {
       expect(screen.queryByText('Bewertungen')).not.toBeInTheDocument();
     });
 
-    it('shows single rating text for 1 rating', async () => {
+    it('shows single rating text for 1 rating during rating phase for non-authors', async () => {
       const prophecyWithOneRating = [
         {
           id: 'p1',
@@ -1384,18 +1487,21 @@ describe('RoundDetailClient', () => {
           title: 'Deutschland wird Weltmeister',
           description: 'Bei der nächsten WM wird Deutschland gewinnen',
           createdAt: new Date().toISOString(),
-          creatorId: 'user1',
-          averageRating: 5.5,
-          ratingCount: 1,
+          creatorId: 'user1', // Not current user
           fulfilled: null,
           resolvedAt: null,
         },
       ];
 
-      await setupStores(prophecyWithOneRating);
+      // 1 rating
+      const ratings = createRatingsForProphecy('p1', [5]);
+
+      await setupStores(prophecyWithOneRating, ratings);
       await renderWithMantine(<RoundDetailClient round={mockRoundRatingOpen} />);
 
-      expect(screen.getByText(/Durchschnitt \(1 Bewertung\)/)).toBeInTheDocument();
+      // During rating phase, non-authors only see the count
+      expect(screen.getByText('1 Bewertung')).toBeInTheDocument();
+      expect(screen.queryByText(/Durchschnitt/)).not.toBeInTheDocument();
     });
   });
 
@@ -1623,14 +1729,15 @@ describe('RoundDetailClient', () => {
           description: 'Diese hat schon Bewertungen',
           createdAt: new Date().toISOString(),
           creatorId: currentUserId,
-          averageRating: 4.5,
-          ratingCount: 3,
           fulfilled: null,
           resolvedAt: null,
         },
       ];
 
-      await setupStores(prophecyWithRatings);
+      // 3 ratings
+      const ratings = createRatingsForProphecy('p-rated', [4, 5, 5]);
+
+      await setupStores(prophecyWithRatings, ratings);
       await renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} />);
 
       fireEvent.click(screen.getByTitle('Bearbeiten'));
@@ -1649,20 +1756,23 @@ describe('RoundDetailClient', () => {
           description: 'Diese hat 5 Bewertungen',
           createdAt: new Date().toISOString(),
           creatorId: currentUserId,
-          averageRating: 4.5,
-          ratingCount: 5,
           fulfilled: null,
           resolvedAt: null,
         },
       ];
 
-      await setupStores(prophecyWith5Ratings);
+      // 5 ratings
+      const ratings = createRatingsForProphecy('p-rated', [4, 4, 5, 5, 5]);
+
+      await setupStores(prophecyWith5Ratings, ratings);
       await renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} />);
 
       fireEvent.click(screen.getByTitle('Bearbeiten'));
 
       await waitFor(() => {
-        expect(screen.getByText('5 Bewertungen')).toBeInTheDocument();
+        expect(
+          screen.getByText('Diese Prophezeiung hat bereits 5 Bewertungen erhalten.')
+        ).toBeInTheDocument();
         expect(
           screen.getByText('Beim Speichern werden alle Bewertungen gelöscht.')
         ).toBeInTheDocument();
@@ -1678,20 +1788,23 @@ describe('RoundDetailClient', () => {
           description: 'Diese hat 1 Bewertung',
           createdAt: new Date().toISOString(),
           creatorId: currentUserId,
-          averageRating: 4.5,
-          ratingCount: 1,
           fulfilled: null,
           resolvedAt: null,
         },
       ];
 
-      await setupStores(prophecyWith1Rating);
+      // 1 rating
+      const ratings = createRatingsForProphecy('p-rated', [5]);
+
+      await setupStores(prophecyWith1Rating, ratings);
       await renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} />);
 
       fireEvent.click(screen.getByTitle('Bearbeiten'));
 
       await waitFor(() => {
-        expect(screen.getByText('1 Bewertung')).toBeInTheDocument();
+        expect(
+          screen.getByText('Diese Prophezeiung hat bereits 1 Bewertung erhalten.')
+        ).toBeInTheDocument();
       });
     });
 
@@ -1731,14 +1844,15 @@ describe('RoundDetailClient', () => {
           description: 'Diese hat schon Bewertungen',
           createdAt: new Date().toISOString(),
           creatorId: currentUserId,
-          averageRating: 4.5,
-          ratingCount: 3,
           fulfilled: null,
           resolvedAt: null,
         },
       ];
 
-      await setupStores(prophecyWithRatings);
+      // 3 ratings
+      const ratings = createRatingsForProphecy('p-rated', [4, 5, 5]);
+
+      await setupStores(prophecyWithRatings, ratings);
       await renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} />);
 
       fireEvent.click(screen.getByTitle('Bearbeiten'));
@@ -1764,14 +1878,15 @@ describe('RoundDetailClient', () => {
           description: 'Diese hat schon Bewertungen',
           createdAt: new Date().toISOString(),
           creatorId: currentUserId,
-          averageRating: 4.5,
-          ratingCount: 3,
           fulfilled: null,
           resolvedAt: null,
         },
       ];
 
-      await setupStores(prophecyWithRatings);
+      // 3 ratings
+      const ratings = createRatingsForProphecy('p-rated', [4, 5, 5]);
+
+      await setupStores(prophecyWithRatings, ratings);
       await renderWithMantine(<RoundDetailClient round={mockRoundSubmissionOpen} />);
 
       fireEvent.click(screen.getByTitle('Bearbeiten'));

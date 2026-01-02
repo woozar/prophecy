@@ -34,6 +34,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
                   select: {
                     username: true,
                     displayName: true,
+                    isBot: true,
                   },
                 },
               },
@@ -48,17 +49,28 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }
 
     // Transform data for export
-    const prophecies = round.prophecies.map((p) => ({
-      id: p.id,
-      title: p.title,
-      description: p.description,
-      creatorUsername: p.creator.username,
-      creatorDisplayName: p.creator.displayName,
-      ratingCount: p.ratingCount,
-      averageRating: p.averageRating,
-      fulfilled: p.fulfilled,
-      createdAt: p.createdAt,
-    }));
+    const prophecies = round.prophecies.map((p) => {
+      // Calculate ratingCount and averageRating from ratings
+      const nonZeroRatings = p.ratings.filter((r) => r.value !== 0);
+      const humanRatings = nonZeroRatings.filter((r) => !r.user.isBot);
+      const ratingCount = nonZeroRatings.length;
+      const averageRating =
+        humanRatings.length > 0
+          ? humanRatings.reduce((sum, r) => sum + r.value, 0) / humanRatings.length
+          : null;
+
+      return {
+        id: p.id,
+        title: p.title,
+        description: p.description,
+        creatorUsername: p.creator.username,
+        creatorDisplayName: p.creator.displayName,
+        ratingCount,
+        averageRating,
+        fulfilled: p.fulfilled,
+        createdAt: p.createdAt,
+      };
+    });
 
     const ratings = round.prophecies.flatMap((p) =>
       p.ratings.map((r) => ({

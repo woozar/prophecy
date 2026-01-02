@@ -24,7 +24,7 @@ beforeAll(() => {
   });
 });
 
-// Mock the store
+// Mock the stores
 const mockRemoveRound = vi.fn();
 let mockRoundsRecord: Record<
   string,
@@ -35,7 +35,17 @@ let mockRoundsRecord: Record<
     ratingDeadline: string;
     fulfillmentDate: string;
     createdAt: string;
-    _count?: { prophecies: number };
+  }
+> = {};
+
+let mockPropheciesRecord: Record<
+  string,
+  {
+    id: string;
+    title: string;
+    roundId: string;
+    creatorId: string;
+    createdAt: string;
   }
 > = {};
 
@@ -50,6 +60,15 @@ vi.mock('@/store/useRoundStore', () => ({
       setRound: vi.fn(),
       setLoading: vi.fn(),
       setError: vi.fn(),
+    };
+    return selector ? selector(state) : state;
+  },
+}));
+
+vi.mock('@/store/useProphecyStore', () => ({
+  useProphecyStore: (selector?: (state: unknown) => unknown) => {
+    const state = {
+      prophecies: mockPropheciesRecord,
     };
     return selector ? selector(state) : state;
   },
@@ -86,7 +105,6 @@ describe('RoundsManager', () => {
       ratingDeadline: farFuture.toISOString(),
       fulfillmentDate: veryFarFuture.toISOString(),
       createdAt: now.toISOString(),
-      _count: { prophecies: 5 },
     },
     {
       id: '2',
@@ -95,13 +113,51 @@ describe('RoundsManager', () => {
       ratingDeadline: farFuture.toISOString(),
       fulfillmentDate: veryFarFuture.toISOString(),
       createdAt: now.toISOString(),
-      _count: { prophecies: 0 },
+    },
+  ];
+
+  const mockPropheciesForRound1 = [
+    {
+      id: 'p1',
+      title: 'Prophecy 1',
+      roundId: '1',
+      creatorId: 'user1',
+      createdAt: now.toISOString(),
+    },
+    {
+      id: 'p2',
+      title: 'Prophecy 2',
+      roundId: '1',
+      creatorId: 'user1',
+      createdAt: now.toISOString(),
+    },
+    {
+      id: 'p3',
+      title: 'Prophecy 3',
+      roundId: '1',
+      creatorId: 'user1',
+      createdAt: now.toISOString(),
+    },
+    {
+      id: 'p4',
+      title: 'Prophecy 4',
+      roundId: '1',
+      creatorId: 'user1',
+      createdAt: now.toISOString(),
+    },
+    {
+      id: 'p5',
+      title: 'Prophecy 5',
+      roundId: '1',
+      creatorId: 'user1',
+      createdAt: now.toISOString(),
     },
   ];
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockRoundsRecord = {};
+    mockPropheciesRecord = {};
   });
 
   it('shows create button', () => {
@@ -146,6 +202,8 @@ describe('RoundsManager', () => {
       '1': mockRoundsData[0],
       '2': mockRoundsData[1],
     };
+    // Mock prophecies: 5 for round 1, 0 for round 2
+    mockPropheciesRecord = mockPropheciesForRound1.reduce((acc, p) => ({ ...acc, [p.id]: p }), {});
     renderWithMantine(<RoundsManager />);
     expect(screen.getByText('5 Prophezeiung(en)')).toBeInTheDocument();
     expect(screen.getByText('0 Prophezeiung(en)')).toBeInTheDocument();
@@ -353,7 +411,6 @@ describe('RoundsManager', () => {
       ratingDeadline: future.toISOString(),
       fulfillmentDate: farFuture.toISOString(),
       createdAt: past.toISOString(),
-      _count: { prophecies: 3 },
     };
 
     mockRoundsRecord = {
@@ -375,7 +432,6 @@ describe('RoundsManager', () => {
       ratingDeadline: past2.toISOString(),
       fulfillmentDate: future.toISOString(),
       createdAt: past1.toISOString(),
-      _count: { prophecies: 2 },
     };
 
     mockRoundsRecord = {
@@ -398,7 +454,6 @@ describe('RoundsManager', () => {
       fulfillmentDate: past3.toISOString(),
       resultsPublishedAt: past3.toISOString(),
       createdAt: past1.toISOString(),
-      _count: { prophecies: 10 },
     };
 
     mockRoundsRecord = {
@@ -531,10 +586,10 @@ describe('RoundsManager', () => {
     }
   });
 
-  it('shows 0 prophecies when _count is not provided', () => {
-    const roundWithoutCount = {
+  it('shows 0 prophecies when no prophecies in store for round', () => {
+    const roundWithNoProphecies = {
       id: '6',
-      title: 'No Count Round',
+      title: 'No Prophecies Round',
       submissionDeadline: new Date(Date.now() + 86400000 * 30).toISOString(),
       ratingDeadline: new Date(Date.now() + 86400000 * 60).toISOString(),
       fulfillmentDate: new Date(Date.now() + 86400000 * 90).toISOString(),
@@ -542,8 +597,10 @@ describe('RoundsManager', () => {
     };
 
     mockRoundsRecord = {
-      '6': roundWithoutCount,
+      '6': roundWithNoProphecies,
     };
+    // No prophecies in store for this round
+    mockPropheciesRecord = {};
     renderWithMantine(<RoundsManager />);
     expect(screen.getByText('0 Prophezeiung(en)')).toBeInTheDocument();
   });

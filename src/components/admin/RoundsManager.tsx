@@ -16,6 +16,7 @@ import { TextInput } from '@/components/TextInput';
 import { useExportRound } from '@/hooks/useExportRound';
 import { createRoundSchema, updateRoundSchema } from '@/lib/schemas/round';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
+import { useProphecyStore } from '@/store/useProphecyStore';
 import { type Round, useRoundStore } from '@/store/useRoundStore';
 
 export const RoundsManager = memo(function RoundsManager() {
@@ -26,7 +27,13 @@ export const RoundsManager = memo(function RoundsManager() {
       )
     )
   );
+  const prophecies = useProphecyStore(useShallow((state) => state.prophecies));
   const { removeRound } = useRoundStore();
+
+  const getProphecyCount = useCallback(
+    (roundId: string) => Object.values(prophecies).filter((p) => p.roundId === roundId).length,
+    [prophecies]
+  );
   const { exportRound, exportingRoundId } = useExportRound();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingRound, setEditingRound] = useState<Round | null>(null);
@@ -241,7 +248,7 @@ export const RoundsManager = memo(function RoundsManager() {
 
                 <div className="mt-2 flex items-center justify-between">
                   <p className="text-sm text-(--text-muted)">
-                    {round._count?.prophecies || 0} Prophezeiung(en)
+                    {getProphecyCount(round.id)} Prophezeiung(en)
                   </p>
                   <div className="flex flex-row gap-1.5">
                     <IconActionButton

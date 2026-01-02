@@ -4,7 +4,98 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
+import { useAnimationLoop } from '@/hooks/useAnimationLoop';
+import { useColorCycling } from '@/hooks/useColorCycling';
 import { useUser } from '@/hooks/useUser';
+
+/**
+ * Get hex color from color name
+ */
+function getColorHex(colorName: string): string {
+  return EFFECT_COLORS[colorName]?.hex || '#22d3ee';
+}
+
+interface EffectSVGContainerProps {
+  /** The avatar content to wrap */
+  children: React.ReactNode;
+  /** SVG elements to render */
+  svgContent: React.ReactNode;
+  size: number;
+  svgSize: number;
+  offset: number;
+  filterId: string;
+  filterBox?: { x: string; y: string; width: string; height: string };
+  blurDeviation?: number;
+  extraBlurLayers?: number;
+  zIndex?: number;
+  /** If true, render children before svg (for effects that overlay) */
+  childrenFirst?: boolean;
+}
+
+/**
+ * Shared SVG container for effect wrappers with glow filter
+ */
+function EffectSVGContainer({
+  children,
+  svgContent,
+  size,
+  svgSize,
+  offset,
+  filterId,
+  filterBox = { x: '-100%', y: '-100%', width: '300%', height: '300%' },
+  blurDeviation = 1.5,
+  extraBlurLayers = 0,
+  zIndex,
+  childrenFirst = false,
+}: Readonly<EffectSVGContainerProps>) {
+  const svg = (
+    <svg
+      className="absolute pointer-events-none"
+      width={svgSize}
+      height={svgSize}
+      style={{
+        top: -offset,
+        left: -offset,
+        overflow: 'visible',
+        ...(zIndex !== undefined && { zIndex }),
+      }}
+    >
+      <defs>
+        <filter
+          id={filterId}
+          x={filterBox.x}
+          y={filterBox.y}
+          width={filterBox.width}
+          height={filterBox.height}
+        >
+          <feGaussianBlur stdDeviation={blurDeviation} result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            {extraBlurLayers > 0 && <feMergeNode key={`${filterId}-extra-blur`} in="blur" />}
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      {svgContent}
+    </svg>
+  );
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      {childrenFirst ? (
+        <>
+          {children}
+          {svg}
+        </>
+      ) : (
+        <>
+          {svg}
+          {children}
+        </>
+      )}
+    </div>
+  );
+}
 
 type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
 export type AvatarEffect = 'glow' | 'particles' | 'lightning' | 'halo' | 'fire' | 'none';
@@ -181,7 +272,7 @@ const SparkleWrapper = memo(function SparkleWrapper({
   const maxSparkles = size >= 48 ? 8 : 6;
   const idCounterRef = useRef(0);
   const [sparkles, setSparkles] = useState<Sparkle[]>([]);
-  const [currentTime, setCurrentTime] = useState(() => Date.now());
+  const currentTime = useAnimationLoop(50);
 
   // Create new sparkles
   useEffect(() => {
@@ -216,14 +307,6 @@ const SparkleWrapper = memo(function SparkleWrapper({
     };
   }, [colors, size, maxSparkles]);
 
-  // Animation loop for opacity updates
-  useEffect(() => {
-    const animationInterval = setInterval(() => {
-      setCurrentTime(Date.now());
-    }, 50);
-    return () => clearInterval(animationInterval);
-  }, []);
-
   const center = size / 2;
   const svgSize = size + 24;
   const offset = 12;
@@ -231,39 +314,24 @@ const SparkleWrapper = memo(function SparkleWrapper({
   const visibleSparkles = sparkles.filter((s) => currentTime - s.createdAt < SPARKLE_LIFETIME);
 
   return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg
-        className="absolute pointer-events-none"
-        width={svgSize}
-        height={svgSize}
-        style={{
-          top: -offset,
-          left: -offset,
-          overflow: 'visible',
-        }}
-      >
-        <defs>
-          <filter id={`sparkle-glow-${size}`} x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="1.5" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-        {visibleSparkles.map((sparkle) => (
-          <SparkleElement
-            key={sparkle.id}
-            sparkle={sparkle}
-            currentTime={currentTime}
-            center={center}
-            offset={offset}
-            size={size}
-          />
-        ))}
-      </svg>
+    <EffectSVGContainer
+      size={size}
+      svgSize={svgSize}
+      offset={offset}
+      filterId={`sparkle-glow-${size}`}
+      svgContent={visibleSparkles.map((sparkle) => (
+        <SparkleElement
+          key={sparkle.id}
+          sparkle={sparkle}
+          currentTime={currentTime}
+          center={center}
+          offset={offset}
+          size={size}
+        />
+      ))}
+    >
       {children}
-    </div>
+    </EffectSVGContainer>
   );
 });
 
@@ -329,71 +397,62 @@ const LightningWrapper = memo(function LightningWrapper({
 
   const colorHex = EFFECT_COLORS[currentColor]?.hex || '#22d3ee';
 
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg
-        className="absolute pointer-events-none"
-        width={svgSize}
-        height={svgSize}
+  const lightningContent = (
+    <g transform={`rotate(${rotation} ${svgSize / 2} ${svgSize / 2})`}>
+      {/* Glow layer */}
+      <path
+        d={currentPath}
+        fill="none"
+        stroke={colorHex}
+        strokeWidth={isVisible ? 4 : 0}
+        strokeLinecap="square"
+        strokeLinejoin="miter"
         style={{
-          top: -offset,
-          left: -offset,
-          overflow: 'visible',
+          opacity: isVisible ? 0.6 : 0,
+          filter: `blur(3px)`,
         }}
-      >
-        <defs>
-          <filter id={`lightning-glow-${size}`} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-        <g transform={`rotate(${rotation} ${svgSize / 2} ${svgSize / 2})`}>
-          {/* Glow layer */}
-          <path
-            d={currentPath}
-            fill="none"
-            stroke={colorHex}
-            strokeWidth={isVisible ? 4 : 0}
-            strokeLinecap="square"
-            strokeLinejoin="miter"
-            style={{
-              opacity: isVisible ? 0.6 : 0,
-              filter: `blur(3px)`,
-            }}
-          />
-          {/* Main bolt */}
-          <path
-            d={currentPath}
-            fill="none"
-            stroke={colorHex}
-            strokeWidth={isVisible ? 2 : 0}
-            strokeLinecap="square"
-            strokeLinejoin="miter"
-            filter={`url(#lightning-glow-${size})`}
-            style={{
-              opacity: isVisible ? 1 : 0,
-            }}
-          />
-          {/* Bright core */}
-          <path
-            d={currentPath}
-            fill="none"
-            stroke="#ffffff"
-            strokeWidth={isVisible ? 1 : 0}
-            strokeLinecap="square"
-            strokeLinejoin="miter"
-            style={{
-              opacity: isVisible ? 0.8 : 0,
-            }}
-          />
-        </g>
-      </svg>
+      />
+      {/* Main bolt */}
+      <path
+        d={currentPath}
+        fill="none"
+        stroke={colorHex}
+        strokeWidth={isVisible ? 2 : 0}
+        strokeLinecap="square"
+        strokeLinejoin="miter"
+        filter={`url(#lightning-glow-${size})`}
+        style={{
+          opacity: isVisible ? 1 : 0,
+        }}
+      />
+      {/* Bright core */}
+      <path
+        d={currentPath}
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth={isVisible ? 1 : 0}
+        strokeLinecap="square"
+        strokeLinejoin="miter"
+        style={{
+          opacity: isVisible ? 0.8 : 0,
+        }}
+      />
+    </g>
+  );
+
+  return (
+    <EffectSVGContainer
+      size={size}
+      svgSize={svgSize}
+      offset={offset}
+      filterId={`lightning-glow-${size}`}
+      filterBox={{ x: '-50%', y: '-50%', width: '200%', height: '200%' }}
+      blurDeviation={2}
+      extraBlurLayers={1}
+      svgContent={lightningContent}
+    >
       {children}
-    </div>
+    </EffectSVGContainer>
   );
 });
 
@@ -407,18 +466,8 @@ const GlowWrapper = memo(function GlowWrapper({
   children: React.ReactNode;
   colors: string[];
 }) {
-  const [currentColorIndex, setCurrentColorIndex] = useState(0);
-
-  useEffect(() => {
-    if (colors.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentColorIndex((prev) => (prev + 1) % colors.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [colors.length]);
-
-  const currentColor = colors[currentColorIndex] || 'cyan';
-  const colorHex = EFFECT_COLORS[currentColor]?.hex || '#22d3ee';
+  const currentColor = useColorCycling(colors, 2000);
+  const colorHex = getColorHex(currentColor);
 
   const glowStyle = useMemo(
     () => ({
@@ -504,28 +553,16 @@ const HaloWrapper = memo(function HaloWrapper({
   colors: string[];
   size: number;
 }) {
-  const [currentColorIndex, setCurrentColorIndex] = useState(0);
-  const [pulsePhase, setPulsePhase] = useState(0);
   const [sparkles, setSparkles] = useState<HaloSparkle[]>([]);
-  const [currentTime, setCurrentTime] = useState(() => Date.now());
   const idCounterRef = useRef(0);
 
-  // Color cycling
-  useEffect(() => {
-    if (colors.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentColorIndex((prev) => (prev + 1) % colors.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [colors.length]);
+  // Shared hooks for color cycling and animation
+  const currentColor = useColorCycling(colors, 2000);
+  const currentTime = useAnimationLoop(50);
+  const colorHex = getColorHex(currentColor);
 
-  // Pulse animation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPulsePhase((prev) => (prev + 0.05) % (Math.PI * 2));
-    }, 50);
-    return () => clearInterval(interval);
-  }, []);
+  // Derive pulse phase from animation time (0.05 radians per 50ms)
+  const pulsePhase = (currentTime / 50) * 0.05;
 
   // Sparkle creation along the halo
   useEffect(() => {
@@ -550,17 +587,6 @@ const HaloWrapper = memo(function HaloWrapper({
     const interval = setInterval(createSparkle, 300);
     return () => clearInterval(interval);
   }, [colors]);
-
-  // Animation loop for sparkle opacity
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(Date.now());
-    }, 50);
-    return () => clearInterval(interval);
-  }, []);
-
-  const currentColor = colors[currentColorIndex] || 'cyan';
-  const colorHex = EFFECT_COLORS[currentColor]?.hex || '#22d3ee';
 
   // Halo dimensions (2/3 size)
   const haloWidth = size * 0.6;
@@ -775,7 +801,7 @@ const FireWrapper = memo(function FireWrapper({
   const maxParticles = size >= 48 ? 8 : 6;
   const idCounterRef = useRef(0);
   const [particles, setParticles] = useState<FireParticle[]>([]);
-  const [currentTime, setCurrentTime] = useState(() => Date.now());
+  const currentTime = useAnimationLoop(30);
 
   // Helper to filter and limit particles - extracted to reduce nesting depth
   const updateParticles = useCallback(
@@ -825,14 +851,6 @@ const FireWrapper = memo(function FireWrapper({
     };
   }, [colors, maxParticles, updateParticles]);
 
-  // Animation loop for position/opacity updates
-  useEffect(() => {
-    const animationInterval = setInterval(() => {
-      setCurrentTime(Date.now());
-    }, 30); // ~33fps for smooth animation
-    return () => clearInterval(animationInterval);
-  }, []);
-
   const center = size / 2;
   const svgSize = size + 40;
   const offset = 20;
@@ -842,39 +860,24 @@ const FireWrapper = memo(function FireWrapper({
   );
 
   return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg
-        className="absolute pointer-events-none"
-        width={svgSize}
-        height={svgSize}
-        style={{
-          top: -offset,
-          left: -offset,
-          overflow: 'visible',
-        }}
-      >
-        <defs>
-          <filter id={`fire-glow-${size}`} x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="1.5" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-        {visibleParticles.map((particle) => (
-          <FireParticleElement
-            key={particle.id}
-            particle={particle}
-            currentTime={currentTime}
-            center={center}
-            avatarSize={size}
-            offset={offset}
-          />
-        ))}
-      </svg>
+    <EffectSVGContainer
+      size={size}
+      svgSize={svgSize}
+      offset={offset}
+      filterId={`fire-glow-${size}`}
+      svgContent={visibleParticles.map((particle) => (
+        <FireParticleElement
+          key={particle.id}
+          particle={particle}
+          currentTime={currentTime}
+          center={center}
+          avatarSize={size}
+          offset={offset}
+        />
+      ))}
+    >
       {children}
-    </div>
+    </EffectSVGContainer>
   );
 });
 

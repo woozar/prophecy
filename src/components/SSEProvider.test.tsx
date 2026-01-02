@@ -6,7 +6,7 @@ import { useUserStore } from '@/store/useUserStore';
 import { SSEProvider } from './SSEProvider';
 
 // Mock the useSSE hook
-const mockUseSSE = vi.fn();
+const mockUseSSE = vi.fn().mockReturnValue({ connectionStatus: 'connected' });
 vi.mock('@/hooks/useSSE', () => ({
   useSSE: () => mockUseSSE(),
 }));
@@ -25,5 +25,11 @@ describe('SSEProvider', () => {
   it('sets currentUserId in store', () => {
     render(<SSEProvider userId="user-456" />);
     expect(useUserStore.getState().currentUserId).toBe('user-456');
+  });
+
+  it('sets connectionStatus in store', () => {
+    mockUseSSE.mockReturnValueOnce({ connectionStatus: 'disconnected' });
+    render(<SSEProvider userId="user-123" />);
+    expect(useUserStore.getState().connectionStatus).toBe('disconnected');
   });
 });

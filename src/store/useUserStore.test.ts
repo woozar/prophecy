@@ -37,6 +37,7 @@ describe('useUserStore', () => {
       isInitialized: false,
       isLoading: false,
       error: null,
+      connectionStatus: 'disconnected',
     });
   });
 
@@ -393,6 +394,45 @@ describe('useUserStore', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual(mockUser);
+    });
+  });
+
+  describe('connectionStatus', () => {
+    it('has initial status disconnected', () => {
+      expect(useUserStore.getState().connectionStatus).toBe('disconnected');
+    });
+
+    it('can be set to connected', () => {
+      const { setConnectionStatus } = useUserStore.getState();
+
+      act(() => {
+        setConnectionStatus('connected');
+      });
+
+      expect(useUserStore.getState().connectionStatus).toBe('connected');
+    });
+
+    it('can be set to connecting', () => {
+      const { setConnectionStatus } = useUserStore.getState();
+
+      act(() => {
+        setConnectionStatus('connecting');
+      });
+
+      expect(useUserStore.getState().connectionStatus).toBe('connecting');
+    });
+
+    it('can be set back to disconnected', () => {
+      const { setConnectionStatus } = useUserStore.getState();
+
+      act(() => {
+        setConnectionStatus('connected');
+      });
+      act(() => {
+        setConnectionStatus('disconnected');
+      });
+
+      expect(useUserStore.getState().connectionStatus).toBe('disconnected');
     });
   });
 });

@@ -122,9 +122,6 @@ describe('webauthn', () => {
 
         const result = getChallenge(userId);
         expect(result).toBe('valid-challenge');
-
-        // Cleanup (reset timers first)
-        vi.useRealTimers();
       });
 
       it('deletes expired challenge when accessed', () => {
@@ -200,8 +197,6 @@ describe('webauthn', () => {
         expect(getChallenge(userId2)).toBeNull();
         expect(getChallenge(userId3)).toBe('challenge-3');
 
-        // Cleanup
-        vi.useRealTimers();
         clearChallenge(userId3);
       });
 
@@ -218,8 +213,6 @@ describe('webauthn', () => {
 
         expect(getChallenge(userId)).toBe('valid-challenge');
 
-        // Cleanup
-        vi.useRealTimers();
         clearChallenge(userId);
       });
 

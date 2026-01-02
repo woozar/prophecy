@@ -78,11 +78,13 @@ vi.mock('@/store/useUserStore', () => ({
       selector?: (state: {
         users: typeof mockUsers;
         currentUserId: typeof mockCurrentUserId;
+        connectionStatus: 'connected' | 'connecting' | 'disconnected';
       }) => unknown
     ) => {
       const state = {
         users: mockUsers,
         currentUserId: mockCurrentUserId,
+        connectionStatus: 'connected' as const,
         setUsers: vi.fn(),
         setUser: vi.fn(),
         removeUser: vi.fn(),
@@ -90,6 +92,7 @@ vi.mock('@/store/useUserStore', () => ({
         setInitialized: vi.fn(),
         setLoading: vi.fn(),
         setError: vi.fn(),
+        setConnectionStatus: vi.fn(),
         isInitialized: false,
         isLoading: false,
         error: null,
@@ -100,6 +103,7 @@ vi.mock('@/store/useUserStore', () => ({
       getState: () => ({
         users: mockUsers,
         currentUserId: mockCurrentUserId,
+        connectionStatus: 'connected' as const,
         setUsers: vi.fn(),
         setUser: vi.fn(),
         removeUser: vi.fn(),
@@ -107,6 +111,7 @@ vi.mock('@/store/useUserStore', () => ({
         setInitialized: vi.fn(),
         setLoading: vi.fn(),
         setError: vi.fn(),
+        setConnectionStatus: vi.fn(),
         isInitialized: false,
         isLoading: false,
         error: null,

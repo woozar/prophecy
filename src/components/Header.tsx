@@ -9,6 +9,7 @@ import { IconChevronDown, IconLogout, IconMenu2, IconUser, IconX } from '@tabler
 
 import { Button } from '@/components/Button';
 import { Link } from '@/components/Link';
+import { SSEStatusIndicator } from '@/components/SSEStatusIndicator';
 import { UserAvatar } from '@/components/UserAvatar';
 import { apiClient } from '@/lib/api-client';
 import { errorToast, successToast } from '@/lib/toast/toast-styles';
@@ -83,6 +84,7 @@ export const Header = memo(function Header({ user: serverUser }: Readonly<Header
   };
 
   const allNavItems = user.role === 'ADMIN' ? [...navItems, ...adminItems] : navItems;
+  const isAdmin = user.role === 'ADMIN';
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[rgba(10,25,41,0.85)] backdrop-blur-xl border-b border-[rgba(98,125,152,0.2)]">
@@ -115,6 +117,13 @@ export const Header = memo(function Header({ user: serverUser }: Readonly<Header
 
           {/* User Menu */}
           <div className="flex items-center gap-4">
+            {/* SSE Status Indicator (Admin only) */}
+            {isAdmin && (
+              <div className="hidden md:block">
+                <SSEStatusIndicator />
+              </div>
+            )}
+
             {/* User Dropdown (Desktop) */}
             <div className="hidden md:block relative" ref={userMenuRef}>
               <Button

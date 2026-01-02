@@ -22,12 +22,19 @@ type SSEEventType =
   | 'rating:updated'
   | 'rating:deleted';
 
+export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
+
+// If no message received for 45 seconds, consider connection dead (server pings every 30s)
+const HEARTBEAT_TIMEOUT = 45000;
+
 export function useSSE() {
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const heartbeatTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttempts = useRef(0);
   const connectRef = useRef<() => void>(() => {});
   const [isInitialized, setIsInitialized] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
 
   // Store actions
   const { setRound, removeRound } = useRoundStore();
@@ -35,7 +42,27 @@ export function useSSE() {
   const { setProphecy, removeProphecy } = useProphecyStore();
   const { setRating, removeRating } = useRatingStore();
 
-  // Load initial data
+  // Load/reload data from server
+  const loadInitialData = useCallback(async () => {
+    try {
+      const { data, error } = await apiClient.initialData.get();
+      if (error || !data) throw new Error('Failed to load initial data');
+
+      // Populate stores
+      useUserStore.getState().setUsers(data.users as User[]);
+      useUserStore.getState().setCurrentUserId(data.currentUserId);
+      useUserStore.getState().setInitialized(true);
+      useRoundStore.getState().setRounds(data.rounds as Round[]);
+      useProphecyStore.getState().setProphecies(data.prophecies as Prophecy[]);
+      useRatingStore.getState().setRatings(data.ratings as Rating[]);
+
+      setIsInitialized(true);
+    } catch (error) {
+      console.error('[SSE] Error loading initial data:', error);
+    }
+  }, []);
+
+  // Load initial data on mount
   useEffect(() => {
     // Skip if already initialized (e.g., after client-side navigation)
     if (useUserStore.getState().isInitialized) {
@@ -43,27 +70,8 @@ export function useSSE() {
       return;
     }
 
-    async function loadInitialData() {
-      try {
-        const { data, error } = await apiClient.initialData.get();
-        if (error || !data) throw new Error('Failed to load initial data');
-
-        // Populate stores
-        useUserStore.getState().setUsers(data.users as User[]);
-        useUserStore.getState().setCurrentUserId(data.currentUserId);
-        useUserStore.getState().setInitialized(true);
-        useRoundStore.getState().setRounds(data.rounds as Round[]);
-        useProphecyStore.getState().setProphecies(data.prophecies as Prophecy[]);
-        useRatingStore.getState().setRatings(data.ratings as Rating[]);
-
-        setIsInitialized(true);
-      } catch (error) {
-        console.error('[SSE] Error loading initial data:', error);
-      }
-    }
-
     loadInitialData();
-  }, []);
+  }, [loadInitialData]);
 
   const handleEvent = useCallback(
     (type: SSEEventType, data: unknown) => {
@@ -120,23 +128,62 @@ export function useSSE() {
     ]
   );
 
+  // Reset heartbeat timeout - call this on every message from server
+  const resetHeartbeatTimeout = useCallback(() => {
+    if (heartbeatTimeoutRef.current) {
+      clearTimeout(heartbeatTimeoutRef.current);
+    }
+    heartbeatTimeoutRef.current = setTimeout(() => {
+      console.log('[SSE] Heartbeat timeout - no message received for 45s');
+      setConnectionStatus('disconnected');
+      // Force reconnect
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      // Reload data since we might have missed events
+      loadInitialData();
+      reconnectAttempts.current++;
+      connectRef.current();
+    }, HEARTBEAT_TIMEOUT);
+  }, [loadInitialData]);
+
   const connect = useCallback(() => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
+    if (heartbeatTimeoutRef.current) {
+      clearTimeout(heartbeatTimeoutRef.current);
+    }
 
+    // Only show 'connecting' on first connect, not during reconnect attempts
+    if (reconnectAttempts.current === 0) {
+      setConnectionStatus('connecting');
+    }
     const eventSource = new EventSource('/api/sse');
     eventSourceRef.current = eventSource;
 
     eventSource.onopen = () => {
       console.log('[SSE] Connected');
+      setConnectionStatus('connected');
+      resetHeartbeatTimeout();
+
+      // Reload data if this is a reconnect (might have missed events)
+      if (reconnectAttempts.current > 0) {
+        console.log('[SSE] Reconnected, reloading data...');
+        loadInitialData();
+      }
       reconnectAttempts.current = 0;
     };
 
     eventSource.onerror = () => {
       console.log('[SSE] Connection error, attempting reconnect...');
+      setConnectionStatus('disconnected');
       eventSource.close();
       eventSourceRef.current = null;
+      if (heartbeatTimeoutRef.current) {
+        clearTimeout(heartbeatTimeoutRef.current);
+      }
 
       // Exponential backoff for reconnection
       const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
@@ -165,6 +212,7 @@ export function useSSE() {
 
     eventTypes.forEach((type) => {
       eventSource.addEventListener(type, (event) => {
+        resetHeartbeatTimeout();
         try {
           const data = JSON.parse(event.data);
           handleEvent(type, data);
@@ -173,7 +221,12 @@ export function useSSE() {
         }
       });
     });
-  }, [handleEvent]);
+
+    // Also listen for any message (including pings) to reset heartbeat
+    eventSource.onmessage = () => {
+      resetHeartbeatTimeout();
+    };
+  }, [handleEvent, loadInitialData, resetHeartbeatTimeout]);
 
   // Keep connectRef updated
   useEffect(() => {
@@ -194,8 +247,11 @@ export function useSSE() {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
+      if (heartbeatTimeoutRef.current) {
+        clearTimeout(heartbeatTimeoutRef.current);
+      }
     };
   }, [connect, isInitialized]);
 
-  return { isInitialized };
+  return { isInitialized, connectionStatus };
 }

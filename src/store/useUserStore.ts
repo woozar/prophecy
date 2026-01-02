@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import type { ConnectionStatus } from '@/hooks/useSSE';
+
 export interface User {
   id: string;
   username: string;
@@ -23,6 +25,7 @@ interface UserState {
   isInitialized: boolean;
   isLoading: boolean;
   error: string | null;
+  connectionStatus: ConnectionStatus;
 
   // Actions
   setUsers: (users: User[]) => void;
@@ -32,6 +35,7 @@ interface UserState {
   setInitialized: (initialized: boolean) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setConnectionStatus: (status: ConnectionStatus) => void;
 }
 
 export const useUserStore = create<UserState>((set) => ({
@@ -40,6 +44,7 @@ export const useUserStore = create<UserState>((set) => ({
   isInitialized: false,
   isLoading: false,
   error: null,
+  connectionStatus: 'disconnected',
 
   setUsers: (users) =>
     set({
@@ -83,6 +88,8 @@ export const useUserStore = create<UserState>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
 
   setError: (error) => set({ error }),
+
+  setConnectionStatus: (connectionStatus) => set({ connectionStatus }),
 }));
 
 // Selectors (außerhalb des Stores für bessere Performance)

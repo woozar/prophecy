@@ -97,10 +97,12 @@ describe('useSSE', () => {
       currentUserId: null,
       isLoading: false,
       error: null,
+      connectionStatus: 'disconnected' as const,
       setUser: vi.fn(),
       removeUser: vi.fn(),
       setLoading: vi.fn(),
       setError: vi.fn(),
+      setConnectionStatus: vi.fn(),
     });
 
     // Mock getState for other stores
@@ -298,8 +300,6 @@ describe('useSSE', () => {
     // Should have created a new EventSource
     expect(EventSource).toHaveBeenCalledTimes(2);
     expect(createdInstances).toHaveLength(2);
-
-    vi.useRealTimers();
   });
 
   it('resets reconnect attempts on successful connection', async () => {
@@ -623,8 +623,6 @@ describe('useSSE', () => {
 
     // Second instance should be created
     expect(createdInstances).toHaveLength(2);
-
-    vi.useRealTimers();
   });
 
   it('clears reconnect timeout on unmount', async () => {
@@ -656,8 +654,6 @@ describe('useSSE', () => {
 
     // Should still only have 1 instance (initial)
     expect(createdInstances).toHaveLength(1);
-
-    vi.useRealTimers();
   });
 
   it('handles fetch error gracefully during initial data load', async () => {
@@ -741,7 +737,181 @@ describe('useSSE', () => {
     });
 
     expect(createdInstances).toHaveLength(4);
+  });
 
-    vi.useRealTimers();
+  describe('connectionStatus', () => {
+    it('returns connectionStatus from hook', async () => {
+      vi.useFakeTimers();
+      const { result } = renderHook(() => useSSE());
+
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      expect(result.current.connectionStatus).toBeDefined();
+    });
+
+    it('sets status to connected on open', async () => {
+      vi.useFakeTimers();
+      const { result } = renderHook(() => useSSE());
+
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      act(() => {
+        createdInstances[0].onopen?.();
+      });
+
+      expect(result.current.connectionStatus).toBe('connected');
+    });
+
+    it('sets status to disconnected on error', async () => {
+      vi.useFakeTimers();
+      const { result } = renderHook(() => useSSE());
+
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      act(() => {
+        createdInstances[0].onopen?.();
+      });
+
+      expect(result.current.connectionStatus).toBe('connected');
+
+      act(() => {
+        createdInstances[0].onerror?.();
+      });
+
+      expect(result.current.connectionStatus).toBe('disconnected');
+    });
+  });
+
+  describe('heartbeat timeout', () => {
+    it('sets status to disconnected after 45s without messages', async () => {
+      vi.useFakeTimers();
+
+      const { result } = renderHook(() => useSSE());
+
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      act(() => {
+        createdInstances[0].onopen?.();
+      });
+
+      expect(result.current.connectionStatus).toBe('connected');
+
+      // Advance time by 45 seconds (heartbeat timeout)
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(45000);
+      });
+
+      expect(result.current.connectionStatus).toBe('disconnected');
+    });
+
+    it('resets heartbeat timeout on message received', async () => {
+      vi.useFakeTimers();
+
+      const { result } = renderHook(() => useSSE());
+
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      act(() => {
+        createdInstances[0].onopen?.();
+      });
+
+      // Advance 30 seconds
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30000);
+      });
+
+      // Simulate message received (resets timeout)
+      act(() => {
+        createdInstances[0].onmessage?.();
+      });
+
+      // Advance another 30 seconds (total 60s, but timeout reset at 30s)
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30000);
+      });
+
+      // Should still be connected (timeout was reset)
+      expect(result.current.connectionStatus).toBe('connected');
+    });
+  });
+
+  describe('reconnect data reload', () => {
+    it('reloads data after reconnect', async () => {
+      vi.useFakeTimers();
+
+      // Clear previous calls
+      mockInitialDataGet.mockClear();
+
+      renderHook(() => useSSE());
+
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      // Verify initial data was loaded
+      expect(mockInitialDataGet).toHaveBeenCalledTimes(1);
+
+      // Initial connect
+      act(() => {
+        createdInstances[0].onopen?.();
+      });
+
+      // Simulate disconnect
+      act(() => {
+        createdInstances[0].onerror?.();
+      });
+
+      // Wait for reconnect delay
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+
+      // Simulate successful reconnect
+      act(() => {
+        createdInstances[1].onopen?.();
+      });
+
+      // Verify data was reloaded (called again after reconnect)
+      expect(mockInitialDataGet).toHaveBeenCalledTimes(2);
+    });
+
+    it('reloads data after heartbeat timeout', async () => {
+      vi.useFakeTimers();
+
+      // Clear previous calls
+      mockInitialDataGet.mockClear();
+
+      renderHook(() => useSSE());
+
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      // Verify initial data was loaded
+      expect(mockInitialDataGet).toHaveBeenCalledTimes(1);
+
+      // Initial connect
+      act(() => {
+        createdInstances[0].onopen?.();
+      });
+
+      // Wait for heartbeat timeout (45s)
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(45000);
+      });
+
+      // Heartbeat timeout should trigger data reload
+      expect(mockInitialDataGet).toHaveBeenCalledTimes(2);
+    });
   });
 });

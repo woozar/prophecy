@@ -61,8 +61,10 @@ const EFFECT_COLORS: Record<string, { glow: string; particle: string; hex: strin
   teal: { glow: 'shadow-teal-500/60', particle: 'bg-teal-400', hex: '#2dd4bf' },
   violet: { glow: 'shadow-violet-500/60', particle: 'bg-violet-400', hex: '#a78bfa' },
   emerald: { glow: 'shadow-emerald-500/60', particle: 'bg-emerald-400', hex: '#34d399' },
+  green: { glow: 'shadow-green-500/60', particle: 'bg-green-400', hex: '#4ade80' },
   rose: { glow: 'shadow-rose-500/60', particle: 'bg-rose-400', hex: '#fb7185' },
   amber: { glow: 'shadow-amber-500/60', particle: 'bg-amber-400', hex: '#fbbf24' },
+  orange: { glow: 'shadow-orange-500/60', particle: 'bg-orange-400', hex: '#fb923c' },
   blue: { glow: 'shadow-blue-500/60', particle: 'bg-blue-400', hex: '#60a5fa' },
   pink: { glow: 'shadow-pink-500/60', particle: 'bg-pink-400', hex: '#f472b6' },
 };
@@ -560,9 +562,9 @@ const HaloWrapper = memo(function HaloWrapper({
   const currentColor = colors[currentColorIndex] || 'cyan';
   const colorHex = EFFECT_COLORS[currentColor]?.hex || '#22d3ee';
 
-  // Halo dimensions
-  const haloWidth = size * 0.9;
-  const haloHeight = size * 0.25; // Perspectively flattened
+  // Halo dimensions (2/3 size)
+  const haloWidth = size * 0.6;
+  const haloHeight = size * 0.17; // Perspectively flattened
   const haloOffsetY = -size * 0.45; // Position well above avatar head
 
   const svgSize = size + 40;

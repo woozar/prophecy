@@ -1120,4 +1120,159 @@ describe('RoundsManager', () => {
       });
     });
   });
+
+  describe('Bot ratings', () => {
+    it('shows bot ratings button for rounds past submission deadline', () => {
+      const past = new Date(Date.now() - 86400000); // 1 day ago
+      const future = new Date(Date.now() + 86400000 * 30); // 30 days ahead
+      const farFuture = new Date(Date.now() + 86400000 * 60); // 60 days ahead
+
+      const roundPastSubmission = {
+        id: 'bot-round',
+        title: 'Bot Rating Round',
+        submissionDeadline: past.toISOString(),
+        ratingDeadline: future.toISOString(),
+        fulfillmentDate: farFuture.toISOString(),
+        createdAt: past.toISOString(),
+      };
+
+      mockRoundsRecord = {
+        'bot-round': roundPastSubmission,
+      };
+      renderWithMantine(<RoundsManager />);
+      expect(screen.getByTitle('Bot-Bewertungen auslösen')).toBeInTheDocument();
+    });
+
+    it('does not show bot ratings button for rounds in submission phase', () => {
+      const future = new Date(Date.now() + 86400000 * 30);
+      const farFuture = new Date(Date.now() + 86400000 * 60);
+      const veryFarFuture = new Date(Date.now() + 86400000 * 90);
+
+      const roundInSubmission = {
+        id: 'sub-round',
+        title: 'Submission Round',
+        submissionDeadline: future.toISOString(),
+        ratingDeadline: farFuture.toISOString(),
+        fulfillmentDate: veryFarFuture.toISOString(),
+        createdAt: new Date().toISOString(),
+      };
+
+      mockRoundsRecord = {
+        'sub-round': roundInSubmission,
+      };
+      renderWithMantine(<RoundsManager />);
+      expect(screen.queryByTitle('Bot-Bewertungen auslösen')).not.toBeInTheDocument();
+    });
+
+    it('calls bot ratings API when button clicked', async () => {
+      const past = new Date(Date.now() - 86400000);
+      const future = new Date(Date.now() + 86400000 * 30);
+      const farFuture = new Date(Date.now() + 86400000 * 60);
+
+      const roundPastSubmission = {
+        id: 'bot-api-round',
+        title: 'Bot API Round',
+        submissionDeadline: past.toISOString(),
+        ratingDeadline: future.toISOString(),
+        fulfillmentDate: farFuture.toISOString(),
+        createdAt: past.toISOString(),
+      };
+
+      mockRoundsRecord = {
+        'bot-api-round': roundPastSubmission,
+      };
+
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ message: '6 Bewertungen erstellt' }),
+      });
+      globalThis.fetch = mockFetch;
+
+      renderWithMantine(<RoundsManager />);
+      fireEvent.click(screen.getByTitle('Bot-Bewertungen auslösen'));
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith('/api/admin/rounds/bot-api-round/bot-ratings', {
+          method: 'POST',
+        });
+      });
+
+      await waitFor(() => {
+        expect(mockShowSuccessToast).toHaveBeenCalledWith('6 Bewertungen erstellt');
+      });
+    });
+
+    it('shows error toast when bot ratings API fails', async () => {
+      const past = new Date(Date.now() - 86400000);
+      const future = new Date(Date.now() + 86400000 * 30);
+      const farFuture = new Date(Date.now() + 86400000 * 60);
+
+      const roundPastSubmission = {
+        id: 'bot-error-round',
+        title: 'Bot Error Round',
+        submissionDeadline: past.toISOString(),
+        ratingDeadline: future.toISOString(),
+        fulfillmentDate: farFuture.toISOString(),
+        createdAt: past.toISOString(),
+      };
+
+      mockRoundsRecord = {
+        'bot-error-round': roundPastSubmission,
+      };
+
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Keine Bots gefunden' }),
+      });
+      globalThis.fetch = mockFetch;
+
+      renderWithMantine(<RoundsManager />);
+      fireEvent.click(screen.getByTitle('Bot-Bewertungen auslösen'));
+
+      await waitFor(() => {
+        expect(mockShowErrorToast).toHaveBeenCalledWith('Keine Bots gefunden');
+      });
+    });
+
+    it('shows default error message when bot ratings API throws', async () => {
+      const past = new Date(Date.now() - 86400000);
+      const future = new Date(Date.now() + 86400000 * 30);
+      const farFuture = new Date(Date.now() + 86400000 * 60);
+
+      const roundPastSubmission = {
+        id: 'bot-throw-round',
+        title: 'Bot Throw Round',
+        submissionDeadline: past.toISOString(),
+        ratingDeadline: future.toISOString(),
+        fulfillmentDate: farFuture.toISOString(),
+        createdAt: past.toISOString(),
+      };
+
+      mockRoundsRecord = {
+        'bot-throw-round': roundPastSubmission,
+      };
+
+      const mockFetch = vi.fn().mockRejectedValue('Network error');
+      globalThis.fetch = mockFetch;
+
+      renderWithMantine(<RoundsManager />);
+      fireEvent.click(screen.getByTitle('Bot-Bewertungen auslösen'));
+
+      await waitFor(() => {
+        expect(mockShowErrorToast).toHaveBeenCalledWith('Unbekannter Fehler');
+      });
+    });
+  });
+
+  describe('Export', () => {
+    it('shows export button for all rounds', () => {
+      mockRoundsRecord = {
+        '1': mockRoundsData[0],
+        '2': mockRoundsData[1],
+      };
+      renderWithMantine(<RoundsManager />);
+      const exportButtons = screen.getAllByTitle('Excel Export');
+      expect(exportButtons.length).toBe(2);
+    });
+  });
 });

@@ -19,6 +19,7 @@ model User {
   avatarEffectColors  String?  // JSON-Array: ["cyan", "violet", "teal"]
   role                String   @default("USER")     // UserRole: USER, ADMIN
   status              String   @default("PENDING")  // UserStatus: PENDING, APPROVED, REJECTED, SUSPENDED
+  isBot               Boolean  @default(false)      // Künstliche Teilnehmer (Randolf, Kimberly)
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

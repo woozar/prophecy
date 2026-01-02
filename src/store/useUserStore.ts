@@ -9,6 +9,7 @@ export interface User {
   avatarEffectColors?: string[];
   role: string;
   status: string;
+  isBot?: boolean;
   createdAt?: string;
   _count?: {
     prophecies: number;

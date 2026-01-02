@@ -37,6 +37,7 @@ describe('PATCH /api/users/me/avatar-settings', () => {
     avatarEffectColors: '["cyan","teal"]',
     role: 'USER',
     status: 'APPROVED',
+    isBot: false,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

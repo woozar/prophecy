@@ -33,6 +33,7 @@ const createMockUser = (overrides = {}) => ({
   avatarEffectColors: null,
   role: 'USER',
   status: 'APPROVED',
+  isBot: false,
   createdAt: new Date(),
   updatedAt: new Date(),
   authenticators: [

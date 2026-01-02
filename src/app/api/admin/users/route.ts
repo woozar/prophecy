@@ -27,6 +27,7 @@ export async function GET() {
         avatarEffectColors: true,
         role: true,
         status: true,
+        isBot: true,
         createdAt: true,
         _count: {
           select: {
@@ -37,7 +38,13 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ users });
+    // Parse avatarEffectColors JSON for each user
+    const usersWithParsedColors = users.map((user) => ({
+      ...user,
+      avatarEffectColors: user.avatarEffectColors ? JSON.parse(user.avatarEffectColors) : undefined,
+    }));
+
+    return NextResponse.json({ users: usersWithParsedColors });
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json({ error: 'Fehler beim Laden der Benutzer' }, { status: 500 });

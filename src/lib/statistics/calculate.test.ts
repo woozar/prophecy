@@ -17,6 +17,7 @@ const createMockUser = (id: string, username: string) => ({
   username,
   displayName: `Display ${username}`,
   avatarUrl: null,
+  isBot: false,
 });
 
 const createMockProphecy = (overrides = {}) => ({

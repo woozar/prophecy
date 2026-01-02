@@ -52,6 +52,7 @@ const mockUserFull = {
   avatarEffectColors: null,
   role: 'USER',
   status: 'APPROVED',
+  isBot: false,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

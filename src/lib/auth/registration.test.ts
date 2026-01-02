@@ -180,6 +180,7 @@ describe('registration utilities', () => {
         passwordHash: null,
         role: 'USER',
         status: 'PENDING',
+        isBot: false,
         forcePasswordChange: false,
         avatarUrl: null,
         avatarEffect: null,

@@ -2,7 +2,14 @@
 
 import { memo, useCallback, useMemo, useState } from 'react';
 
-import { IconCalendar, IconDownload, IconEdit, IconPlus, IconTrash } from '@tabler/icons-react';
+import {
+  IconCalendar,
+  IconDownload,
+  IconEdit,
+  IconPlus,
+  IconRobot,
+  IconTrash,
+} from '@tabler/icons-react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { Button } from '@/components/Button';
@@ -35,6 +42,7 @@ export const RoundsManager = memo(function RoundsManager() {
     [prophecies]
   );
   const { exportRound, exportingRoundId } = useExportRound();
+  const [triggeringBotRatingsId, setTriggeringBotRatingsId] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingRound, setEditingRound] = useState<Round | null>(null);
   const [deletingRoundId, setDeletingRoundId] = useState<string | null>(null);
@@ -180,6 +188,27 @@ export const RoundsManager = memo(function RoundsManager() {
     }
   }, [deletingRoundId, closeModals, removeRound]);
 
+  const handleTriggerBotRatings = useCallback(async (roundId: string) => {
+    setTriggeringBotRatingsId(roundId);
+    try {
+      const res = await fetch(`/api/admin/rounds/${roundId}/bot-ratings`, {
+        method: 'POST',
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Fehler bei Bot-Bewertungen');
+      }
+
+      showSuccessToast(data.message);
+    } catch (error) {
+      showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
+    } finally {
+      setTriggeringBotRatingsId(null);
+    }
+  }, []);
+
   const submitButtonLabel = useMemo(() => {
     if (isSubmitting) return 'Speichern...';
     return editingRound ? 'Speichern' : 'Erstellen';
@@ -259,6 +288,16 @@ export const RoundsManager = memo(function RoundsManager() {
                       title="Excel Export"
                       icon={<IconDownload size={14} />}
                     />
+                    {new Date(round.submissionDeadline) < new Date() && (
+                      <IconActionButton
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleTriggerBotRatings(round.id)}
+                        disabled={triggeringBotRatingsId === round.id}
+                        title="Bot-Bewertungen auslösen"
+                        icon={<IconRobot size={14} />}
+                      />
+                    )}
                     <IconActionButton
                       variant="edit"
                       size="sm"

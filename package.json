@@ -21,6 +21,7 @@
     "*.{js,jsx,ts,tsx,json,css,md}": "prettier --write"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.2",
     "@asteasolutions/zod-to-openapi": "^7.3.4",
     "@mantine/core": "^8.3.10",
     "@mantine/dates": "^8.3.10",
@@ -33,6 +34,7 @@
     "@simplewebauthn/browser": "^13.2.2",
     "@simplewebauthn/server": "^13.2.2",
     "@tabler/icons-react": "^3.36.0",
+    "ai": "^6.0.5",
     "bcrypt": "^6.0.0",
     "dayjs": "^1.11.19",
     "exceljs": "^4.4.0",

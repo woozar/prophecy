@@ -128,5 +128,39 @@ describe('GET /api/uploads/avatars/[filename]', () => {
         expect(response.status).not.toBe(400);
       }
     });
+
+    it('accepts valid bot avatar filenames', async () => {
+      const validBotFilenames = ['bot-randolf.webp', 'bot-kimberly.webp', 'bot-meanfred.webp'];
+
+      for (const filename of validBotFilenames) {
+        const request = new NextRequest('http://localhost/api/uploads/avatars/' + filename);
+
+        const response = await GET(request, {
+          params: Promise.resolve({ filename }),
+        });
+
+        // Should not return 400 (validation passed)
+        // May return 404 if file doesn't exist, which is expected
+        expect(response.status).not.toBe(400);
+      }
+    });
+
+    it('rejects bot filenames with invalid characters', async () => {
+      const invalidBotFilenames = [
+        'bot-RANDOLF.webp', // uppercase
+        'bot-rand0lf.webp', // numbers
+        'bot-.webp', // empty name
+      ];
+
+      for (const filename of invalidBotFilenames) {
+        const request = new NextRequest('http://localhost/api/uploads/avatars/' + filename);
+
+        const response = await GET(request, {
+          params: Promise.resolve({ filename }),
+        });
+
+        expect(response.status).toBe(400);
+      }
+    });
   });
 });

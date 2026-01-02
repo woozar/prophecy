@@ -206,4 +206,88 @@ describe('UserAvatar', () => {
     const { container } = render(<UserAvatar userId="user-1" className="custom-class" />);
     expect(container.firstChild).toHaveClass('custom-class');
   });
+
+  it('renders user from direct user prop instead of store', () => {
+    const directUser = {
+      username: 'directuser',
+      displayName: 'Direct User',
+      avatarUrl: null,
+      avatarEffect: null,
+    };
+    render(<UserAvatar user={directUser} />);
+    expect(screen.getByText('DU')).toBeInTheDocument();
+    expect(screen.getByTitle('Direct User')).toBeInTheDocument();
+  });
+
+  it('renders avatar effect from user prop', () => {
+    const userWithEffect = {
+      username: 'effectuser',
+      displayName: 'Effect User',
+      avatarUrl: null,
+      avatarEffect: 'glow',
+      avatarEffectColors: ['cyan'],
+    };
+    const { container } = render(<UserAvatar user={userWithEffect} />);
+    expect(container.querySelector('.animate-avatar-pulse-glow')).toBeInTheDocument();
+  });
+
+  it('renders xl size correctly', () => {
+    mockUsersRecord = {
+      'user-xl': {
+        id: 'user-xl',
+        username: 'xluser',
+        displayName: 'XL User',
+      },
+    };
+    const { container } = render(<UserAvatar userId="user-xl" size="xl" />);
+    expect(container.firstChild).toHaveClass('w-16', 'h-16');
+  });
+
+  it('renders sm size correctly', () => {
+    mockUsersRecord = {
+      'user-sm': {
+        id: 'user-sm',
+        username: 'smuser',
+        displayName: 'SM User',
+      },
+    };
+    const { container } = render(<UserAvatar userId="user-sm" size="sm" />);
+    expect(container.firstChild).toHaveClass('w-8', 'h-8');
+  });
+});
+
+describe('AvatarPreview with color fallback', () => {
+  it('uses default cyan when unknown color provided', () => {
+    const { container } = render(
+      <AvatarPreview username="test" avatarEffect="glow" avatarEffectColors={['unknowncolor']} />
+    );
+    const glowElement = container.querySelector('.animate-avatar-pulse-glow');
+    expect(glowElement).toBeInTheDocument();
+    // Falls back to cyan
+    expect(glowElement).toHaveStyle({ '--avatar-glow-color': '#22d3ee' });
+  });
+
+  it('uses green color for glow effect', () => {
+    const { container } = render(
+      <AvatarPreview username="test" avatarEffect="glow" avatarEffectColors={['green']} />
+    );
+    const glowElement = container.querySelector('.animate-avatar-pulse-glow');
+    expect(glowElement).toHaveStyle({ '--avatar-glow-color': '#4ade80' });
+  });
+
+  it('uses orange color for glow effect', () => {
+    const { container } = render(
+      <AvatarPreview username="test" avatarEffect="glow" avatarEffectColors={['orange']} />
+    );
+    const glowElement = container.querySelector('.animate-avatar-pulse-glow');
+    expect(glowElement).toHaveStyle({ '--avatar-glow-color': '#fb923c' });
+  });
+
+  it('uses pink color for glow effect', () => {
+    const { container } = render(
+      <AvatarPreview username="test" avatarEffect="glow" avatarEffectColors={['pink']} />
+    );
+    const glowElement = container.querySelector('.animate-avatar-pulse-glow');
+    expect(glowElement).toHaveStyle({ '--avatar-glow-color': '#f472b6' });
+  });
 });

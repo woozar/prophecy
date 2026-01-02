@@ -11,14 +11,21 @@ interface RouteParams {
   params: Promise<{ filename: string }>;
 }
 
+// Erlaubte Dateinamen-Patterns (alle .webp)
+const VALID_PATTERNS = [
+  /^[a-f0-9]{64}\.webp$/, // SHA-256 Hash (User-Uploads)
+  /^bot-[a-z]+\.webp$/, // Bot-Avatare
+];
+
 // GET: Avatar-Bild ausliefern
 // Kein Auth-Check nötig: SHA-256 Hash-Dateinamen sind praktisch unmöglich zu erraten
 // und Avatare sind keine sensiblen Daten
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { filename } = await params;
 
-  // Validate filename (only allow SHA-256 hex hash with .webp extension)
-  if (!/^[a-f0-9]{64}\.webp$/.test(filename)) {
+  // Validate filename
+  const isValidFilename = VALID_PATTERNS.some((pattern) => pattern.test(filename));
+  if (!isValidFilename) {
     return NextResponse.json({ error: 'Ungültiger Dateiname' }, { status: 400 });
   }
 

@@ -58,6 +58,7 @@ describe('POST /api/auth/register/verify', () => {
     avatarEffectColors: null,
     role: 'USER',
     status: 'PENDING',
+    isBot: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     authenticators: [{ id: 'auth-1' }],

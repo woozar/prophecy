@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { prisma } from '@/lib/db/prisma';
 
-import { ensureAdminExists } from './admin-seed';
+import { ensureAdminExists, ensureBotsExist } from './admin-seed';
 
 // Mock prisma
 vi.mock('@/lib/db/prisma', () => ({
@@ -10,6 +10,7 @@ vi.mock('@/lib/db/prisma', () => ({
     user: {
       findUnique: vi.fn(),
       create: vi.fn(),
+      upsert: vi.fn(),
     },
   },
 }));
@@ -19,6 +20,20 @@ vi.mock('bcrypt', () => ({
   default: {
     hash: vi.fn().mockResolvedValue('hashed-admin-password'),
   },
+}));
+
+// Mock fs
+const mockExistsSync = vi.fn();
+vi.mock('node:fs', () => ({
+  existsSync: (p: string) => mockExistsSync(p),
+}));
+
+// Mock fs/promises
+const mockCopyFile = vi.fn();
+const mockMkdir = vi.fn();
+vi.mock('node:fs/promises', () => ({
+  copyFile: (...args: unknown[]) => mockCopyFile(...args),
+  mkdir: (...args: unknown[]) => mockMkdir(...args),
 }));
 
 describe('ensureAdminExists', () => {
@@ -53,6 +68,7 @@ describe('ensureAdminExists', () => {
       passwordHash: 'existing-hash',
       role: 'ADMIN',
       status: 'APPROVED',
+      isBot: false,
       forcePasswordChange: false,
       avatarUrl: null,
       avatarEffect: null,
@@ -79,6 +95,7 @@ describe('ensureAdminExists', () => {
       passwordHash: 'hashed-admin-password',
       role: 'ADMIN',
       status: 'APPROVED',
+      isBot: false,
       forcePasswordChange: false,
       avatarUrl: null,
       avatarEffect: null,
@@ -128,6 +145,7 @@ describe('ensureAdminExists', () => {
       passwordHash: 'hashed-admin-password',
       role: 'ADMIN',
       status: 'APPROVED',
+      isBot: false,
       forcePasswordChange: false,
       avatarUrl: null,
       avatarEffect: null,
@@ -141,5 +159,262 @@ describe('ensureAdminExists', () => {
 
     expect(bcrypt.default.hash).toHaveBeenCalledWith('admin-password', 12);
     consoleSpy.mockRestore();
+  });
+});
+
+describe('ensureBotsExist', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockExistsSync.mockReset();
+    mockCopyFile.mockReset();
+    mockMkdir.mockReset();
+  });
+
+  it('creates all three bot users with upsert', async () => {
+    // Source files exist, upload dir exists
+    mockExistsSync.mockReturnValue(true);
+    mockCopyFile.mockResolvedValue(undefined);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({
+      id: 'bot-id',
+      username: 'randolf',
+      displayName: 'Randolf der Zufällige',
+      passwordHash: null,
+      role: 'USER',
+      status: 'APPROVED',
+      isBot: true,
+      forcePasswordChange: false,
+      avatarUrl: '/api/uploads/avatars/bot-randolf.webp',
+      avatarEffect: 'particles',
+      avatarEffectColors: JSON.stringify(['orange', 'amber']),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await ensureBotsExist();
+
+    expect(prisma.user.upsert).toHaveBeenCalledTimes(3);
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Bot-User erstellt'));
+    consoleSpy.mockRestore();
+  });
+
+  it('copies avatar files when source exists', async () => {
+    mockExistsSync.mockReturnValue(true);
+    mockCopyFile.mockResolvedValue(undefined);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({
+      id: 'bot-id',
+      username: 'randolf',
+      displayName: 'Randolf der Zufällige',
+      passwordHash: null,
+      role: 'USER',
+      status: 'APPROVED',
+      isBot: true,
+      forcePasswordChange: false,
+      avatarUrl: '/api/uploads/avatars/bot-randolf.webp',
+      avatarEffect: 'particles',
+      avatarEffectColors: JSON.stringify(['orange', 'amber']),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await ensureBotsExist();
+
+    expect(mockCopyFile).toHaveBeenCalledTimes(3);
+    consoleSpy.mockRestore();
+  });
+
+  it('creates upload directory if it does not exist', async () => {
+    // Source exists, but upload dir doesn't on first call
+    mockExistsSync
+      .mockReturnValueOnce(true) // source file exists
+      .mockReturnValueOnce(false); // upload dir doesn't exist
+    mockMkdir.mockResolvedValue(undefined);
+    mockCopyFile.mockResolvedValue(undefined);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({
+      id: 'bot-id',
+      username: 'randolf',
+      displayName: 'Randolf der Zufällige',
+      passwordHash: null,
+      role: 'USER',
+      status: 'APPROVED',
+      isBot: true,
+      forcePasswordChange: false,
+      avatarUrl: '/api/uploads/avatars/bot-randolf.webp',
+      avatarEffect: 'particles',
+      avatarEffectColors: JSON.stringify(['orange', 'amber']),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await ensureBotsExist();
+
+    expect(mockMkdir).toHaveBeenCalledWith('./uploads/avatars', { recursive: true });
+    consoleSpy.mockRestore();
+  });
+
+  it('logs warning when source avatar file not found', async () => {
+    mockExistsSync.mockReturnValue(false); // source file doesn't exist
+    vi.mocked(prisma.user.upsert).mockResolvedValue({
+      id: 'bot-id',
+      username: 'randolf',
+      displayName: 'Randolf der Zufällige',
+      passwordHash: null,
+      role: 'USER',
+      status: 'APPROVED',
+      isBot: true,
+      forcePasswordChange: false,
+      avatarUrl: null,
+      avatarEffect: 'particles',
+      avatarEffectColors: JSON.stringify(['orange', 'amber']),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await ensureBotsExist();
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Avatar-Datei nicht gefunden'));
+    expect(mockCopyFile).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
+    logSpy.mockRestore();
+  });
+
+  it('handles copy error gracefully', async () => {
+    mockExistsSync.mockReturnValue(true);
+    mockCopyFile.mockRejectedValue(new Error('Copy failed'));
+    vi.mocked(prisma.user.upsert).mockResolvedValue({
+      id: 'bot-id',
+      username: 'randolf',
+      displayName: 'Randolf der Zufällige',
+      passwordHash: null,
+      role: 'USER',
+      status: 'APPROVED',
+      isBot: true,
+      forcePasswordChange: false,
+      avatarUrl: null,
+      avatarEffect: 'particles',
+      avatarEffectColors: JSON.stringify(['orange', 'amber']),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await ensureBotsExist();
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Fehler beim Kopieren von Avatar'),
+      expect.any(Error)
+    );
+    errorSpy.mockRestore();
+    logSpy.mockRestore();
+  });
+
+  it('handles database error gracefully', async () => {
+    mockExistsSync.mockReturnValue(true);
+    mockCopyFile.mockResolvedValue(undefined);
+    vi.mocked(prisma.user.upsert).mockRejectedValue(new Error('Database error'));
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await ensureBotsExist();
+
+    expect(errorSpy).toHaveBeenCalledWith('Fehler beim Erstellen der Bot-User:', expect.any(Error));
+    errorSpy.mockRestore();
+  });
+
+  it('upserts with correct bot data including avatarUrl when copy succeeds', async () => {
+    mockExistsSync.mockReturnValue(true);
+    mockCopyFile.mockResolvedValue(undefined);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({
+      id: 'bot-id',
+      username: 'randolf',
+      displayName: 'Randolf der Zufällige',
+      passwordHash: null,
+      role: 'USER',
+      status: 'APPROVED',
+      isBot: true,
+      forcePasswordChange: false,
+      avatarUrl: '/api/uploads/avatars/bot-randolf.webp',
+      avatarEffect: 'particles',
+      avatarEffectColors: JSON.stringify(['orange', 'amber']),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await ensureBotsExist();
+
+    // Check first bot (randolf)
+    expect(prisma.user.upsert).toHaveBeenCalledWith({
+      where: { username: 'randolf' },
+      update: {
+        displayName: 'Randolf der Zufällige',
+        avatarEffect: 'particles',
+        avatarEffectColors: JSON.stringify(['orange', 'amber']),
+        isBot: true,
+        status: 'APPROVED',
+        avatarUrl: '/api/uploads/avatars/bot-randolf.webp',
+      },
+      create: {
+        username: 'randolf',
+        displayName: 'Randolf der Zufällige',
+        avatarEffect: 'particles',
+        avatarEffectColors: JSON.stringify(['orange', 'amber']),
+        role: 'USER',
+        status: 'APPROVED',
+        isBot: true,
+        avatarUrl: '/api/uploads/avatars/bot-randolf.webp',
+      },
+    });
+    consoleSpy.mockRestore();
+  });
+
+  it('upserts without avatarUrl when source file not found', async () => {
+    mockExistsSync.mockReturnValue(false);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({
+      id: 'bot-id',
+      username: 'randolf',
+      displayName: 'Randolf der Zufällige',
+      passwordHash: null,
+      role: 'USER',
+      status: 'APPROVED',
+      isBot: true,
+      forcePasswordChange: false,
+      avatarUrl: null,
+      avatarEffect: 'particles',
+      avatarEffectColors: JSON.stringify(['orange', 'amber']),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await ensureBotsExist();
+
+    // Check that upsert was called without avatarUrl
+    expect(prisma.user.upsert).toHaveBeenCalledWith({
+      where: { username: 'randolf' },
+      update: {
+        displayName: 'Randolf der Zufällige',
+        avatarEffect: 'particles',
+        avatarEffectColors: JSON.stringify(['orange', 'amber']),
+        isBot: true,
+        status: 'APPROVED',
+      },
+      create: {
+        username: 'randolf',
+        displayName: 'Randolf der Zufällige',
+        avatarEffect: 'particles',
+        avatarEffectColors: JSON.stringify(['orange', 'amber']),
+        role: 'USER',
+        status: 'APPROVED',
+        isBot: true,
+      },
+    });
+    warnSpy.mockRestore();
+    logSpy.mockRestore();
   });
 });

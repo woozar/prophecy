@@ -163,14 +163,10 @@ describe('POST /api/prophecies/[id]/rate', () => {
     });
     vi.mocked(prisma.rating.findMany).mockResolvedValue([
       {
-        id: 'rating-1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: 'user-1',
         value: 5,
-        prophecyId: 'prophecy-1',
+        user: { isBot: false },
       },
-    ]);
+    ] as never);
     vi.mocked(prisma.prophecy.update).mockResolvedValue({
       ...createMockProphecy(),
       averageRating: 5,
@@ -212,31 +208,10 @@ describe('POST /api/prophecies/[id]/rate', () => {
       updatedAt: new Date(),
     });
     vi.mocked(prisma.rating.findMany).mockResolvedValue([
-      {
-        id: 'rating-1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: 'user-1',
-        value: 8,
-        prophecyId: 'prophecy-1',
-      },
-      {
-        id: 'rating-2',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: 'user-2',
-        value: 4,
-        prophecyId: 'prophecy-1',
-      },
-      {
-        id: 'rating-3',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: 'user-3',
-        value: 6,
-        prophecyId: 'prophecy-1',
-      },
-    ]);
+      { value: 8, user: { isBot: false } },
+      { value: 4, user: { isBot: false } },
+      { value: 6, user: { isBot: false } },
+    ] as never);
     vi.mocked(prisma.prophecy.update).mockResolvedValue({
       ...createMockProphecy(),
       averageRating: 6,
@@ -275,5 +250,48 @@ describe('POST /api/prophecies/[id]/rate', () => {
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Bewerten der Prophezeiung');
     consoleSpy.mockRestore();
+  });
+
+  it('excludes bot ratings from average calculation', async () => {
+    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy());
+    vi.mocked(prisma.rating.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.rating.upsert).mockResolvedValue({
+      id: 'rating-1',
+      prophecyId: 'prophecy-1',
+      userId: 'user-1',
+      value: 8,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    // Mix of human and bot ratings - only human ratings should count
+    vi.mocked(prisma.rating.findMany).mockResolvedValue([
+      { value: 8, user: { isBot: false } }, // Human: 8
+      { value: -10, user: { isBot: true } }, // Bot (ignored)
+      { value: 4, user: { isBot: false } }, // Human: 4
+      { value: 5, user: { isBot: true } }, // Bot (ignored)
+    ] as never);
+    vi.mocked(prisma.prophecy.update).mockResolvedValue({
+      ...createMockProphecy(),
+      averageRating: 6,
+      ratingCount: 2,
+    });
+
+    const request = new NextRequest('http://localhost/api/prophecies/prophecy-1/rate', {
+      method: 'POST',
+      body: JSON.stringify({ value: 8 }),
+    });
+    const response = await POST(request, createRouteParams('prophecy-1'));
+
+    expect(response.status).toBe(200);
+    // Average should be (8 + 4) / 2 = 6, not including bot ratings
+    expect(prisma.prophecy.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          averageRating: 6,
+          ratingCount: 2,
+        }),
+      })
+    );
   });
 });

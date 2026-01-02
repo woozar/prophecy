@@ -22,6 +22,7 @@ export async function GET() {
         avatarEffectColors: true,
         role: true,
         status: true,
+        isBot: true,
         createdAt: true,
       },
     }),

@@ -213,12 +213,28 @@ export const UsersManager = memo(function UsersManager() {
     });
   };
 
-  // Group users by status
-  const pendingUsers = useMemo(() => users.filter((u) => u.status === 'PENDING'), [users]);
-  const activeUsers = useMemo(() => users.filter((u) => u.status === 'APPROVED'), [users]);
+  // Sort function for alphabetical ordering by display name or username
+  const sortAlphabetically = useCallback(
+    (a: User, b: User) =>
+      (a.displayName || a.username).localeCompare(b.displayName || b.username, 'de'),
+    []
+  );
+
+  // Group users by status and sort alphabetically
+  const pendingUsers = useMemo(
+    () => users.filter((u) => u.status === 'PENDING').sort(sortAlphabetically),
+    [users, sortAlphabetically]
+  );
+  const activeUsers = useMemo(
+    () => users.filter((u) => u.status === 'APPROVED').sort(sortAlphabetically),
+    [users, sortAlphabetically]
+  );
   const otherUsers = useMemo(
-    () => users.filter((u) => u.status !== 'PENDING' && u.status !== 'APPROVED'),
-    [users]
+    () =>
+      users
+        .filter((u) => u.status !== 'PENDING' && u.status !== 'APPROVED')
+        .sort(sortAlphabetically),
+    [users, sortAlphabetically]
   );
 
   const modalContent = useMemo(() => {
@@ -447,100 +463,108 @@ const UserCard = memo(function UserCard({
                   Admin
                 </GlowBadge>
               )}
-              <GlowBadge size="sm" color={STATUS_COLORS[user.status]}>
-                {STATUS_LABELS[user.status]}
-              </GlowBadge>
+              {user.isBot ? (
+                <GlowBadge size="sm" color="cyan">
+                  Bot
+                </GlowBadge>
+              ) : (
+                <GlowBadge size="sm" color={STATUS_COLORS[user.status]}>
+                  {STATUS_LABELS[user.status]}
+                </GlowBadge>
+              )}
             </div>
             <p className="text-sm text-(--text-muted) truncate">
               @{user.username}
               {user.createdAt && <> · Seit {formatDate(user.createdAt)}</>}
             </p>
             <p className="text-xs text-(--text-muted)">
-              {user._count?.prophecies || 0} Prophezeiungen · {user._count?.ratings || 0}{' '}
-              Bewertungen
+              {!user.isBot && <>{user._count?.prophecies || 0} Prophezeiungen · </>}
+              {user._count?.ratings || 0} Bewertungen
             </p>
           </div>
         </div>
 
-        <div className="flex gap-2 shrink-0">
-          {onApprove && (
-            <Button
-              variant="ghost"
-              onClick={onApprove}
-              disabled={isSubmitting}
-              className="p-2 rounded-lg bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 hover:shadow-[0_0_12px_rgba(34,197,94,0.3)]"
-              title="Freigeben"
-            >
-              <IconCheck size={18} />
-            </Button>
-          )}
-          {onReject && (
-            <Button
-              variant="ghost"
-              onClick={onReject}
-              disabled={isSubmitting}
-              className="p-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30 hover:shadow-[0_0_12px_rgba(239,68,68,0.3)]"
-              title="Ablehnen"
-            >
-              <IconX size={18} />
-            </Button>
-          )}
-          {onSuspend && (
-            <Button
-              variant="ghost"
-              onClick={onSuspend}
-              disabled={isSubmitting}
-              className="p-2 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-yellow-400 hover:border-yellow-400/50 hover:shadow-[0_0_12px_rgba(234,179,8,0.3)]"
-              title="Sperren"
-            >
-              <IconBan size={18} />
-            </Button>
-          )}
-          {onReactivate && (
-            <Button
-              variant="ghost"
-              onClick={onReactivate}
-              disabled={isSubmitting}
-              className="p-2 rounded-lg bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 hover:shadow-[0_0_12px_rgba(34,197,94,0.3)]"
-              title="Reaktivieren"
-            >
-              <IconCheck size={18} />
-            </Button>
-          )}
-          {onToggleAdmin && (
-            <Button
-              variant="ghost"
-              onClick={onToggleAdmin}
-              disabled={isSubmitting}
-              className="p-2 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-violet-400 hover:border-violet-400/50 hover:shadow-[0_0_12px_rgba(139,92,246,0.3)]"
-              title={user.role === 'ADMIN' ? 'Adminrechte entziehen' : 'Zum Admin machen'}
-            >
-              {user.role === 'ADMIN' ? <IconUser size={18} /> : <IconShield size={18} />}
-            </Button>
-          )}
-          {onResetPassword && (
-            <Button
-              variant="ghost"
-              onClick={onResetPassword}
-              disabled={isSubmitting}
-              className="p-2 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-cyan-400 hover:border-cyan-400/50 hover:shadow-[0_0_12px_rgba(6,182,212,0.3)]"
-              title="Passwort zurücksetzen"
-            >
-              <IconKey size={18} />
-            </Button>
-          )}
-          {onDelete && (
-            <Button
-              variant="ghost"
-              onClick={onDelete}
-              disabled={isSubmitting}
-              className="p-2 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-red-400 hover:border-red-400/50 hover:shadow-[0_0_12px_rgba(239,68,68,0.3)]"
-              title="Löschen"
-            >
-              <IconTrash size={18} />
-            </Button>
-          )}
-        </div>
+        {!user.isBot && (
+          <div className="flex gap-2 shrink-0">
+            {onApprove && (
+              <Button
+                variant="ghost"
+                onClick={onApprove}
+                disabled={isSubmitting}
+                className="p-2 rounded-lg bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 hover:shadow-[0_0_12px_rgba(34,197,94,0.3)]"
+                title="Freigeben"
+              >
+                <IconCheck size={18} />
+              </Button>
+            )}
+            {onReject && (
+              <Button
+                variant="ghost"
+                onClick={onReject}
+                disabled={isSubmitting}
+                className="p-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30 hover:shadow-[0_0_12px_rgba(239,68,68,0.3)]"
+                title="Ablehnen"
+              >
+                <IconX size={18} />
+              </Button>
+            )}
+            {onSuspend && (
+              <Button
+                variant="ghost"
+                onClick={onSuspend}
+                disabled={isSubmitting}
+                className="p-2 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-yellow-400 hover:border-yellow-400/50 hover:shadow-[0_0_12px_rgba(234,179,8,0.3)]"
+                title="Sperren"
+              >
+                <IconBan size={18} />
+              </Button>
+            )}
+            {onReactivate && (
+              <Button
+                variant="ghost"
+                onClick={onReactivate}
+                disabled={isSubmitting}
+                className="p-2 rounded-lg bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 hover:shadow-[0_0_12px_rgba(34,197,94,0.3)]"
+                title="Reaktivieren"
+              >
+                <IconCheck size={18} />
+              </Button>
+            )}
+            {onToggleAdmin && (
+              <Button
+                variant="ghost"
+                onClick={onToggleAdmin}
+                disabled={isSubmitting}
+                className="p-2 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-violet-400 hover:border-violet-400/50 hover:shadow-[0_0_12px_rgba(139,92,246,0.3)]"
+                title={user.role === 'ADMIN' ? 'Adminrechte entziehen' : 'Zum Admin machen'}
+              >
+                {user.role === 'ADMIN' ? <IconUser size={18} /> : <IconShield size={18} />}
+              </Button>
+            )}
+            {onResetPassword && (
+              <Button
+                variant="ghost"
+                onClick={onResetPassword}
+                disabled={isSubmitting}
+                className="p-2 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-cyan-400 hover:border-cyan-400/50 hover:shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+                title="Passwort zurücksetzen"
+              >
+                <IconKey size={18} />
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="ghost"
+                onClick={onDelete}
+                disabled={isSubmitting}
+                className="p-2 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-red-400 hover:border-red-400/50 hover:shadow-[0_0_12px_rgba(239,68,68,0.3)]"
+                title="Löschen"
+              >
+                <IconTrash size={18} />
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </Card>
   );

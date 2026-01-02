@@ -28,8 +28,6 @@ interface EffectSVGContainerProps {
   blurDeviation?: number;
   extraBlurLayers?: number;
   zIndex?: number;
-  /** If true, render children before svg (for effects that overlay) */
-  childrenFirst?: boolean;
 }
 
 /**
@@ -46,7 +44,6 @@ function EffectSVGContainer({
   blurDeviation = 1.5,
   extraBlurLayers = 0,
   zIndex,
-  childrenFirst = false,
 }: Readonly<EffectSVGContainerProps>) {
   const svg = (
     <svg
@@ -82,17 +79,8 @@ function EffectSVGContainer({
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
-      {childrenFirst ? (
-        <>
-          {children}
-          {svg}
-        </>
-      ) : (
-        <>
-          {svg}
-          {children}
-        </>
-      )}
+      {children}
+      {svg}
     </div>
   );
 }

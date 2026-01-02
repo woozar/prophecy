@@ -35,10 +35,12 @@ export const RatingDisplay = memo(function RatingDisplay({
   const displayLabel = useMemo(() => {
     if (!label && ratingCount === undefined) return null;
 
-    const countText =
-      ratingCount !== undefined
-        ? `${ratingCount} ${ratingCount === 1 ? 'Bewertung' : 'Bewertungen'}`
-        : null;
+    // Build count text if ratingCount is defined
+    let countText: string | null = null;
+    if (ratingCount !== undefined) {
+      const suffix = ratingCount === 1 ? 'Bewertung' : 'Bewertungen';
+      countText = `${ratingCount} ${suffix}`;
+    }
 
     // If not showing average, only show count
     if (!showAverage) {

@@ -777,6 +777,19 @@ const FireWrapper = memo(function FireWrapper({
   const [particles, setParticles] = useState<FireParticle[]>([]);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
 
+  // Helper to filter and limit particles - extracted to reduce nesting depth
+  const updateParticles = useCallback(
+    (newParticle: FireParticle) => {
+      const now = newParticle.createdAt;
+      setParticles((prev) => {
+        const filtered = prev.filter((p) => now - p.createdAt < FIRE_PARTICLE_LIFETIME);
+        const limited = filtered.slice(-maxParticles + 1);
+        return [...limited, newParticle];
+      });
+    },
+    [maxParticles]
+  );
+
   // Create new particles
   useEffect(() => {
     const createParticle = () => {
@@ -796,11 +809,7 @@ const FireWrapper = memo(function FireWrapper({
         createdAt: now,
       };
 
-      setParticles((prev) => {
-        const filtered = prev.filter((p) => now - p.createdAt < FIRE_PARTICLE_LIFETIME);
-        const limited = filtered.slice(-maxParticles + 1);
-        return [...limited, newParticle];
-      });
+      updateParticles(newParticle);
     };
 
     // Initial particles with staggered start
@@ -814,7 +823,7 @@ const FireWrapper = memo(function FireWrapper({
       clearTimeout(t2);
       clearInterval(interval);
     };
-  }, [colors, maxParticles]);
+  }, [colors, maxParticles, updateParticles]);
 
   // Animation loop for position/opacity updates
   useEffect(() => {

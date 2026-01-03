@@ -1452,6 +1452,15 @@ body {
   color: var(--color-cyan-400) !important;
 }
 
+/* Error Toast Copy Button */
+.error-toast-copy-btn:hover svg {
+  stroke: var(--color-cyan-400) !important;
+}
+
+.error-toast-copy-btn:hover {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+}
+
 /* Ghost fly-towards animation */
 @keyframes ghost-fly-towards {
   0% {

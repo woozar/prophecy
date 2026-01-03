@@ -3,6 +3,22 @@ import React from 'react';
 import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
 
+// Mock window.matchMedia for Mantine components
+// See: https://mantine.dev/guides/jest/
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
 // Fix jsdom "Not implemented: navigation" error
 // See: https://github.com/vitest-dev/vitest/issues/4450
 // jsdom doesn't support navigation, so we replace window.location entirely

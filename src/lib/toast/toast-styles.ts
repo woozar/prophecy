@@ -2,6 +2,8 @@ import { createElement } from 'react';
 
 import type { NotificationData } from '@mantine/notifications';
 
+import { createErrorToastContent } from './ErrorToastContent';
+
 // Custom Icons als React Elemente
 const CheckIcon = createElement(
   'svg',
@@ -218,6 +220,35 @@ export const infoToast = (title: string, message?: string): NotificationData => 
       '&:hover': {
         backgroundColor: 'rgba(6, 182, 212, 0.15)',
         color: '#06b6d4',
+      },
+    },
+  },
+});
+
+// Error Toast with Copy Button - Red glow
+export const errorToastWithCopy = (title: string, description?: string): NotificationData => ({
+  message: createErrorToastContent(title, description),
+  icon: XIcon,
+  autoClose: 6000,
+  withCloseButton: true,
+  styles: {
+    root: {
+      background: 'linear-gradient(135deg, rgba(30, 15, 20, 0.98), rgba(20, 10, 15, 0.99))',
+      border: '2px solid rgba(239, 68, 68, 0.5)',
+      backdropFilter: 'blur(16px)',
+      borderRadius: '12px',
+      boxShadow:
+        '0 4px 24px rgba(0, 0, 0, 0.6), 0 0 60px rgba(239, 68, 68, 0.3), 0 0 30px rgba(239, 68, 68, 0.25), inset 0 1px 0 rgba(239, 68, 68, 0.15)',
+    },
+    icon: {
+      backgroundColor: 'rgba(239, 68, 68, 0.2)',
+      borderRadius: '8px',
+    },
+    closeButton: {
+      color: '#627d98',
+      '&:hover': {
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        color: '#f87171',
       },
     },
   },

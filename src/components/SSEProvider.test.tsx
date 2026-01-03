@@ -5,6 +5,17 @@ import { useUserStore } from '@/store/useUserStore';
 
 import { SSEProvider } from './SSEProvider';
 
+// Mock the useSSEToasts hook
+vi.mock('@/hooks/useSSEToasts', () => ({
+  useSSEToasts: () => ({
+    onProphecyCreated: vi.fn(),
+    onRatingCreated: vi.fn(),
+    onRoundCreated: vi.fn(),
+    onRoundUpdated: vi.fn(),
+    onUserUpdated: vi.fn(),
+  }),
+}));
+
 // Mock the useSSE hook
 const mockUseSSE = vi.fn().mockReturnValue({ connectionStatus: 'connected' });
 vi.mock('@/hooks/useSSE', () => ({

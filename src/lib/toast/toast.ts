@@ -1,13 +1,13 @@
 import { notifications } from '@mantine/notifications';
 
-import { errorToast, infoToast, successToast, warningToast } from './toast-styles';
+import { errorToastWithCopy, infoToast, successToast, warningToast } from './toast-styles';
 
 export function showSuccessToast(message: string, description?: string) {
   notifications.show(successToast(message, description));
 }
 
 export function showErrorToast(message: string, description?: string) {
-  notifications.show(errorToast(message, description));
+  notifications.show(errorToastWithCopy(message, description));
 }
 
 export function showWarningToast(message: string, description?: string) {

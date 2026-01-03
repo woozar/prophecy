@@ -22,6 +22,11 @@ vi.mock('./toast-styles', () => ({
     message,
     description,
   })),
+  errorToastWithCopy: vi.fn((message: string, description?: string) => ({
+    type: 'error',
+    message,
+    description,
+  })),
   warningToast: vi.fn((message: string, description?: string) => ({
     type: 'warning',
     message,

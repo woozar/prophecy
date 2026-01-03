@@ -8,6 +8,8 @@ import { type Rating, useRatingStore } from '@/store/useRatingStore';
 import { type Round, useRoundStore } from '@/store/useRoundStore';
 import { type User, useUserStore } from '@/store/useUserStore';
 
+import { type SSEEventCallbacks } from './useSSEToasts';
+
 type SSEEventType =
   | 'round:created'
   | 'round:updated'
@@ -27,14 +29,21 @@ export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
 // If no message received for 45 seconds, consider connection dead (server pings every 30s)
 const HEARTBEAT_TIMEOUT = 45000;
 
-export function useSSE() {
+export function useSSE(callbacks?: SSEEventCallbacks) {
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heartbeatTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttempts = useRef(0);
   const connectRef = useRef<() => void>(() => {});
+  const isReconnectingRef = useRef(false);
+  const callbacksRef = useRef(callbacks);
   const [isInitialized, setIsInitialized] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
+
+  // Keep callbacks ref updated
+  useEffect(() => {
+    callbacksRef.current = callbacks;
+  }, [callbacks]);
 
   // Store actions
   const { setRound, removeRound } = useRoundStore();
@@ -75,27 +84,60 @@ export function useSSE() {
 
   const handleEvent = useCallback(
     (type: SSEEventType, data: unknown) => {
+      // Don't trigger callbacks during reconnect (data reload handles that)
+      const shouldTriggerCallbacks = !isReconnectingRef.current;
+
       switch (type) {
         // Round events
-        case 'round:created':
-        case 'round:updated':
-          setRound(data as Round);
+        case 'round:created': {
+          const round = data as Round;
+          setRound(round);
+          if (shouldTriggerCallbacks) {
+            callbacksRef.current?.onRoundCreated?.(round);
+          }
           break;
+        }
+        case 'round:updated': {
+          const round = data as Round;
+          // Get previous state BEFORE updating
+          const previousRound = useRoundStore.getState().rounds[round.id];
+          setRound(round);
+          if (shouldTriggerCallbacks) {
+            callbacksRef.current?.onRoundUpdated?.(round, previousRound);
+          }
+          break;
+        }
         case 'round:deleted':
           removeRound((data as { id: string }).id);
           break;
 
         // User events
         case 'user:created':
-        case 'user:updated':
           setUser(data as User);
           break;
+        case 'user:updated': {
+          const user = data as User;
+          // Get previous state BEFORE updating
+          const previousUser = useUserStore.getState().users[user.id];
+          setUser(user);
+          if (shouldTriggerCallbacks) {
+            callbacksRef.current?.onUserUpdated?.(user, previousUser);
+          }
+          break;
+        }
         case 'user:deleted':
           removeUser((data as { id: string }).id);
           break;
 
         // Prophecy events
-        case 'prophecy:created':
+        case 'prophecy:created': {
+          const prophecy = data as Prophecy;
+          setProphecy(prophecy);
+          if (shouldTriggerCallbacks) {
+            callbacksRef.current?.onProphecyCreated?.(prophecy);
+          }
+          break;
+        }
         case 'prophecy:updated':
           setProphecy(data as Prophecy);
           break;
@@ -104,7 +146,14 @@ export function useSSE() {
           break;
 
         // Rating events
-        case 'rating:created':
+        case 'rating:created': {
+          const rating = data as Rating;
+          setRating(rating);
+          if (shouldTriggerCallbacks) {
+            callbacksRef.current?.onRatingCreated?.(rating);
+          }
+          break;
+        }
         case 'rating:updated':
           setRating(data as Rating);
           break;
@@ -141,8 +190,12 @@ export function useSSE() {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
       }
+      // Mark as reconnecting to prevent toast spam during data reload
+      isReconnectingRef.current = true;
       // Reload data since we might have missed events
-      loadInitialData();
+      loadInitialData().finally(() => {
+        isReconnectingRef.current = false;
+      });
       reconnectAttempts.current++;
       connectRef.current();
     }, HEARTBEAT_TIMEOUT);
@@ -171,7 +224,11 @@ export function useSSE() {
       // Reload data if this is a reconnect (might have missed events)
       if (reconnectAttempts.current > 0) {
         console.log('[SSE] Reconnected, reloading data...');
-        loadInitialData();
+        // Mark as reconnecting to prevent toast spam during data reload
+        isReconnectingRef.current = true;
+        loadInitialData().finally(() => {
+          isReconnectingRef.current = false;
+        });
       }
       reconnectAttempts.current = 0;
     };

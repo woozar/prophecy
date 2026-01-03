@@ -18,15 +18,6 @@ type RequestBody<P extends keyof paths, M extends keyof paths[P]> = paths[P][M] 
   ? B
   : never;
 
-// Type for initial data response (used by SSE hook)
-interface InitialDataResponse {
-  users: unknown[];
-  rounds: unknown[];
-  prophecies: unknown[];
-  ratings: unknown[];
-  currentUserId: string;
-}
-
 /**
  * Typed API client with convenient methods for all endpoints.
  */
@@ -35,12 +26,7 @@ export const apiClient = {
   // Initial Data (for SSE)
   // ============================================================================
   initialData: {
-    get: () =>
-      fetch('/api/initial-data', { credentials: 'include' }).then(async (res) => ({
-        data: res.ok ? ((await res.json()) as InitialDataResponse) : null,
-        error: res.ok ? null : await res.json(),
-        response: res,
-      })),
+    get: () => api.GET('/api/initial-data'),
   },
 
   // ============================================================================
@@ -146,31 +132,7 @@ export const apiClient = {
       api.POST('/api/prophecies/{id}/resolve', { params: { path: { id } }, body: { fulfilled } }),
 
     getAuditLogs: (id: string) =>
-      fetch(`/api/prophecies/${id}/audit`, { credentials: 'include' }).then(async (res) => ({
-        data: res.ok
-          ? ((await res.json()) as {
-              auditLogs: Array<{
-                id: string;
-                entityType: 'RATING' | 'PROPHECY';
-                entityId: string;
-                action: 'CREATE' | 'UPDATE' | 'DELETE' | 'BULK_DELETE';
-                prophecyId: string | null;
-                userId: string;
-                oldValue: string | null;
-                newValue: string | null;
-                context: string | null;
-                createdAt: string;
-                user: {
-                  id: string;
-                  username: string;
-                  displayName: string | null;
-                };
-              }>;
-            })
-          : null,
-        error: res.ok ? null : await res.json(),
-        response: res,
-      })),
+      api.GET('/api/prophecies/{id}/audit', { params: { path: { id } } }),
   },
 
   // ============================================================================
@@ -264,6 +226,11 @@ export const apiClient = {
 
       resetPassword: (id: string) =>
         api.POST('/api/admin/users/{id}/reset-password', { params: { path: { id } } }),
+    },
+
+    rounds: {
+      triggerBotRatings: (id: string) =>
+        api.POST('/api/admin/rounds/{id}/bot-ratings', { params: { path: { id } } }),
     },
   },
 };

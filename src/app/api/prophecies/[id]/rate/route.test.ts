@@ -20,6 +20,8 @@ const createMockProphecy = (overrides = {}) => ({
   resolvedAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  averageRating: null,
+  ratingCount: 0,
   round: {
     ratingDeadline: new Date(Date.now() + 86400000), // Tomorrow
   },

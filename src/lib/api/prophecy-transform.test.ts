@@ -14,6 +14,8 @@ describe('transformProphecyToResponse', () => {
     updatedAt: new Date('2025-01-15T10:30:00.000Z'),
     fulfilled: null,
     resolvedAt: null,
+    averageRating: null,
+    ratingCount: 0,
     ...overrides,
   });
 

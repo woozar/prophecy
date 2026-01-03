@@ -19,6 +19,7 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { GlowBadge } from '@/components/GlowBadge';
 import { Modal } from '@/components/Modal';
 import { UserAvatar } from '@/components/UserAvatar';
+import { apiClient } from '@/lib/api-client/client';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 import { type User } from '@/store/useUserStore';
 
@@ -58,10 +59,9 @@ export const UsersManager = memo(function UsersManager() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch('/api/admin/users');
-        if (res.ok) {
-          const data = await res.json();
-          setUsers(data.users);
+        const { data, error } = await apiClient.admin.users.list();
+        if (data && !error) {
+          setUsers(data.users as User[]);
         } else {
           showErrorToast('Fehler beim Laden der Benutzer');
         }
@@ -87,19 +87,15 @@ export const UsersManager = memo(function UsersManager() {
     async (userId: string, status: string) => {
       setIsSubmitting(true);
       try {
-        const res = await fetch(`/api/admin/users/${userId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status }),
+        const { data, error } = await apiClient.admin.users.update(userId, {
+          status: status as 'PENDING' | 'APPROVED' | 'SUSPENDED',
         });
 
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || 'Fehler beim Aktualisieren');
+        if (error || !data) {
+          throw new Error((error as { error?: string })?.error || 'Fehler beim Aktualisieren');
         }
 
-        const { user } = await res.json();
-        updateUser(user);
+        updateUser(data.user as User);
         showSuccessToast(`Benutzer ${STATUS_LABELS[status].toLowerCase()}`);
         setConfirmAction(null);
       } catch (error) {
@@ -115,19 +111,15 @@ export const UsersManager = memo(function UsersManager() {
     async (userId: string, role: string) => {
       setIsSubmitting(true);
       try {
-        const res = await fetch(`/api/admin/users/${userId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ role }),
+        const { data, error } = await apiClient.admin.users.update(userId, {
+          role: role as 'USER' | 'ADMIN',
         });
 
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || 'Fehler beim Aktualisieren');
+        if (error || !data) {
+          throw new Error((error as { error?: string })?.error || 'Fehler beim Aktualisieren');
         }
 
-        const { user } = await res.json();
-        updateUser(user);
+        updateUser(data.user as User);
         showSuccessToast(role === 'ADMIN' ? 'Zum Admin befördert' : 'Adminrechte entzogen');
         setConfirmAction(null);
       } catch (error) {
@@ -143,13 +135,10 @@ export const UsersManager = memo(function UsersManager() {
     async (userId: string) => {
       setIsSubmitting(true);
       try {
-        const res = await fetch(`/api/admin/users/${userId}`, {
-          method: 'DELETE',
-        });
+        const { error } = await apiClient.admin.users.delete(userId);
 
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || 'Fehler beim Löschen');
+        if (error) {
+          throw new Error((error as { error?: string })?.error || 'Fehler beim Löschen');
         }
 
         removeUser(userId);
@@ -167,19 +156,15 @@ export const UsersManager = memo(function UsersManager() {
   const handleResetPassword = useCallback(async (userId: string, username: string) => {
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/admin/users/${userId}/reset-password`, {
-        method: 'POST',
-      });
+      const { data, error } = await apiClient.admin.users.resetPassword(userId);
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Fehler beim Zurücksetzen');
+      if (error || !data) {
+        throw new Error((error as { error?: string })?.error || 'Fehler beim Zurücksetzen');
       }
 
-      const data = await res.json();
       setPasswordResetResult({
         username,
-        temporaryPassword: data.newPassword,
+        temporaryPassword: data.temporaryPassword,
       });
       showSuccessToast('Passwort wurde zurückgesetzt');
     } catch (error) {

@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { errorResponseSchema, successResponseSchema } from '@/lib/schemas/common';
+import {
+  errorResponseSchema,
+  successResponseSchema,
+  userReferenceSchema,
+} from '@/lib/schemas/common';
 import {
   createProphecySchema,
   propheciesListResponseSchema,
@@ -11,6 +15,38 @@ import {
 import { rateSchema, ratingResponseSchema, resolveSchema } from '@/lib/schemas/rating';
 
 import { registry } from '../registry';
+
+// ============================================================================
+// Audit Log Schemas
+// ============================================================================
+
+const auditLogEntityTypeSchema = z.enum(['RATING', 'PROPHECY']).openapi('AuditLogEntityType');
+
+const auditLogActionSchema = z
+  .enum(['CREATE', 'UPDATE', 'DELETE', 'BULK_DELETE'])
+  .openapi('AuditLogAction');
+
+const auditLogSchema = z
+  .object({
+    id: z.string(),
+    entityType: auditLogEntityTypeSchema,
+    entityId: z.string(),
+    action: auditLogActionSchema,
+    prophecyId: z.string().nullable(),
+    userId: z.string(),
+    oldValue: z.string().nullable(),
+    newValue: z.string().nullable(),
+    context: z.string().nullable(),
+    createdAt: z.string().datetime(),
+    user: userReferenceSchema.pick({ id: true, username: true, displayName: true }),
+  })
+  .openapi('AuditLog');
+
+const auditLogsResponseSchema = z
+  .object({
+    auditLogs: z.array(auditLogSchema),
+  })
+  .openapi('AuditLogsResponse');
 
 // ============================================================================
 // List Prophecies
@@ -242,6 +278,36 @@ registry.registerPath({
     },
     403: {
       description: 'Forbidden (not admin)',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    404: {
+      description: 'Prophecy not found',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+  },
+});
+
+// ============================================================================
+// Get Audit Logs
+// ============================================================================
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/prophecies/{id}/audit',
+  tags: ['Prophecies'],
+  summary: 'Get audit logs for a prophecy',
+  request: {
+    params: z.object({
+      id: z.string().openapi({ description: 'Prophecy ID' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Audit logs for the prophecy',
+      content: { 'application/json': { schema: auditLogsResponseSchema } },
+    },
+    401: {
+      description: 'Unauthorized',
       content: { 'application/json': { schema: errorResponseSchema } },
     },
     404: {

@@ -49,6 +49,34 @@ export const MyComponent = memo(function MyComponent({ value, onChange }) {
 - Inline Funktionen als Event-Handler (verursachen Rerender)
 - Unnötige State-Updates
 
+## API-Aufrufe
+
+**Immer den zentralen `apiClient` verwenden** statt direkter `fetch()` Aufrufe:
+
+```tsx
+// ❌ Schlecht - direkter fetch
+const res = await fetch('/api/rounds');
+const data = await res.json();
+
+// ✅ Gut - über apiClient
+import { apiClient } from '@/lib/api-client/client';
+const { data, error } = await apiClient.rounds.list();
+```
+
+### Vorteile des apiClient
+
+- **Type-Safety**: Generierte TypeScript-Typen aus OpenAPI-Schema
+- **Konsistente Fehlerbehandlung**: Einheitliches `{ data, error }` Pattern
+- **Zentrale Konfiguration**: Credentials, Base-URL automatisch gesetzt
+
+### Verfügbare Methoden
+
+- `apiClient.auth.*` - Authentifizierung
+- `apiClient.rounds.*` - Runden CRUD
+- `apiClient.prophecies.*` - Prophezeiungen CRUD
+- `apiClient.user.*` - Benutzerprofil, Avatar, Passkeys
+- `apiClient.admin.users.*` - Admin Benutzerverwaltung
+
 ## Git Worktree Workflow
 
 Features werden in separaten Git Worktrees entwickelt, dann per Fast-Forward Merge gemerged. Worktrees liegen im `worktrees/` Unterordner (Git ignoriert Ordner mit eigenem `.git` automatisch).

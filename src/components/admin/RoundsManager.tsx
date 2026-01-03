@@ -21,7 +21,8 @@ import { Modal } from '@/components/Modal';
 import { RoundStatusBadge } from '@/components/RoundStatusBadge';
 import { TextInput } from '@/components/TextInput';
 import { useExportRound } from '@/hooks/useExportRound';
-import { createRoundSchema, updateRoundSchema } from '@/lib/schemas/round';
+import { apiClient } from '@/lib/api-client/client';
+import { createRoundSchema } from '@/lib/schemas/round';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 import { useProphecyStore } from '@/store/useProphecyStore';
 import { type Round, useRoundStore } from '@/store/useRoundStore';
@@ -91,98 +92,82 @@ export const RoundsManager = memo(function RoundsManager() {
     resetForm();
   }, [resetForm]);
 
-  const validateAndSubmit = useCallback(
-    async (
-      schema: typeof createRoundSchema | typeof updateRoundSchema,
-      url: string,
-      method: 'POST' | 'PUT',
-      successMessage: string,
-      errorMessage: string
-    ) => {
-      const input = {
-        title: title.trim(),
-        submissionDeadline,
-        ratingDeadline,
-        fulfillmentDate,
-      };
+  const validateForm = useCallback(() => {
+    const input = {
+      title: title.trim(),
+      submissionDeadline,
+      ratingDeadline,
+      fulfillmentDate,
+    };
 
-      const parsed = schema.safeParse(input);
-      if (!parsed.success) {
-        const errors: FormErrors = {};
-        for (const err of parsed.error.errors) {
-          const field = err.path[0] as keyof FormErrors;
-          if (!errors[field]) errors[field] = err.message;
-        }
-        setFormErrors(errors);
-        return;
+    const parsed = createRoundSchema.safeParse(input);
+    if (!parsed.success) {
+      const errors: FormErrors = {};
+      for (const err of parsed.error.errors) {
+        const field = err.path[0] as keyof FormErrors;
+        if (!errors[field]) errors[field] = err.message;
       }
+      setFormErrors(errors);
+      return null;
+    }
 
-      setFormErrors({});
-      setIsSubmitting(true);
-      try {
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(parsed.data),
-        });
+    setFormErrors({});
+    return parsed.data;
+  }, [title, submissionDeadline, ratingDeadline, fulfillmentDate]);
 
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || errorMessage);
-        }
+  const handleCreate = useCallback(async () => {
+    const data = validateForm();
+    if (!data) return;
 
-        await res.json();
-        showSuccessToast(successMessage);
-        closeModals();
-      } catch (error) {
-        showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
-      } finally {
-        setIsSubmitting(false);
+    setIsSubmitting(true);
+    try {
+      const { error } = await apiClient.rounds.create(data);
+      if (error) {
+        throw new Error((error as { error?: string }).error || 'Fehler beim Erstellen');
       }
-    },
-    [title, submissionDeadline, ratingDeadline, fulfillmentDate, closeModals]
-  );
+      showSuccessToast('Runde erstellt');
+      closeModals();
+    } catch (err) {
+      showErrorToast(err instanceof Error ? err.message : 'Unbekannter Fehler');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [validateForm, closeModals]);
 
-  const handleCreate = useCallback(() => {
-    return validateAndSubmit(
-      createRoundSchema,
-      '/api/rounds',
-      'POST',
-      'Runde erstellt',
-      'Fehler beim Erstellen'
-    );
-  }, [validateAndSubmit]);
-
-  const handleUpdate = useCallback(() => {
+  const handleUpdate = useCallback(async () => {
     if (!editingRound) return;
-    return validateAndSubmit(
-      updateRoundSchema,
-      `/api/rounds/${editingRound.id}`,
-      'PUT',
-      'Runde aktualisiert',
-      'Fehler beim Aktualisieren'
-    );
-  }, [editingRound, validateAndSubmit]);
+    const data = validateForm();
+    if (!data) return;
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await apiClient.rounds.update(editingRound.id, data);
+      if (error) {
+        throw new Error((error as { error?: string }).error || 'Fehler beim Aktualisieren');
+      }
+      showSuccessToast('Runde aktualisiert');
+      closeModals();
+    } catch (err) {
+      showErrorToast(err instanceof Error ? err.message : 'Unbekannter Fehler');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [editingRound, validateForm, closeModals]);
 
   const handleDelete = useCallback(async () => {
     if (!deletingRoundId) return;
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/rounds/${deletingRoundId}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Fehler beim Löschen');
+      const { error } = await apiClient.rounds.delete(deletingRoundId);
+      if (error) {
+        throw new Error((error as { error?: string }).error || 'Fehler beim Löschen');
       }
-
       removeRound(deletingRoundId);
       showSuccessToast('Runde gelöscht');
       closeModals();
-    } catch (error) {
-      showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
+    } catch (err) {
+      showErrorToast(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {
       setIsSubmitting(false);
     }
@@ -191,19 +176,13 @@ export const RoundsManager = memo(function RoundsManager() {
   const handleTriggerBotRatings = useCallback(async (roundId: string) => {
     setTriggeringBotRatingsId(roundId);
     try {
-      const res = await fetch(`/api/admin/rounds/${roundId}/bot-ratings`, {
-        method: 'POST',
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Fehler bei Bot-Bewertungen');
+      const { data, error } = await apiClient.admin.rounds.triggerBotRatings(roundId);
+      if (error) {
+        throw new Error((error as { error?: string }).error || 'Fehler bei Bot-Bewertungen');
       }
-
       showSuccessToast(data.message);
-    } catch (error) {
-      showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
+    } catch (err) {
+      showErrorToast(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {
       setTriggeringBotRatingsId(null);
     }

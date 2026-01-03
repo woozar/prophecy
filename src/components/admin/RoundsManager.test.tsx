@@ -3,9 +3,31 @@ import { DatesProvider } from '@mantine/dates';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { apiClient } from '@/lib/api-client/client';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 
 import { RoundsManager } from './RoundsManager';
+
+// Mock apiClient
+vi.mock('@/lib/api-client/client', () => ({
+  apiClient: {
+    rounds: {
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    admin: {
+      rounds: {
+        triggerBotRatings: vi.fn(),
+      },
+    },
+  },
+}));
+
+const mockRoundsCreate = apiClient.rounds.create as ReturnType<typeof vi.fn>;
+const mockRoundsUpdate = apiClient.rounds.update as ReturnType<typeof vi.fn>;
+const mockRoundsDelete = apiClient.rounds.delete as ReturnType<typeof vi.fn>;
+const mockTriggerBotRatings = apiClient.admin.rounds.triggerBotRatings as ReturnType<typeof vi.fn>;
 
 // Mock matchMedia for Mantine
 beforeAll(() => {
@@ -307,8 +329,7 @@ describe('RoundsManager', () => {
       '1': mockRoundsData[0],
       '2': mockRoundsData[1],
     };
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
-    globalThis.fetch = mockFetch;
+    mockRoundsDelete.mockResolvedValue({ data: { success: true }, error: undefined });
 
     renderWithMantine(<RoundsManager />);
 
@@ -328,7 +349,7 @@ describe('RoundsManager', () => {
     fireEvent.click(confirmButton!);
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/rounds/1', { method: 'DELETE' });
+      expect(mockRoundsDelete).toHaveBeenCalledWith('1');
     });
   });
 
@@ -337,16 +358,11 @@ describe('RoundsManager', () => {
       '1': mockRoundsData[0],
       '2': mockRoundsData[1],
     };
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: false,
-      json: () => Promise.resolve({ error: 'Cannot delete' }),
+    mockRoundsDelete.mockResolvedValue({
+      data: undefined,
+      error: { error: 'Cannot delete' },
     });
-    globalThis.fetch = mockFetch;
 
-    mockRoundsRecord = {
-      '1': mockRoundsData[0],
-      '2': mockRoundsData[1],
-    };
     renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
@@ -372,13 +388,8 @@ describe('RoundsManager', () => {
       '1': mockRoundsData[0],
       '2': mockRoundsData[1],
     };
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
-    globalThis.fetch = mockFetch;
+    mockRoundsDelete.mockResolvedValue({ data: { success: true }, error: undefined });
 
-    mockRoundsRecord = {
-      '1': mockRoundsData[0],
-      '2': mockRoundsData[1],
-    };
     renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
@@ -494,11 +505,10 @@ describe('RoundsManager', () => {
   });
 
   it('calls create API and shows success toast', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ id: 'new-round' }),
+    mockRoundsCreate.mockResolvedValue({
+      data: { id: 'new-round' },
+      error: undefined,
     });
-    globalThis.fetch = mockFetch;
 
     renderWithMantine(<RoundsManager />);
     fireEvent.click(screen.getByText('Neue Runde'));
@@ -521,16 +531,11 @@ describe('RoundsManager', () => {
       '1': mockRoundsData[0],
       '2': mockRoundsData[1],
     };
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({}),
+    mockRoundsUpdate.mockResolvedValue({
+      data: {},
+      error: undefined,
     });
-    globalThis.fetch = mockFetch;
 
-    mockRoundsRecord = {
-      '1': mockRoundsData[0],
-      '2': mockRoundsData[1],
-    };
     renderWithMantine(<RoundsManager />);
 
     // Open edit modal
@@ -553,16 +558,11 @@ describe('RoundsManager', () => {
       '1': mockRoundsData[0],
       '2': mockRoundsData[1],
     };
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: false,
-      json: () => Promise.resolve({ error: 'Update failed' }),
+    mockRoundsUpdate.mockResolvedValue({
+      data: undefined,
+      error: { error: 'Update failed' },
     });
-    globalThis.fetch = mockFetch;
 
-    mockRoundsRecord = {
-      '1': mockRoundsData[0],
-      '2': mockRoundsData[1],
-    };
     renderWithMantine(<RoundsManager />);
 
     const editButtons = screen.getAllByTitle('Bearbeiten');
@@ -683,16 +683,8 @@ describe('RoundsManager', () => {
       '1': mockRoundsData[0],
       '2': mockRoundsData[1],
     };
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ success: true }),
-    });
-    globalThis.fetch = mockFetch;
+    mockRoundsDelete.mockResolvedValue({ data: { success: true }, error: undefined });
 
-    mockRoundsRecord = {
-      '1': mockRoundsData[0],
-      '2': mockRoundsData[1],
-    };
     renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
@@ -705,7 +697,7 @@ describe('RoundsManager', () => {
     fireEvent.click(screen.getByText('Löschen'));
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/rounds/1', { method: 'DELETE' });
+      expect(mockRoundsDelete).toHaveBeenCalledWith('1');
     });
 
     await waitFor(() => {
@@ -718,16 +710,11 @@ describe('RoundsManager', () => {
       '1': mockRoundsData[0],
       '2': mockRoundsData[1],
     };
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: false,
-      json: () => Promise.resolve({ error: 'Delete failed' }),
+    mockRoundsDelete.mockResolvedValue({
+      data: undefined,
+      error: { error: 'Delete failed' },
     });
-    globalThis.fetch = mockFetch;
 
-    mockRoundsRecord = {
-      '1': mockRoundsData[0],
-      '2': mockRoundsData[1],
-    };
     renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
@@ -749,13 +736,8 @@ describe('RoundsManager', () => {
       '1': mockRoundsData[0],
       '2': mockRoundsData[1],
     };
-    const mockFetch = vi.fn().mockRejectedValue(new Error('Network error'));
-    globalThis.fetch = mockFetch;
+    mockRoundsDelete.mockRejectedValue(new Error('Network error'));
 
-    mockRoundsRecord = {
-      '1': mockRoundsData[0],
-      '2': mockRoundsData[1],
-    };
     renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
@@ -777,16 +759,11 @@ describe('RoundsManager', () => {
       '1': mockRoundsData[0],
       '2': mockRoundsData[1],
     };
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: false,
-      json: () => Promise.resolve({}),
+    mockRoundsDelete.mockResolvedValue({
+      data: undefined,
+      error: {},
     });
-    globalThis.fetch = mockFetch;
 
-    mockRoundsRecord = {
-      '1': mockRoundsData[0],
-      '2': mockRoundsData[1],
-    };
     renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
@@ -894,11 +871,10 @@ describe('RoundsManager', () => {
 
   it('closes modal and resets state when closeModals is called after successful create', async () => {
     mockRoundsRecord = {};
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ id: 'new-round', title: 'Test' }),
+    mockRoundsCreate.mockResolvedValue({
+      data: { id: 'new-round', title: 'Test' },
+      error: undefined,
     });
-    globalThis.fetch = mockFetch;
 
     renderWithMantine(<RoundsManager />);
     fireEvent.click(screen.getByText('Neue Runde'));
@@ -971,13 +947,8 @@ describe('RoundsManager', () => {
       '1': mockRoundsData[0],
       '2': mockRoundsData[1],
     };
-    const mockFetch = vi.fn().mockRejectedValue('String error');
-    globalThis.fetch = mockFetch;
+    mockRoundsDelete.mockRejectedValue('String error');
 
-    mockRoundsRecord = {
-      '1': mockRoundsData[0],
-      '2': mockRoundsData[1],
-    };
     renderWithMantine(<RoundsManager />);
 
     const deleteButtons = screen.getAllByTitle('Löschen');
@@ -999,20 +970,10 @@ describe('RoundsManager', () => {
       '1': mockRoundsData[0],
       '2': mockRoundsData[1],
     };
-    const mockFetch = vi
-      .fn()
-      .mockImplementation(
-        () =>
-          new Promise((resolve) =>
-            setTimeout(() => resolve({ ok: true, json: () => Promise.resolve({}) }), 100)
-          )
-      );
-    globalThis.fetch = mockFetch;
+    mockRoundsUpdate.mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve({ data: {}, error: undefined }), 100))
+    );
 
-    mockRoundsRecord = {
-      '1': mockRoundsData[0],
-      '2': mockRoundsData[1],
-    };
     renderWithMantine(<RoundsManager />);
 
     const editButtons = screen.getAllByTitle('Bearbeiten');
@@ -1094,16 +1055,11 @@ describe('RoundsManager', () => {
         '1': mockRoundsData[0],
         '2': mockRoundsData[1],
       };
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({}),
+      mockRoundsDelete.mockResolvedValue({
+        data: undefined,
+        error: {},
       });
-      globalThis.fetch = mockFetch;
 
-      mockRoundsRecord = {
-        '1': mockRoundsData[0],
-        '2': mockRoundsData[1],
-      };
       renderWithMantine(<RoundsManager />);
 
       const deleteButtons = screen.getAllByTitle('Löschen');
@@ -1182,19 +1138,16 @@ describe('RoundsManager', () => {
         'bot-api-round': roundPastSubmission,
       };
 
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ message: '6 Bewertungen erstellt' }),
+      mockTriggerBotRatings.mockResolvedValue({
+        data: { message: '6 Bewertungen erstellt' },
+        error: undefined,
       });
-      globalThis.fetch = mockFetch;
 
       renderWithMantine(<RoundsManager />);
       fireEvent.click(screen.getByTitle('Bot-Bewertungen auslösen'));
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/admin/rounds/bot-api-round/bot-ratings', {
-          method: 'POST',
-        });
+        expect(mockTriggerBotRatings).toHaveBeenCalledWith('bot-api-round');
       });
 
       await waitFor(() => {
@@ -1220,11 +1173,10 @@ describe('RoundsManager', () => {
         'bot-error-round': roundPastSubmission,
       };
 
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({ error: 'Keine Bots gefunden' }),
+      mockTriggerBotRatings.mockResolvedValue({
+        data: undefined,
+        error: { error: 'Keine Bots gefunden' },
       });
-      globalThis.fetch = mockFetch;
 
       renderWithMantine(<RoundsManager />);
       fireEvent.click(screen.getByTitle('Bot-Bewertungen auslösen'));
@@ -1252,8 +1204,7 @@ describe('RoundsManager', () => {
         'bot-throw-round': roundPastSubmission,
       };
 
-      const mockFetch = vi.fn().mockRejectedValue('Network error');
-      globalThis.fetch = mockFetch;
+      mockTriggerBotRatings.mockRejectedValue('Network error');
 
       renderWithMantine(<RoundsManager />);
       fireEvent.click(screen.getByTitle('Bot-Bewertungen auslösen'));

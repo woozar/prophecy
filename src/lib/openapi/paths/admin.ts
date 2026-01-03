@@ -195,3 +195,56 @@ registry.registerPath({
     },
   },
 });
+
+// ============================================================================
+// Trigger Bot Ratings for Round
+// ============================================================================
+
+const botRatingsResultSchema = z
+  .object({
+    botId: z.string(),
+    botName: z.string(),
+    ratingsCreated: z.number(),
+  })
+  .openapi('BotRatingsResult');
+
+const botRatingsResponseSchema = z
+  .object({
+    success: z.boolean(),
+    message: z.string(),
+    result: z.object({
+      totalRatingsCreated: z.number(),
+      bots: z.array(botRatingsResultSchema),
+    }),
+  })
+  .openapi('BotRatingsResponse');
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/admin/rounds/{id}/bot-ratings',
+  tags: ['Admin'],
+  summary: 'Trigger bot ratings for a round (Admin only)',
+  request: {
+    params: z.object({
+      id: z.string().openapi({ description: 'Round ID' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Bot ratings triggered successfully',
+      content: { 'application/json': { schema: botRatingsResponseSchema } },
+    },
+    400: {
+      description: 'Error running bot ratings',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    401: {
+      description: 'Unauthorized',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    403: {
+      description: 'Forbidden (not admin)',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+  },
+});

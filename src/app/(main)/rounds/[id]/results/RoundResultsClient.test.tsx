@@ -1,12 +1,22 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { apiClient } from '@/lib/api-client/client';
 import type { Round } from '@/store/useRoundStore';
 
 import { RoundResultsClient } from './RoundResultsClient';
 
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+// Mock the apiClient - we mock it to return the internal RoundStatistics format
+// (which differs from the OpenAPI schema)
+vi.mock('@/lib/api-client/client', () => ({
+  apiClient: {
+    rounds: {
+      getStatistics: vi.fn(),
+    },
+  },
+}));
+
+const mockGetStatistics = apiClient.rounds.getStatistics as ReturnType<typeof vi.fn>;
 
 const createMockRound = (overrides = {}): Round => ({
   id: 'round-1',
@@ -63,7 +73,7 @@ describe('RoundResultsClient', () => {
   });
 
   it('shows loading state initially', () => {
-    mockFetch.mockImplementation(() => new Promise(() => {}));
+    mockGetStatistics.mockImplementation(() => new Promise(() => {}));
 
     render(<RoundResultsClient round={createMockRound()} />);
 
@@ -72,9 +82,10 @@ describe('RoundResultsClient', () => {
   });
 
   it('shows error state when fetch fails', async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      json: () => Promise.resolve({ error: 'Server Fehler' }),
+    mockGetStatistics.mockResolvedValue({
+      data: undefined,
+      error: { error: 'Server Fehler' },
+      response: {} as Response,
     });
 
     render(<RoundResultsClient round={createMockRound()} />);
@@ -85,7 +96,7 @@ describe('RoundResultsClient', () => {
   });
 
   it('shows generic error when fetch throws', async () => {
-    mockFetch.mockRejectedValue(new Error('Network Error'));
+    mockGetStatistics.mockRejectedValue(new Error('Network Error'));
 
     render(<RoundResultsClient round={createMockRound()} />);
 
@@ -95,9 +106,10 @@ describe('RoundResultsClient', () => {
   });
 
   it('renders statistics after successful fetch', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ statistics: createMockStatistics() }),
+    mockGetStatistics.mockResolvedValue({
+      data: createMockStatistics(),
+      error: undefined,
+      response: {} as Response,
     });
 
     render(<RoundResultsClient round={createMockRound()} />);
@@ -113,12 +125,10 @@ describe('RoundResultsClient', () => {
   });
 
   it('shows incomplete badge when not all prophecies resolved', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          statistics: createMockStatistics({ isComplete: false, resolvedProphecies: 5 }),
-        }),
+    mockGetStatistics.mockResolvedValue({
+      data: createMockStatistics({ isComplete: false, resolvedProphecies: 5 }),
+      error: undefined,
+      response: {} as Response,
     });
 
     render(<RoundResultsClient round={createMockRound()} />);
@@ -129,9 +139,10 @@ describe('RoundResultsClient', () => {
   });
 
   it('shows complete badge when all prophecies resolved', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ statistics: createMockStatistics({ isComplete: true }) }),
+    mockGetStatistics.mockResolvedValue({
+      data: createMockStatistics({ isComplete: true }),
+      error: undefined,
+      response: {} as Response,
     });
 
     render(<RoundResultsClient round={createMockRound()} />);
@@ -142,9 +153,10 @@ describe('RoundResultsClient', () => {
   });
 
   it('shows preview banner when isPreview is true', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ statistics: createMockStatistics() }),
+    mockGetStatistics.mockResolvedValue({
+      data: createMockStatistics(),
+      error: undefined,
+      response: {} as Response,
     });
 
     render(<RoundResultsClient round={createMockRound()} isPreview={true} />);
@@ -157,9 +169,10 @@ describe('RoundResultsClient', () => {
   });
 
   it('does not show preview banner when isPreview is false', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ statistics: createMockStatistics() }),
+    mockGetStatistics.mockResolvedValue({
+      data: createMockStatistics(),
+      error: undefined,
+      response: {} as Response,
     });
 
     render(<RoundResultsClient round={createMockRound()} isPreview={false} />);
@@ -174,9 +187,10 @@ describe('RoundResultsClient', () => {
   });
 
   it('shows published date when resultsPublishedAt is set', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ statistics: createMockStatistics() }),
+    mockGetStatistics.mockResolvedValue({
+      data: createMockStatistics(),
+      error: undefined,
+      response: {} as Response,
     });
 
     render(<RoundResultsClient round={createMockRound()} />);
@@ -187,9 +201,10 @@ describe('RoundResultsClient', () => {
   });
 
   it('does not show published date when resultsPublishedAt is null', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ statistics: createMockStatistics() }),
+    mockGetStatistics.mockResolvedValue({
+      data: createMockStatistics(),
+      error: undefined,
+      response: {} as Response,
     });
 
     render(<RoundResultsClient round={createMockRound({ resultsPublishedAt: null })} />);
@@ -202,9 +217,10 @@ describe('RoundResultsClient', () => {
   });
 
   it('renders creator and rater leaderboards', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ statistics: createMockStatistics() }),
+    mockGetStatistics.mockResolvedValue({
+      data: createMockStatistics(),
+      error: undefined,
+      response: {} as Response,
     });
 
     render(<RoundResultsClient round={createMockRound()} />);
@@ -216,15 +232,16 @@ describe('RoundResultsClient', () => {
   });
 
   it('fetches statistics with correct round id', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ statistics: createMockStatistics() }),
+    mockGetStatistics.mockResolvedValue({
+      data: createMockStatistics(),
+      error: undefined,
+      response: {} as Response,
     });
 
     render(<RoundResultsClient round={createMockRound({ id: 'custom-round-id' })} />);
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/rounds/custom-round-id/statistics');
+      expect(mockGetStatistics).toHaveBeenCalledWith('custom-round-id');
     });
   });
 });

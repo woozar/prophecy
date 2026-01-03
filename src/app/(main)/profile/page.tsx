@@ -9,6 +9,7 @@ import { PasswordManagement } from '@/components/PasswordManagement';
 import { ProfileAvatarSection } from '@/components/ProfileAvatarSection';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useCurrentUser } from '@/hooks/useUser';
+import { apiClient } from '@/lib/api-client/client';
 import { useProphecyStore } from '@/store/useProphecyStore';
 import { useRatingStore } from '@/store/useRatingStore';
 
@@ -43,10 +44,9 @@ export default function ProfilePage() {
   useEffect(() => {
     async function loadPasskeys() {
       try {
-        const response = await fetch('/api/users/me/passkeys');
-        if (response.ok) {
-          const data = await response.json();
-          setPasskeys(data);
+        const { data } = await apiClient.user.passkeys.list();
+        if (data?.passkeys) {
+          setPasskeys(data.passkeys as Passkey[]);
         }
       } finally {
         setIsLoadingPasskeys(false);

@@ -163,7 +163,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
         throw new Error((error as { error?: string }).error || 'Fehler beim Erstellen');
       }
 
-      if (data?.prophecy) {
+      if (data.prophecy) {
         setProphecy(data.prophecy);
       }
       showSuccessToast('Prophezeiung erstellt');
@@ -269,7 +269,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
         throw new Error((error as { error?: string }).error || 'Fehler beim Aktualisieren');
       }
 
-      if (data?.prophecy) {
+      if (data.prophecy) {
         setProphecy(data.prophecy);
       }
       showSuccessToast('Prophezeiung aktualisiert');
@@ -294,11 +294,11 @@ export const RoundDetailClient = memo(function RoundDetailClient({
         }
 
         // Update prophecy in store if API returns it
-        if (data?.prophecy) {
+        if (data.prophecy) {
           setProphecy(data.prophecy);
         }
         // Update rating in store
-        if (data?.rating) {
+        if (data.rating) {
           setRating(data.rating);
         }
         showSuccessToast('Bewertung gespeichert');
@@ -318,7 +318,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
           throw new Error((error as { error?: string }).error || 'Fehler beim Auflösen');
         }
 
-        if (data?.prophecy) {
+        if (data.prophecy) {
           setProphecy(data.prophecy);
         }
         showSuccessToast(fulfilled ? 'Als erfüllt markiert' : 'Als nicht erfüllt markiert');

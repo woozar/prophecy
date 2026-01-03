@@ -7,6 +7,7 @@ import { Card } from '@/components/Card';
 import { GlowBadge } from '@/components/GlowBadge';
 import { CreatorLeaderboard } from '@/components/statistics/CreatorLeaderboard';
 import { RaterLeaderboard } from '@/components/statistics/RaterLeaderboard';
+import { apiClient } from '@/lib/api-client/client';
 import { formatDate } from '@/lib/formatting/date';
 import type { RoundStatistics } from '@/lib/statistics/types';
 import type { Round } from '@/store/useRoundStore';
@@ -28,13 +29,11 @@ export const RoundResultsClient = memo(function RoundResultsClient({
   useEffect(() => {
     async function fetchStatistics() {
       try {
-        const res = await fetch(`/api/rounds/${round.id}/statistics`);
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || 'Fehler beim Laden');
+        const { data, error } = await apiClient.rounds.getStatistics(round.id);
+        if (error || !data) {
+          throw new Error((error as { error?: string })?.error || 'Fehler beim Laden');
         }
-        const { statistics } = await res.json();
-        setStatistics(statistics);
+        setStatistics(data as unknown as RoundStatistics);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
       } finally {

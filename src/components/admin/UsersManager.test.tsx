@@ -2,6 +2,7 @@ import { MantineProvider } from '@mantine/core';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { apiClient } from '@/lib/api-client/client';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 
 import { UsersManager } from './UsersManager';
@@ -33,6 +34,25 @@ vi.mock('@/lib/toast/toast', () => ({
   showErrorToast: vi.fn(),
 }));
 
+// Mock apiClient
+vi.mock('@/lib/api-client/client', () => ({
+  apiClient: {
+    admin: {
+      users: {
+        list: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+        resetPassword: vi.fn(),
+      },
+    },
+  },
+}));
+
+const mockList = vi.mocked(apiClient.admin.users.list);
+const mockUpdate = vi.mocked(apiClient.admin.users.update);
+const mockDelete = vi.mocked(apiClient.admin.users.delete);
+const mockResetPassword = vi.mocked(apiClient.admin.users.resetPassword);
+
 const mockShowSuccessToast = vi.mocked(showSuccessToast);
 const mockShowErrorToast = vi.mocked(showErrorToast);
 
@@ -40,8 +60,11 @@ interface MockUser {
   id: string;
   username: string;
   displayName: string | null;
-  status: string;
-  role: string;
+  avatarUrl: string | null;
+  avatarEffect: string | null;
+  avatarEffectColors: string[];
+  status: 'PENDING' | 'APPROVED' | 'SUSPENDED';
+  role: 'USER' | 'ADMIN';
   createdAt: string;
   _count: { prophecies: number; ratings: number };
 }
@@ -52,6 +75,9 @@ describe('UsersManager', () => {
       id: '1',
       username: 'pending_user',
       displayName: 'Pending User',
+      avatarUrl: null,
+      avatarEffect: null,
+      avatarEffectColors: [],
       status: 'PENDING',
       role: 'USER',
       createdAt: '2025-01-15T10:00:00Z',
@@ -61,6 +87,9 @@ describe('UsersManager', () => {
       id: '2',
       username: 'active_user',
       displayName: 'Active User',
+      avatarUrl: null,
+      avatarEffect: null,
+      avatarEffectColors: [],
       status: 'APPROVED',
       role: 'USER',
       createdAt: '2025-01-10T10:00:00Z',
@@ -70,6 +99,9 @@ describe('UsersManager', () => {
       id: '3',
       username: 'admin_user',
       displayName: 'Admin User',
+      avatarUrl: null,
+      avatarEffect: null,
+      avatarEffectColors: [],
       status: 'APPROVED',
       role: 'ADMIN',
       createdAt: '2025-01-05T10:00:00Z',
@@ -79,6 +111,9 @@ describe('UsersManager', () => {
       id: '4',
       username: 'suspended_user',
       displayName: 'Suspended User',
+      avatarUrl: null,
+      avatarEffect: null,
+      avatarEffectColors: [],
       status: 'SUSPENDED',
       role: 'USER',
       createdAt: '2025-01-01T10:00:00Z',
@@ -86,54 +121,43 @@ describe('UsersManager', () => {
     },
   ];
 
-  let mockFetch: ReturnType<typeof vi.fn>;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetch = vi.fn();
-    globalThis.fetch = mockFetch as unknown as typeof fetch;
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  function setupFetchMock(users = mockUsersData) {
-    mockFetch.mockImplementation((url: string, options?: RequestInit) => {
-      if (url === '/api/admin/users' && !options?.method) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ users }),
-        });
-      }
-      // Default fallback for other requests
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({}),
-      });
+  function setupMock(users = mockUsersData) {
+    mockList.mockResolvedValue({
+      data: { users },
+      error: undefined,
+      response: {} as Response,
     });
   }
 
   describe('initial loading', () => {
     it('shows loading state initially', () => {
-      mockFetch.mockImplementation(() => new Promise(() => {})); // Never resolves
+      mockList.mockImplementation(() => new Promise(() => {})); // Never resolves
       renderWithMantine(<UsersManager />);
       expect(screen.getByText('Benutzer werden geladen...')).toBeInTheDocument();
     });
 
-    it('fetches users from /api/admin/users on mount', async () => {
-      setupFetchMock();
+    it('fetches users on mount', async () => {
+      setupMock();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/admin/users');
+        expect(mockList).toHaveBeenCalled();
       });
     });
 
     it('shows error toast when fetch fails', async () => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({ error: 'Failed' }),
+      mockList.mockResolvedValue({
+        data: undefined,
+        error: { error: 'Failed' },
+        response: {} as Response,
       });
 
       renderWithMantine(<UsersManager />);
@@ -144,7 +168,7 @@ describe('UsersManager', () => {
     });
 
     it('shows error toast when fetch throws', async () => {
-      mockFetch.mockRejectedValue(new Error('Network error'));
+      mockList.mockRejectedValue(new Error('Network error'));
 
       renderWithMantine(<UsersManager />);
 
@@ -156,7 +180,7 @@ describe('UsersManager', () => {
 
   describe('PENDING users visibility (regression test)', () => {
     it('displays PENDING users from the API in the pending section', async () => {
-      setupFetchMock();
+      setupMock();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -166,7 +190,7 @@ describe('UsersManager', () => {
       expect(screen.getByText(/Ausstehende Freigaben \(1\)/)).toBeInTheDocument();
     });
 
-    it('loads all user statuses including PENDING from /api/admin/users', async () => {
+    it('loads all user statuses including PENDING', async () => {
       const usersWithMultiplePending = [
         { ...mockUsersData[0], id: 'p1', username: 'pending1', displayName: 'Pending 1' },
         { ...mockUsersData[0], id: 'p2', username: 'pending2', displayName: 'Pending 2' },
@@ -174,7 +198,7 @@ describe('UsersManager', () => {
         mockUsersData[1], // APPROVED
       ];
 
-      setupFetchMock(usersWithMultiplePending);
+      setupMock(usersWithMultiplePending);
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -189,7 +213,7 @@ describe('UsersManager', () => {
 
   describe('rendering', () => {
     it('renders pending users section when pending users exist', async () => {
-      setupFetchMock();
+      setupMock();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -198,7 +222,7 @@ describe('UsersManager', () => {
     });
 
     it('renders active users section', async () => {
-      setupFetchMock();
+      setupMock();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -207,7 +231,7 @@ describe('UsersManager', () => {
     });
 
     it('renders other users section when there are non-approved users', async () => {
-      setupFetchMock();
+      setupMock();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -216,7 +240,7 @@ describe('UsersManager', () => {
     });
 
     it('displays user display names', async () => {
-      setupFetchMock();
+      setupMock();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -227,7 +251,7 @@ describe('UsersManager', () => {
     });
 
     it('shows admin badge for admin users', async () => {
-      setupFetchMock();
+      setupMock();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -240,22 +264,12 @@ describe('UsersManager', () => {
   describe('user actions', () => {
     it('approves pending user on click', async () => {
       const pendingUser = mockUsersData[0];
-      setupFetchMock([pendingUser]);
+      setupMock([pendingUser]);
 
-      mockFetch.mockImplementation((url: string, options?: RequestInit) => {
-        if (url === '/api/admin/users' && !options?.method) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ users: [pendingUser] }),
-          });
-        }
-        if (url === `/api/admin/users/${pendingUser.id}` && options?.method === 'PUT') {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ user: { ...pendingUser, status: 'APPROVED' } }),
-          });
-        }
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      mockUpdate.mockResolvedValue({
+        data: { user: { ...pendingUser, status: 'APPROVED' } },
+        error: undefined,
+        response: {} as Response,
       });
 
       renderWithMantine(<UsersManager />);
@@ -268,32 +282,20 @@ describe('UsersManager', () => {
       fireEvent.click(approveButton);
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/1', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'APPROVED' }),
-        });
+        expect(mockUpdate).toHaveBeenCalledWith('1', { status: 'APPROVED' });
       });
       expect(mockShowSuccessToast).toHaveBeenCalledWith('Benutzer freigegeben');
     });
 
     it('rejects pending user on click', async () => {
       const pendingUser = mockUsersData[0];
+      setupMock([pendingUser]);
 
-      mockFetch.mockImplementation((url: string, options?: RequestInit) => {
-        if (url === '/api/admin/users' && !options?.method) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ users: [pendingUser] }),
-          });
-        }
-        if (url === `/api/admin/users/${pendingUser.id}` && options?.method === 'PUT') {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ user: { ...pendingUser, status: 'REJECTED' } }),
-          });
-        }
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      // Note: REJECTED is a valid status in the API even though not in our MockUser type
+      mockUpdate.mockResolvedValue({
+        data: { user: { ...pendingUser, status: 'APPROVED' } as MockUser },
+        error: undefined,
+        response: {} as Response,
       });
 
       renderWithMantine(<UsersManager />);
@@ -306,31 +308,18 @@ describe('UsersManager', () => {
       fireEvent.click(rejectButton);
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/1', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'REJECTED' }),
-        });
+        expect(mockUpdate).toHaveBeenCalledWith('1', { status: 'REJECTED' });
       });
     });
 
     it('promotes user to admin', async () => {
       const activeUser = mockUsersData[1];
+      setupMock([activeUser]);
 
-      mockFetch.mockImplementation((url: string, options?: RequestInit) => {
-        if (url === '/api/admin/users' && !options?.method) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ users: [activeUser] }),
-          });
-        }
-        if (url === `/api/admin/users/${activeUser.id}` && options?.method === 'PUT') {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ user: { ...activeUser, role: 'ADMIN' } }),
-          });
-        }
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      mockUpdate.mockResolvedValue({
+        data: { user: { ...activeUser, role: 'ADMIN' } },
+        error: undefined,
+        response: {} as Response,
       });
 
       renderWithMantine(<UsersManager />);
@@ -343,32 +332,19 @@ describe('UsersManager', () => {
       fireEvent.click(promoteButton);
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/2', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ role: 'ADMIN' }),
-        });
+        expect(mockUpdate).toHaveBeenCalledWith('2', { role: 'ADMIN' });
       });
       expect(mockShowSuccessToast).toHaveBeenCalledWith('Zum Admin befördert');
     });
 
     it('shows error toast when role change fails', async () => {
       const activeUser = mockUsersData[1];
+      setupMock([activeUser]);
 
-      mockFetch.mockImplementation((url: string, options?: RequestInit) => {
-        if (url === '/api/admin/users' && !options?.method) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ users: [activeUser] }),
-          });
-        }
-        if (url === `/api/admin/users/${activeUser.id}` && options?.method === 'PUT') {
-          return Promise.resolve({
-            ok: false,
-            json: () => Promise.resolve({ error: 'Cannot promote' }),
-          });
-        }
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      mockUpdate.mockResolvedValue({
+        data: undefined,
+        error: { error: 'Cannot promote' },
+        response: {} as Response,
       });
 
       renderWithMantine(<UsersManager />);
@@ -389,7 +365,7 @@ describe('UsersManager', () => {
   describe('delete confirmation', () => {
     it('opens delete confirmation modal for pending users', async () => {
       const pendingUser = mockUsersData[0];
-      setupFetchMock([pendingUser]);
+      setupMock([pendingUser]);
 
       renderWithMantine(<UsersManager />);
 
@@ -408,21 +384,12 @@ describe('UsersManager', () => {
 
     it('deletes user when confirmed', async () => {
       const pendingUser = mockUsersData[0];
+      setupMock([pendingUser]);
 
-      mockFetch.mockImplementation((url: string, options?: RequestInit) => {
-        if (url === '/api/admin/users' && !options?.method) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ users: [pendingUser] }),
-          });
-        }
-        if (url === `/api/admin/users/${pendingUser.id}` && options?.method === 'DELETE') {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({}),
-          });
-        }
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      mockDelete.mockResolvedValue({
+        data: { success: true },
+        error: undefined,
+        response: {} as Response,
       });
 
       renderWithMantine(<UsersManager />);
@@ -444,7 +411,7 @@ describe('UsersManager', () => {
       fireEvent.click(confirmButton!);
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/1', { method: 'DELETE' });
+        expect(mockDelete).toHaveBeenCalledWith('1');
       });
       expect(mockShowSuccessToast).toHaveBeenCalledWith('Benutzer gelöscht');
     });
@@ -453,7 +420,7 @@ describe('UsersManager', () => {
   describe('display', () => {
     it('falls back to username when displayName is null', async () => {
       const userWithoutDisplayName = { ...mockUsersData[0], displayName: null };
-      setupFetchMock([userWithoutDisplayName]);
+      setupMock([userWithoutDisplayName]);
 
       renderWithMantine(<UsersManager />);
 
@@ -463,7 +430,7 @@ describe('UsersManager', () => {
     });
 
     it('hides pending users section when none exist', async () => {
-      setupFetchMock([mockUsersData[1]]); // Only APPROVED user
+      setupMock([mockUsersData[1]]); // Only APPROVED user
 
       renderWithMantine(<UsersManager />);
 
@@ -474,7 +441,7 @@ describe('UsersManager', () => {
     });
 
     it('shows no active users message when none exist', async () => {
-      setupFetchMock([mockUsersData[0]]); // Only PENDING user
+      setupMock([mockUsersData[0]]); // Only PENDING user
 
       renderWithMantine(<UsersManager />);
 
@@ -487,21 +454,12 @@ describe('UsersManager', () => {
   describe('suspend and reactivate', () => {
     it('suspends user when confirmed', async () => {
       const activeUser = mockUsersData[1];
+      setupMock([activeUser]);
 
-      mockFetch.mockImplementation((url: string, options?: RequestInit) => {
-        if (url === '/api/admin/users' && !options?.method) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ users: [activeUser] }),
-          });
-        }
-        if (url === `/api/admin/users/${activeUser.id}` && options?.method === 'PUT') {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ user: { ...activeUser, status: 'SUSPENDED' } }),
-          });
-        }
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      mockUpdate.mockResolvedValue({
+        data: { user: { ...activeUser, status: 'SUSPENDED' } },
+        error: undefined,
+        response: {} as Response,
       });
 
       renderWithMantine(<UsersManager />);
@@ -522,31 +480,18 @@ describe('UsersManager', () => {
       fireEvent.click(confirmButton!);
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/2', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'SUSPENDED' }),
-        });
+        expect(mockUpdate).toHaveBeenCalledWith('2', { status: 'SUSPENDED' });
       });
     });
 
     it('reactivates suspended user', async () => {
       const suspendedUser = mockUsersData[3];
+      setupMock([suspendedUser]);
 
-      mockFetch.mockImplementation((url: string, options?: RequestInit) => {
-        if (url === '/api/admin/users' && !options?.method) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ users: [suspendedUser] }),
-          });
-        }
-        if (url === `/api/admin/users/${suspendedUser.id}` && options?.method === 'PUT') {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ user: { ...suspendedUser, status: 'APPROVED' } }),
-          });
-        }
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      mockUpdate.mockResolvedValue({
+        data: { user: { ...suspendedUser, status: 'APPROVED' } },
+        error: undefined,
+        response: {} as Response,
       });
 
       renderWithMantine(<UsersManager />);
@@ -559,11 +504,7 @@ describe('UsersManager', () => {
       fireEvent.click(reactivateButton);
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/4', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'APPROVED' }),
-        });
+        expect(mockUpdate).toHaveBeenCalledWith('4', { status: 'APPROVED' });
       });
     });
   });
@@ -571,21 +512,12 @@ describe('UsersManager', () => {
   describe('demote admin', () => {
     it('demotes admin when confirmed', async () => {
       const adminUser = mockUsersData[2];
+      setupMock([adminUser]);
 
-      mockFetch.mockImplementation((url: string, options?: RequestInit) => {
-        if (url === '/api/admin/users' && !options?.method) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ users: [adminUser] }),
-          });
-        }
-        if (url === `/api/admin/users/${adminUser.id}` && options?.method === 'PUT') {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ user: { ...adminUser, role: 'USER' } }),
-          });
-        }
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      mockUpdate.mockResolvedValue({
+        data: { user: { ...adminUser, role: 'USER' } },
+        error: undefined,
+        response: {} as Response,
       });
 
       renderWithMantine(<UsersManager />);
@@ -605,11 +537,7 @@ describe('UsersManager', () => {
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/3', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ role: 'USER' }),
-        });
+        expect(mockUpdate).toHaveBeenCalledWith('3', { role: 'USER' });
       });
       expect(mockShowSuccessToast).toHaveBeenCalledWith('Adminrechte entzogen');
     });
@@ -618,24 +546,12 @@ describe('UsersManager', () => {
   describe('password reset', () => {
     it('resets password and shows result modal', async () => {
       const activeUser = mockUsersData[1];
+      setupMock([activeUser]);
 
-      mockFetch.mockImplementation((url: string, options?: RequestInit) => {
-        if (url === '/api/admin/users' && !options?.method) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ users: [activeUser] }),
-          });
-        }
-        if (
-          url === `/api/admin/users/${activeUser.id}/reset-password` &&
-          options?.method === 'POST'
-        ) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ newPassword: 'TempPass123' }),
-          });
-        }
-        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      mockResetPassword.mockResolvedValue({
+        data: { temporaryPassword: 'TempPass123' },
+        error: undefined,
+        response: {} as Response,
       });
 
       renderWithMantine(<UsersManager />);
@@ -648,9 +564,7 @@ describe('UsersManager', () => {
       fireEvent.click(resetButton);
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/2/reset-password', {
-          method: 'POST',
-        });
+        expect(mockResetPassword).toHaveBeenCalledWith('2');
       });
 
       await waitFor(() => {
@@ -664,16 +578,9 @@ describe('UsersManager', () => {
   describe('error handling', () => {
     it('handles unknown errors gracefully', async () => {
       const activeUser = mockUsersData[1];
+      setupMock([activeUser]);
 
-      mockFetch.mockImplementation((url: string, options?: RequestInit) => {
-        if (url === '/api/admin/users' && !options?.method) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ users: [activeUser] }),
-          });
-        }
-        return Promise.reject('Network error');
-      });
+      mockUpdate.mockRejectedValue('Network error');
 
       renderWithMantine(<UsersManager />);
 

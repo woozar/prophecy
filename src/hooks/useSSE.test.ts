@@ -67,6 +67,7 @@ describe('useSSE', () => {
   let createdInstances: Array<{
     onopen: (() => void) | null;
     onerror: (() => void) | null;
+    onmessage: (() => void) | null;
     close: ReturnType<typeof vi.fn>;
     addEventListener: ReturnType<typeof vi.fn>;
   }>;
@@ -156,11 +157,13 @@ describe('useSSE', () => {
     const MockEventSource = vi.fn(function (this: {
       onopen: (() => void) | null;
       onerror: (() => void) | null;
+      onmessage: (() => void) | null;
       close: ReturnType<typeof vi.fn>;
       addEventListener: ReturnType<typeof vi.fn>;
     }) {
       this.onopen = null;
       this.onerror = null;
+      this.onmessage = null;
       this.close = vi.fn();
       this.addEventListener = vi.fn();
       createdInstances.push(this);

@@ -312,6 +312,71 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/admin/rounds/{id}/bot-ratings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Trigger bot ratings for a round (Admin only) */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Bot ratings triggered successfully */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['BotRatingsResponse'];
+          };
+        };
+        /** @description Error running bot ratings */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Forbidden (not admin) */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/auth/login/password': {
     parameters: {
       query?: never;
@@ -736,6 +801,51 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/initial-data': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get all initial data for store hydration */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Initial data for store */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['InitialDataResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/prophecies': {
     parameters: {
       query?: never;
@@ -1124,6 +1234,62 @@ export interface paths {
         };
       };
     };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/prophecies/{id}/audit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get audit logs for a prophecy */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Audit logs for the prophecy */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['AuditLogsResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Prophecy not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -2100,6 +2266,19 @@ export interface components {
     ResetPasswordResponse: {
       temporaryPassword: string;
     };
+    BotRatingsResult: {
+      botId: string;
+      botName: string;
+      ratingsCreated: number;
+    };
+    BotRatingsResponse: {
+      success: boolean;
+      message: string;
+      result: {
+        totalRatingsCreated: number;
+        bots: components['schemas']['BotRatingsResult'][];
+      };
+    };
     LoginResponse: {
       user: {
         id: string;
@@ -2236,6 +2415,36 @@ export interface components {
       username: string;
       displayName: string;
     };
+    InitialDataUser: {
+      id: string;
+      username: string;
+      displayName: string | null;
+      avatarUrl: string | null;
+      avatarEffect: string | null;
+      avatarEffectColors: string[];
+      role: components['schemas']['Role'];
+      status: components['schemas']['UserStatus'];
+      isBot: boolean;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    Round: {
+      id: string;
+      title: string;
+      /** Format: date-time */
+      submissionDeadline: string;
+      /** Format: date-time */
+      ratingDeadline: string;
+      /** Format: date-time */
+      fulfillmentDate: string;
+      /** Format: date-time */
+      resultsPublishedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      _count?: {
+        prophecies: number;
+      };
+    };
     Prophecy: {
       id: string;
       title: string;
@@ -2247,6 +2456,21 @@ export interface components {
       fulfilled: boolean | null;
       /** Format: date-time */
       resolvedAt: string | null;
+    };
+    Rating: {
+      id: string;
+      value: number;
+      prophecyId: string;
+      userId: string;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    InitialDataResponse: {
+      users: components['schemas']['InitialDataUser'][];
+      rounds: components['schemas']['Round'][];
+      prophecies: components['schemas']['Prophecy'][];
+      ratings: components['schemas']['Rating'][];
+      currentUserId: string;
     };
     PropheciesListResponse: {
       prophecies: components['schemas']['Prophecy'][];
@@ -2265,36 +2489,36 @@ export interface components {
       /** @default  */
       description: string;
     };
-    Rating: {
-      id: string;
-      value: number;
-      prophecyId: string;
-      userId: string;
-      /** Format: date-time */
-      createdAt: string;
-    };
     RateRequest: {
       value: number;
     };
     ResolveRequest: {
       fulfilled: boolean;
     };
-    Round: {
+    /** @enum {string} */
+    AuditLogEntityType: 'RATING' | 'PROPHECY';
+    /** @enum {string} */
+    AuditLogAction: 'CREATE' | 'UPDATE' | 'DELETE' | 'BULK_DELETE';
+    AuditLog: {
       id: string;
-      title: string;
-      /** Format: date-time */
-      submissionDeadline: string;
-      /** Format: date-time */
-      ratingDeadline: string;
-      /** Format: date-time */
-      fulfillmentDate: string;
-      /** Format: date-time */
-      resultsPublishedAt: string | null;
+      entityType: components['schemas']['AuditLogEntityType'];
+      entityId: string;
+      action: components['schemas']['AuditLogAction'];
+      prophecyId: string | null;
+      userId: string;
+      oldValue: string | null;
+      newValue: string | null;
+      context: string | null;
       /** Format: date-time */
       createdAt: string;
-      _count?: {
-        prophecies: number;
+      user: {
+        id: string;
+        username: string;
+        displayName: string | null;
       };
+    };
+    AuditLogsResponse: {
+      auditLogs: components['schemas']['AuditLog'][];
     };
     RoundsListResponse: {
       rounds: components['schemas']['Round'][];

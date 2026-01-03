@@ -148,6 +148,48 @@
         },
         "required": ["temporaryPassword"]
       },
+      "BotRatingsResult": {
+        "type": "object",
+        "properties": {
+          "botId": {
+            "type": "string"
+          },
+          "botName": {
+            "type": "string"
+          },
+          "ratingsCreated": {
+            "type": "number"
+          }
+        },
+        "required": ["botId", "botName", "ratingsCreated"]
+      },
+      "BotRatingsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "totalRatingsCreated": {
+                "type": "number"
+              },
+              "bots": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/BotRatingsResult"
+                }
+              }
+            },
+            "required": ["totalRatingsCreated", "bots"]
+          }
+        },
+        "required": ["success", "message", "result"]
+      },
       "LoginResponse": {
         "type": "object",
         "properties": {
@@ -578,6 +620,110 @@
         },
         "required": ["credential", "tempUserId", "username", "displayName"]
       },
+      "InitialDataUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarEffect": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarEffectColors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "status": {
+            "$ref": "#/components/schemas/UserStatus"
+          },
+          "isBot": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "displayName",
+          "avatarUrl",
+          "avatarEffect",
+          "avatarEffectColors",
+          "role",
+          "status",
+          "isBot",
+          "createdAt"
+        ]
+      },
+      "Round": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "submissionDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ratingDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fulfillmentDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resultsPublishedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "_count": {
+            "type": "object",
+            "properties": {
+              "prophecies": {
+                "type": "number"
+              }
+            },
+            "required": ["prophecies"]
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "submissionDeadline",
+          "ratingDeadline",
+          "fulfillmentDate",
+          "resultsPublishedAt",
+          "createdAt"
+        ]
+      },
       "Prophecy": {
         "type": "object",
         "properties": {
@@ -621,6 +767,61 @@
           "fulfilled",
           "resolvedAt"
         ]
+      },
+      "Rating": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "prophecyId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["id", "value", "prophecyId", "userId", "createdAt"]
+      },
+      "InitialDataResponse": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InitialDataUser"
+            }
+          },
+          "rounds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Round"
+            }
+          },
+          "prophecies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Prophecy"
+            }
+          },
+          "ratings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Rating"
+            }
+          },
+          "currentUserId": {
+            "type": "string"
+          }
+        },
+        "required": ["users", "rounds", "prophecies", "ratings", "currentUserId"]
       },
       "PropheciesListResponse": {
         "type": "object",
@@ -679,28 +880,6 @@
         },
         "required": ["title"]
       },
-      "Rating": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "value": {
-            "type": "number"
-          },
-          "prophecyId": {
-            "type": "string"
-          },
-          "userId": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": ["id", "value", "prophecyId", "userId", "createdAt"]
-      },
       "RateRequest": {
         "type": "object",
         "properties": {
@@ -721,55 +900,94 @@
         },
         "required": ["fulfilled"]
       },
-      "Round": {
+      "AuditLogEntityType": {
+        "type": "string",
+        "enum": ["RATING", "PROPHECY"]
+      },
+      "AuditLogAction": {
+        "type": "string",
+        "enum": ["CREATE", "UPDATE", "DELETE", "BULK_DELETE"]
+      },
+      "AuditLog": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string"
           },
-          "title": {
+          "entityType": {
+            "$ref": "#/components/schemas/AuditLogEntityType"
+          },
+          "entityId": {
             "type": "string"
           },
-          "submissionDeadline": {
-            "type": "string",
-            "format": "date-time"
+          "action": {
+            "$ref": "#/components/schemas/AuditLogAction"
           },
-          "ratingDeadline": {
+          "prophecyId": {
             "type": "string",
-            "format": "date-time"
+            "nullable": true
           },
-          "fulfillmentDate": {
-            "type": "string",
-            "format": "date-time"
+          "userId": {
+            "type": "string"
           },
-          "resultsPublishedAt": {
+          "oldValue": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "nullable": true
+          },
+          "newValue": {
+            "type": "string",
+            "nullable": true
+          },
+          "context": {
+            "type": "string",
+            "nullable": true
           },
           "createdAt": {
             "type": "string",
             "format": "date-time"
           },
-          "_count": {
+          "user": {
             "type": "object",
             "properties": {
-              "prophecies": {
-                "type": "number"
+              "id": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string",
+                "nullable": true
               }
             },
-            "required": ["prophecies"]
+            "required": ["id", "username", "displayName"]
           }
         },
         "required": [
           "id",
-          "title",
-          "submissionDeadline",
-          "ratingDeadline",
-          "fulfillmentDate",
-          "resultsPublishedAt",
-          "createdAt"
+          "entityType",
+          "entityId",
+          "action",
+          "prophecyId",
+          "userId",
+          "oldValue",
+          "newValue",
+          "context",
+          "createdAt",
+          "user"
         ]
+      },
+      "AuditLogsResponse": {
+        "type": "object",
+        "properties": {
+          "auditLogs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLog"
+            }
+          }
+        },
+        "required": ["auditLogs"]
       },
       "RoundsListResponse": {
         "type": "object",
@@ -1340,6 +1558,65 @@
         }
       }
     },
+    "/api/admin/rounds/{id}/bot-ratings": {
+      "post": {
+        "tags": ["Admin"],
+        "summary": "Trigger bot ratings for a round (Admin only)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Round ID"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bot ratings triggered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotRatingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error running bot ratings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (not admin)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/login/password": {
       "post": {
         "tags": ["Auth"],
@@ -1662,6 +1939,34 @@
           },
           "400": {
             "description": "Verification failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/initial-data": {
+      "get": {
+        "tags": ["Data"],
+        "summary": "Get all initial data for store hydration",
+        "responses": {
+          "200": {
+            "description": "Initial data for store",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitialDataResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "application/json": {
                 "schema": {
@@ -2093,6 +2398,55 @@
           },
           "403": {
             "description": "Forbidden (not admin)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Prophecy not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prophecies/{id}/audit": {
+      "get": {
+        "tags": ["Prophecies"],
+        "summary": "Get audit logs for a prophecy",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Prophecy ID"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit logs for the prophecy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditLogsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "application/json": {
                 "schema": {

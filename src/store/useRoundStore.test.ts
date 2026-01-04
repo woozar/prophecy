@@ -1,7 +1,13 @@
 import { act } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { type Round, useRoundStore } from './useRoundStore';
+import {
+  type Round,
+  selectAllRounds,
+  selectRoundById,
+  selectRoundsSortedByDate,
+  useRoundStore,
+} from './useRoundStore';
 
 describe('useRoundStore', () => {
   const mockRound: Round = {
@@ -206,6 +212,74 @@ describe('useRoundStore', () => {
 
       const { error } = useRoundStore.getState();
       expect(error).toBeNull();
+    });
+  });
+
+  describe('selectors', () => {
+    beforeEach(() => {
+      useRoundStore.setState({
+        rounds: {
+          'round-1': mockRound,
+          'round-2': mockRound2,
+        },
+      });
+    });
+
+    describe('selectRoundById', () => {
+      it('returns round by id', () => {
+        const state = useRoundStore.getState();
+        const result = selectRoundById('round-1')(state);
+        expect(result).toEqual(mockRound);
+      });
+
+      it('returns undefined for non-existent id', () => {
+        const state = useRoundStore.getState();
+        const result = selectRoundById('non-existent')(state);
+        expect(result).toBeUndefined();
+      });
+    });
+
+    describe('selectAllRounds', () => {
+      it('returns all rounds as array', () => {
+        const state = useRoundStore.getState();
+        const result = selectAllRounds(state);
+        expect(result).toHaveLength(2);
+        expect(result).toContainEqual(mockRound);
+        expect(result).toContainEqual(mockRound2);
+      });
+
+      it('returns empty array when no rounds', () => {
+        useRoundStore.setState({ rounds: {} });
+        const state = useRoundStore.getState();
+        const result = selectAllRounds(state);
+        expect(result).toEqual([]);
+      });
+    });
+
+    describe('selectRoundsSortedByDate', () => {
+      it('returns rounds sorted by createdAt descending', () => {
+        const state = useRoundStore.getState();
+        const result = selectRoundsSortedByDate(state);
+        expect(result).toHaveLength(2);
+        // mockRound2 was created later (2024-12-15) than mockRound (2024-12-01)
+        expect(result[0].id).toBe('round-2');
+        expect(result[1].id).toBe('round-1');
+      });
+
+      it('returns empty array when no rounds', () => {
+        useRoundStore.setState({ rounds: {} });
+        const state = useRoundStore.getState();
+        const result = selectRoundsSortedByDate(state);
+        expect(result).toEqual([]);
+      });
+
+      it('handles single round', () => {
+        useRoundStore.setState({ rounds: { 'round-1': mockRound } });
+        const state = useRoundStore.getState();
+        const result = selectRoundsSortedByDate(state);
+        expect(result).toHaveLength(1);
+        expect(result[0].id).toBe('round-1');
+      });
     });
   });
 });

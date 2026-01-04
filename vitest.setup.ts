@@ -3,6 +3,37 @@ import React from 'react';
 import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
 
+// Suppress jsdom "Not implemented: navigation" errors
+// This is a known limitation of jsdom - it doesn't support full navigation
+const originalConsoleError = console.error;
+console.error = (...args: unknown[]) => {
+  const message = args[0];
+  if (
+    (typeof message === 'object' &&
+      message instanceof Error &&
+      message.message.includes('Not implemented: navigation')) ||
+    (typeof message === 'string' && message.includes('Not implemented: navigation'))
+  ) {
+    return; // Suppress this specific error
+  }
+  originalConsoleError(...args);
+};
+
+// Also suppress via window error handler (jsdom sometimes throws these as unhandled)
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (event) => {
+    if (event.message?.includes('Not implemented: navigation')) {
+      event.preventDefault();
+      event.stopPropagation();
+      return true;
+    }
+  });
+}
+
+// Mock HTMLAnchorElement.click to prevent jsdom "Not implemented: navigation" errors
+// This prevents errors when code creates an anchor and clicks it (e.g., file downloads)
+HTMLAnchorElement.prototype.click = vi.fn();
+
 // Mock window.matchMedia for Mantine components
 // See: https://mantine.dev/guides/jest/
 Object.defineProperty(window, 'matchMedia', {
@@ -22,8 +53,15 @@ Object.defineProperty(window, 'matchMedia', {
 // Fix jsdom "Not implemented: navigation" error
 // See: https://github.com/vitest-dev/vitest/issues/4450
 // jsdom doesn't support navigation, so we replace window.location entirely
+let currentHref = 'http://localhost:3000/';
 const locationMock = {
-  href: 'http://localhost:3000/',
+  get href() {
+    return currentHref;
+  },
+  set href(value: string) {
+    // Mock setter - just update the internal value without triggering navigation
+    currentHref = value;
+  },
   origin: 'http://localhost:3000',
   protocol: 'http:',
   host: 'localhost:3000',
@@ -32,8 +70,12 @@ const locationMock = {
   pathname: '/',
   search: '',
   hash: '',
-  assign: vi.fn(),
-  replace: vi.fn(),
+  assign: vi.fn((url: string) => {
+    currentHref = url;
+  }),
+  replace: vi.fn((url: string) => {
+    currentHref = url;
+  }),
   reload: vi.fn(),
 };
 
@@ -41,6 +83,10 @@ const locationMock = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (window as any).location;
 window.location = locationMock as unknown as string & Location;
+
+// Also mock globalThis.location (some code uses globalThis instead of window)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(globalThis as any).location = locationMock;
 
 // Mock next/link to prevent jsdom navigation errors when clicking links
 // See: https://github.com/vercel/next.js/discussions/60125
@@ -119,6 +165,18 @@ vi.mock('@/lib/db/prisma', () => ({
       findMany: vi.fn(),
       create: vi.fn(),
     },
+    badge: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      upsert: vi.fn(),
+    },
+    userBadge: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+    },
     $transaction: vi.fn((fn) =>
       fn({
         round: {
@@ -164,4 +222,26 @@ vi.mock('@/lib/sse/event-emitter', () => ({
   sseEmitter: {
     broadcast: vi.fn(),
   },
+}));
+
+// Mock badge service for server tests
+vi.mock('@/lib/badges/badge-service', () => ({
+  checkAndAwardBadges: vi.fn().mockResolvedValue([]), // Returns AwardedUserBadge[]
+  awardBadge: vi.fn().mockResolvedValue(null),
+  getBadgeHolders: vi.fn().mockResolvedValue([]),
+  getUserBadges: vi.fn().mockResolvedValue([]),
+  getUserStats: vi.fn().mockResolvedValue({
+    propheciesCreated: 0,
+    propheciesFulfilled: 0,
+    accuracyRate: 0,
+    ratingsGiven: 0,
+    raterAccuracy: 0,
+    roundsParticipated: 0,
+    leaderboardWins: 0,
+    leaderboardSecond: 0,
+    leaderboardThird: 0,
+    averageRatingGiven: 0,
+    maxRatingsGiven: 0,
+    minRatingsGiven: 0,
+  }),
 }));

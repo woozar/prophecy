@@ -18,7 +18,8 @@ export type SSEEventType =
   | 'prophecy:deleted'
   | 'prophecy:rated'
   | 'rating:created'
-  | 'rating:updated';
+  | 'rating:updated'
+  | 'badge:awarded';
 
 export interface SSEEvent {
   type: SSEEventType;

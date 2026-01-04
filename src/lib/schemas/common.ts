@@ -39,7 +39,9 @@ export const userReferenceSchema = z
 export const roleSchema = z.enum(['USER', 'ADMIN']).openapi('Role');
 
 // User status enum
-export const userStatusSchema = z.enum(['PENDING', 'APPROVED', 'SUSPENDED']).openapi('UserStatus');
+export const userStatusSchema = z
+  .enum(['PENDING', 'APPROVED', 'SUSPENDED', 'REJECTED'])
+  .openapi('UserStatus');
 
 // Type exports
 export type IdParam = z.infer<typeof idParamSchema>;

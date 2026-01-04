@@ -3,6 +3,7 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { prisma } = await import('@/lib/db/prisma');
     const { ensureAdminExists, ensureBotsExist } = await import('@/lib/auth/admin-seed');
+    const { seedBadges } = await import('@/lib/badges/badge-service');
 
     // Warten bis DB-Verbindung steht
     try {
@@ -11,6 +12,7 @@ export async function register() {
 
       await ensureAdminExists();
       await ensureBotsExist();
+      await seedBadges();
     } catch (error) {
       console.error('Fehler bei der Initialisierung:', error);
     }

@@ -4,12 +4,51 @@ import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 import { validateBody } from '@/lib/api/validation';
 import { createAuditLog } from '@/lib/audit/audit-service';
 import { getSession } from '@/lib/auth/session';
+import { awardBadge, checkAndAwardBadges } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
 import { rateSchema } from '@/lib/schemas/rating';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
+}
+
+interface UserBadgeWithBadge {
+  id: string;
+  earnedAt: Date;
+  userId: string;
+  badgeId: string;
+  badge: unknown;
+}
+
+function broadcastBadges(badges: UserBadgeWithBadge[]): void {
+  for (const userBadge of badges) {
+    sseEmitter.broadcast({
+      type: 'badge:awarded',
+      data: {
+        id: userBadge.id,
+        earnedAt: userBadge.earnedAt.toISOString(),
+        userId: userBadge.userId,
+        badgeId: userBadge.badgeId,
+        badge: userBadge.badge,
+      },
+    });
+  }
+}
+
+async function checkClutchRaterBadge(
+  userId: string,
+  ratingDeadline: Date,
+  now: Date,
+  badges: UserBadgeWithBadge[]
+): Promise<void> {
+  const hoursUntilDeadline = (ratingDeadline.getTime() - now.getTime()) / (1000 * 60 * 60);
+  if (hoursUntilDeadline >= 1) return;
+
+  const clutchResult = await awardBadge(userId, 'time_clutch_rater');
+  if (clutchResult?.isNew) {
+    badges.push(clutchResult.userBadge);
+  }
 }
 
 // POST /api/prophecies/[id]/rate - Rate a prophecy
@@ -91,6 +130,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       oldValue: existingRating ? { value: existingRating.value } : null,
       newValue: { value: rating.value },
     });
+
+    // Check and award badges for the user (only on new ratings, not updates)
+    if (!isUpdate) {
+      const newBadges = await checkAndAwardBadges(session.userId);
+      await checkClutchRaterBadge(session.userId, prophecy.round.ratingDeadline, now, newBadges);
+      broadcastBadges(newBadges);
+    }
 
     const prophecyData = transformProphecyToResponse(prophecy);
 

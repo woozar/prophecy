@@ -30,12 +30,12 @@ interface HeaderProps {
   user: User;
 }
 
-const navItems = [{ href: '/', label: 'Runden', icon: 'home' }];
-
-const adminItems = [
-  { href: '/admin/users', label: 'Benutzer', icon: 'users' },
-  { href: '/admin/rounds', label: 'Runden verwalten', icon: 'settings' },
+const navItems = [
+  { href: '/', label: 'Runden', icon: 'home' },
+  { href: '/users', label: 'Benutzer', icon: 'users' },
 ];
+
+const adminItems = [{ href: '/admin/rounds', label: 'Runden verwalten', icon: 'settings' }];
 
 export const Header = memo(function Header({ user: serverUser }: Readonly<HeaderProps>) {
   // Use store user if available (for live updates), fallback to server user

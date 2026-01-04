@@ -7,6 +7,7 @@ import path from 'node:path';
 import sharp from 'sharp';
 
 import { getSession } from '@/lib/auth/session';
+import { awardBadge } from '@/lib/badges/badge-service';
 import { ensureInitialized, prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
@@ -14,6 +15,49 @@ const UPLOAD_DIR =
   process.env.NODE_ENV === 'production' ? '/app/uploads/avatars' : './uploads/avatars';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+
+function validateFile(file: File | null): string | null {
+  if (!file) return 'Keine Datei hochgeladen';
+  if (!ALLOWED_TYPES.has(file.type)) return 'Ungültiger Dateityp. Erlaubt: JPEG, PNG, WebP, GIF';
+  if (file.size > MAX_FILE_SIZE) return 'Datei zu groß. Maximum: 5MB';
+  return null;
+}
+
+async function deleteOldAvatar(
+  currentAvatarUrl: string | null,
+  newFilename: string
+): Promise<void> {
+  if (!currentAvatarUrl) return;
+  const oldFilename = currentAvatarUrl.split('/').pop();
+  if (oldFilename && oldFilename !== newFilename) {
+    const oldFilepath = path.join(UPLOAD_DIR, oldFilename);
+    if (existsSync(oldFilepath)) {
+      await unlink(oldFilepath);
+    }
+  }
+}
+
+async function processAndSaveImage(file: File): Promise<{ filename: string; filepath: string }> {
+  if (!existsSync(UPLOAD_DIR)) {
+    await mkdir(UPLOAD_DIR, { recursive: true });
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const processedImage = await sharp(buffer)
+    .resize(256, 256, { fit: 'cover', position: 'center' })
+    .webp({ quality: 85 })
+    .toBuffer();
+
+  const hash = createHash('sha256').update(processedImage).digest('hex');
+  const filename = `${hash}.webp`;
+  const filepath = path.join(UPLOAD_DIR, filename);
+
+  if (!existsSync(filepath)) {
+    await writeFile(filepath, processedImage);
+  }
+
+  return { filename, filepath };
+}
 
 // POST: Avatar hochladen
 export async function POST(request: NextRequest) {
@@ -28,66 +72,20 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('avatar') as File | null;
 
-    if (!file) {
-      return NextResponse.json({ error: 'Keine Datei hochgeladen' }, { status: 400 });
+    const validationError = validateFile(file);
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
-    // Validate file type
-    if (!ALLOWED_TYPES.has(file.type)) {
-      return NextResponse.json(
-        { error: 'Ungültiger Dateityp. Erlaubt: JPEG, PNG, WebP, GIF' },
-        { status: 400 }
-      );
-    }
+    const { filename } = await processAndSaveImage(file!);
 
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'Datei zu groß. Maximum: 5MB' }, { status: 400 });
-    }
-
-    // Ensure upload directory exists
-    if (!existsSync(UPLOAD_DIR)) {
-      await mkdir(UPLOAD_DIR, { recursive: true });
-    }
-
-    // Process image with sharp
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const processedImage = await sharp(buffer)
-      .resize(256, 256, {
-        fit: 'cover',
-        position: 'center',
-      })
-      .webp({ quality: 85 })
-      .toBuffer();
-
-    // Generate SHA-256 hash of the processed image for filename
-    const hash = createHash('sha256').update(processedImage).digest('hex');
-    const filename = `${hash}.webp`;
-    const filepath = path.join(UPLOAD_DIR, filename);
-
-    // Get current user to delete old avatar file
     const currentUser = await prisma.user.findUnique({
       where: { id: session.userId },
       select: { avatarUrl: true },
     });
 
-    // Delete old avatar file if it exists and is different
-    if (currentUser?.avatarUrl) {
-      const oldFilename = currentUser.avatarUrl.split('/').pop();
-      if (oldFilename && oldFilename !== filename) {
-        const oldFilepath = path.join(UPLOAD_DIR, oldFilename);
-        if (existsSync(oldFilepath)) {
-          await unlink(oldFilepath);
-        }
-      }
-    }
+    await deleteOldAvatar(currentUser?.avatarUrl ?? null, filename);
 
-    // Save new avatar (only if file doesn't exist - same hash means same content)
-    if (!existsSync(filepath)) {
-      await writeFile(filepath, processedImage);
-    }
-
-    // Update database
     const avatarUrl = `/api/uploads/avatars/${filename}`;
     const user = await prisma.user.update({
       where: { id: session.userId },
@@ -104,11 +102,23 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Broadcast update
-    sseEmitter.broadcast({
-      type: 'user:updated',
-      data: user,
-    });
+    sseEmitter.broadcast({ type: 'user:updated', data: user });
+
+    if (user.avatarUrl && user.avatarEffect) {
+      const badgeResult = await awardBadge(session.userId, 'special_stylist');
+      if (badgeResult?.isNew) {
+        sseEmitter.broadcast({
+          type: 'badge:awarded',
+          data: {
+            id: badgeResult.userBadge.id,
+            earnedAt: badgeResult.userBadge.earnedAt.toISOString(),
+            userId: badgeResult.userBadge.userId,
+            badgeId: badgeResult.userBadge.badgeId,
+            badge: badgeResult.userBadge.badge,
+          },
+        });
+      }
+    }
 
     return NextResponse.json({ success: true, avatarUrl });
   } catch (error) {

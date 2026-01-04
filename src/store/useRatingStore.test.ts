@@ -4,7 +4,10 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   type Rating,
   selectAllRatings,
+  selectAverageRatingByProphecyId,
+  selectHumanRatingCountByProphecyId,
   selectRatingById,
+  selectRatingCountByProphecyId,
   selectRatingsByProphecyId,
   selectRatingsByUserId,
   selectUserRatingForProphecy,
@@ -365,6 +368,184 @@ describe('useRatingStore', () => {
         const state = useRatingStore.getState();
         const result = selectUserRatingForProphecy('prophecy-99', 'user-1')(state);
         expect(result).toBeUndefined();
+      });
+    });
+
+    describe('selectRatingCountByProphecyId', () => {
+      it('returns count of non-zero ratings', () => {
+        const state = useRatingStore.getState();
+        const result = selectRatingCountByProphecyId('prophecy-1')(state);
+        expect(result).toBe(2); // mockRating1 (value=4) and mockRating2 (value=5)
+      });
+
+      it('excludes zero-value ratings from count', () => {
+        const zeroRating: Rating = {
+          id: 'rating-zero',
+          value: 0,
+          prophecyId: 'prophecy-1',
+          userId: 'user-3',
+          createdAt: '2025-01-04T00:00:00Z',
+        };
+        useRatingStore.setState({
+          ratings: {
+            'rating-1': mockRating1,
+            'rating-zero': zeroRating,
+          },
+          ratingsByProphecy: {
+            'prophecy-1': [mockRating1, zeroRating],
+          },
+        });
+        const state = useRatingStore.getState();
+        const result = selectRatingCountByProphecyId('prophecy-1')(state);
+        expect(result).toBe(1); // Only mockRating1 counted
+      });
+
+      it('returns 0 for prophecy with no ratings', () => {
+        const state = useRatingStore.getState();
+        const result = selectRatingCountByProphecyId('prophecy-99')(state);
+        expect(result).toBe(0);
+      });
+    });
+
+    describe('selectHumanRatingCountByProphecyId', () => {
+      const botUserIds = new Set(['bot-1', 'bot-2']);
+
+      it('returns count of human non-zero ratings', () => {
+        const state = useRatingStore.getState();
+        const result = selectHumanRatingCountByProphecyId('prophecy-1', botUserIds)(state);
+        expect(result).toBe(2); // Both ratings are from humans
+      });
+
+      it('excludes bot ratings from count', () => {
+        const botRating: Rating = {
+          id: 'rating-bot',
+          value: 5,
+          prophecyId: 'prophecy-1',
+          userId: 'bot-1',
+          createdAt: '2025-01-04T00:00:00Z',
+        };
+        useRatingStore.setState({
+          ratings: {
+            'rating-1': mockRating1,
+            'rating-bot': botRating,
+          },
+          ratingsByProphecy: {
+            'prophecy-1': [mockRating1, botRating],
+          },
+        });
+        const state = useRatingStore.getState();
+        const result = selectHumanRatingCountByProphecyId('prophecy-1', botUserIds)(state);
+        expect(result).toBe(1); // Only mockRating1 counted
+      });
+
+      it('excludes zero-value ratings from count', () => {
+        const zeroRating: Rating = {
+          id: 'rating-zero',
+          value: 0,
+          prophecyId: 'prophecy-1',
+          userId: 'user-3',
+          createdAt: '2025-01-04T00:00:00Z',
+        };
+        useRatingStore.setState({
+          ratings: {
+            'rating-1': mockRating1,
+            'rating-zero': zeroRating,
+          },
+          ratingsByProphecy: {
+            'prophecy-1': [mockRating1, zeroRating],
+          },
+        });
+        const state = useRatingStore.getState();
+        const result = selectHumanRatingCountByProphecyId('prophecy-1', botUserIds)(state);
+        expect(result).toBe(1);
+      });
+
+      it('returns 0 for prophecy with no ratings', () => {
+        const state = useRatingStore.getState();
+        const result = selectHumanRatingCountByProphecyId('prophecy-99', botUserIds)(state);
+        expect(result).toBe(0);
+      });
+    });
+
+    describe('selectAverageRatingByProphecyId', () => {
+      const botUserIds = new Set(['bot-1', 'bot-2']);
+
+      it('calculates average of human non-zero ratings', () => {
+        const state = useRatingStore.getState();
+        const result = selectAverageRatingByProphecyId('prophecy-1', botUserIds)(state);
+        expect(result).toBe(4.5); // (4 + 5) / 2
+      });
+
+      it('excludes bot ratings from average', () => {
+        const botRating: Rating = {
+          id: 'rating-bot',
+          value: 10,
+          prophecyId: 'prophecy-1',
+          userId: 'bot-1',
+          createdAt: '2025-01-04T00:00:00Z',
+        };
+        useRatingStore.setState({
+          ratings: {
+            'rating-1': mockRating1,
+            'rating-2': mockRating2,
+            'rating-bot': botRating,
+          },
+          ratingsByProphecy: {
+            'prophecy-1': [mockRating1, mockRating2, botRating],
+          },
+        });
+        const state = useRatingStore.getState();
+        const result = selectAverageRatingByProphecyId('prophecy-1', botUserIds)(state);
+        expect(result).toBe(4.5); // Bot rating excluded
+      });
+
+      it('excludes zero-value ratings from average', () => {
+        const zeroRating: Rating = {
+          id: 'rating-zero',
+          value: 0,
+          prophecyId: 'prophecy-1',
+          userId: 'user-3',
+          createdAt: '2025-01-04T00:00:00Z',
+        };
+        useRatingStore.setState({
+          ratings: {
+            'rating-1': mockRating1,
+            'rating-zero': zeroRating,
+          },
+          ratingsByProphecy: {
+            'prophecy-1': [mockRating1, zeroRating],
+          },
+        });
+        const state = useRatingStore.getState();
+        const result = selectAverageRatingByProphecyId('prophecy-1', botUserIds)(state);
+        expect(result).toBe(4); // Only mockRating1 value
+      });
+
+      it('returns null for prophecy with no human non-zero ratings', () => {
+        const botRating: Rating = {
+          id: 'rating-bot',
+          value: 5,
+          prophecyId: 'prophecy-1',
+          userId: 'bot-1',
+          createdAt: '2025-01-04T00:00:00Z',
+        };
+        useRatingStore.setState({
+          ratings: {
+            'rating-bot': botRating,
+          },
+          ratingsByProphecy: {
+            'prophecy-1': [botRating],
+          },
+        });
+        const state = useRatingStore.getState();
+        const result = selectAverageRatingByProphecyId('prophecy-1', botUserIds)(state);
+        expect(result).toBeNull();
+      });
+
+      it('returns null for prophecy with no ratings', () => {
+        const state = useRatingStore.getState();
+        const result = selectAverageRatingByProphecyId('prophecy-99', botUserIds)(state);
+        expect(result).toBeNull();
       });
     });
   });

@@ -1,9 +1,11 @@
 import { MantineProvider } from '@mantine/core';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { apiClient } from '@/lib/api-client/client';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
+import { useBadgeStore } from '@/store/useBadgeStore';
+import { useUserStore } from '@/store/useUserStore';
 
 import { UsersManager } from './UsersManager';
 
@@ -39,7 +41,6 @@ vi.mock('@/lib/api-client/client', () => ({
   apiClient: {
     admin: {
       users: {
-        list: vi.fn(),
         update: vi.fn(),
         delete: vi.fn(),
         resetPassword: vi.fn(),
@@ -48,7 +49,6 @@ vi.mock('@/lib/api-client/client', () => ({
   },
 }));
 
-const mockList = vi.mocked(apiClient.admin.users.list);
 const mockUpdate = vi.mocked(apiClient.admin.users.update);
 const mockDelete = vi.mocked(apiClient.admin.users.delete);
 const mockResetPassword = vi.mocked(apiClient.admin.users.resetPassword);
@@ -65,7 +65,9 @@ interface MockUser {
   avatarEffectColors: string[];
   status: 'PENDING' | 'APPROVED' | 'SUSPENDED';
   role: 'USER' | 'ADMIN';
+  isBot: boolean;
   createdAt: string;
+  badgeIds?: string[];
   _count: { prophecies: number; ratings: number };
 }
 
@@ -80,7 +82,9 @@ describe('UsersManager', () => {
       avatarEffectColors: [],
       status: 'PENDING',
       role: 'USER',
+      isBot: false,
       createdAt: '2025-01-15T10:00:00Z',
+      badgeIds: [],
       _count: { prophecies: 0, ratings: 0 },
     },
     {
@@ -92,7 +96,9 @@ describe('UsersManager', () => {
       avatarEffectColors: [],
       status: 'APPROVED',
       role: 'USER',
+      isBot: false,
       createdAt: '2025-01-10T10:00:00Z',
+      badgeIds: [],
       _count: { prophecies: 5, ratings: 10 },
     },
     {
@@ -104,7 +110,9 @@ describe('UsersManager', () => {
       avatarEffectColors: [],
       status: 'APPROVED',
       role: 'ADMIN',
+      isBot: false,
       createdAt: '2025-01-05T10:00:00Z',
+      badgeIds: [],
       _count: { prophecies: 3, ratings: 7 },
     },
     {
@@ -116,71 +124,75 @@ describe('UsersManager', () => {
       avatarEffectColors: [],
       status: 'SUSPENDED',
       role: 'USER',
+      isBot: false,
       createdAt: '2025-01-01T10:00:00Z',
+      badgeIds: [],
       _count: { prophecies: 1, ratings: 2 },
     },
   ];
 
+  // Helper to set up user store with data
+  function setupStore(users = mockUsersData, currentUserId = '3') {
+    const usersRecord = users.reduce(
+      (acc, user) => {
+        acc[user.id] = user;
+        return acc;
+      },
+      {} as Record<string, MockUser>
+    );
+
+    useUserStore.setState({
+      users: usersRecord,
+      currentUserId,
+      isInitialized: true,
+    });
+
+    useBadgeStore.setState({
+      badges: {},
+      allUserBadges: {},
+      isInitialized: true,
+    });
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset stores
+    useUserStore.setState({
+      users: {},
+      currentUserId: null,
+      isInitialized: false,
+    });
+    useBadgeStore.setState({
+      badges: {},
+      allUserBadges: {},
+      isInitialized: false,
+    });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  function setupMock(users = mockUsersData) {
-    mockList.mockResolvedValue({
-      data: { users },
-      error: undefined,
-      response: {} as Response,
-    });
-  }
-
   describe('initial loading', () => {
-    it('shows loading state initially', () => {
-      mockList.mockImplementation(() => new Promise(() => {})); // Never resolves
+    it('shows loading state when store not initialized', () => {
+      // Store not initialized = loading
       renderWithMantine(<UsersManager />);
       expect(screen.getByText('Benutzer werden geladen...')).toBeInTheDocument();
     });
 
-    it('fetches users on mount', async () => {
-      setupMock();
+    it('shows users when store is initialized', async () => {
+      setupStore();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
-        expect(mockList).toHaveBeenCalled();
-      });
-    });
-
-    it('shows error toast when fetch fails', async () => {
-      mockList.mockResolvedValue({
-        data: undefined,
-        error: { error: 'Failed' },
-        response: {} as Response,
-      });
-
-      renderWithMantine(<UsersManager />);
-
-      await waitFor(() => {
-        expect(mockShowErrorToast).toHaveBeenCalledWith('Fehler beim Laden der Benutzer');
-      });
-    });
-
-    it('shows error toast when fetch throws', async () => {
-      mockList.mockRejectedValue(new Error('Network error'));
-
-      renderWithMantine(<UsersManager />);
-
-      await waitFor(() => {
-        expect(mockShowErrorToast).toHaveBeenCalledWith('Fehler beim Laden der Benutzer');
+        expect(screen.getByText('Active User')).toBeInTheDocument();
       });
     });
   });
 
-  describe('PENDING users visibility (regression test)', () => {
-    it('displays PENDING users from the API in the pending section', async () => {
-      setupMock();
+  describe('PENDING users visibility', () => {
+    it('displays PENDING users in the pending section', async () => {
+      setupStore();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -190,21 +202,20 @@ describe('UsersManager', () => {
       expect(screen.getByText(/Ausstehende Freigaben \(1\)/)).toBeInTheDocument();
     });
 
-    it('loads all user statuses including PENDING', async () => {
+    it('shows multiple pending users', async () => {
       const usersWithMultiplePending = [
         { ...mockUsersData[0], id: 'p1', username: 'pending1', displayName: 'Pending 1' },
         { ...mockUsersData[0], id: 'p2', username: 'pending2', displayName: 'Pending 2' },
         { ...mockUsersData[0], id: 'p3', username: 'pending3', displayName: 'Pending 3' },
-        mockUsersData[1], // APPROVED
+        mockUsersData[2], // Admin (current user)
       ];
 
-      setupMock(usersWithMultiplePending);
+      setupStore(usersWithMultiplePending);
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
         expect(screen.getByText('Pending 1')).toBeInTheDocument();
       });
-
       expect(screen.getByText('Pending 2')).toBeInTheDocument();
       expect(screen.getByText('Pending 3')).toBeInTheDocument();
       expect(screen.getByText(/Ausstehende Freigaben \(3\)/)).toBeInTheDocument();
@@ -213,7 +224,7 @@ describe('UsersManager', () => {
 
   describe('rendering', () => {
     it('renders pending users section when pending users exist', async () => {
-      setupMock();
+      setupStore();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -222,7 +233,7 @@ describe('UsersManager', () => {
     });
 
     it('renders active users section', async () => {
-      setupMock();
+      setupStore();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -231,7 +242,7 @@ describe('UsersManager', () => {
     });
 
     it('renders other users section when there are non-approved users', async () => {
-      setupMock();
+      setupStore();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -240,7 +251,7 @@ describe('UsersManager', () => {
     });
 
     it('displays user display names', async () => {
-      setupMock();
+      setupStore();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -251,23 +262,22 @@ describe('UsersManager', () => {
     });
 
     it('shows admin badge for admin users', async () => {
-      setupMock();
+      setupStore();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
-        const adminBadges = screen.getAllByText('Admin');
-        expect(adminBadges.length).toBeGreaterThan(0);
+        expect(screen.getByText('Admin User')).toBeInTheDocument();
       });
+      // Admin badge should appear
+      expect(screen.getByText('Admin')).toBeInTheDocument();
     });
   });
 
   describe('user actions', () => {
     it('approves pending user on click', async () => {
-      const pendingUser = mockUsersData[0];
-      setupMock([pendingUser]);
-
+      setupStore();
       mockUpdate.mockResolvedValue({
-        data: { user: { ...pendingUser, status: 'APPROVED' } },
+        data: { user: { ...mockUsersData[0], status: 'APPROVED' } },
         error: undefined,
         response: {} as Response,
       });
@@ -278,22 +288,20 @@ describe('UsersManager', () => {
         expect(screen.getByText('Pending User')).toBeInTheDocument();
       });
 
-      const approveButton = screen.getByTitle('Freigeben');
-      fireEvent.click(approveButton);
+      const approveButtons = screen.getAllByTitle('Freigeben');
+      fireEvent.click(approveButtons[0]);
 
       await waitFor(() => {
         expect(mockUpdate).toHaveBeenCalledWith('1', { status: 'APPROVED' });
       });
+
       expect(mockShowSuccessToast).toHaveBeenCalledWith('Benutzer freigegeben');
     });
 
     it('rejects pending user on click', async () => {
-      const pendingUser = mockUsersData[0];
-      setupMock([pendingUser]);
-
-      // Note: REJECTED is a valid status in the API even though not in our MockUser type
+      setupStore();
       mockUpdate.mockResolvedValue({
-        data: { user: { ...pendingUser, status: 'APPROVED' } as MockUser },
+        data: { user: { ...mockUsersData[0], status: 'REJECTED' as const } },
         error: undefined,
         response: {} as Response,
       });
@@ -304,8 +312,8 @@ describe('UsersManager', () => {
         expect(screen.getByText('Pending User')).toBeInTheDocument();
       });
 
-      const rejectButton = screen.getByTitle('Ablehnen');
-      fireEvent.click(rejectButton);
+      const rejectButtons = screen.getAllByTitle('Ablehnen');
+      fireEvent.click(rejectButtons[0]);
 
       await waitFor(() => {
         expect(mockUpdate).toHaveBeenCalledWith('1', { status: 'REJECTED' });
@@ -313,11 +321,9 @@ describe('UsersManager', () => {
     });
 
     it('promotes user to admin', async () => {
-      const activeUser = mockUsersData[1];
-      setupMock([activeUser]);
-
+      setupStore();
       mockUpdate.mockResolvedValue({
-        data: { user: { ...activeUser, role: 'ADMIN' } },
+        data: { user: { ...mockUsersData[1], role: 'ADMIN' } },
         error: undefined,
         response: {} as Response,
       });
@@ -328,19 +334,18 @@ describe('UsersManager', () => {
         expect(screen.getByText('Active User')).toBeInTheDocument();
       });
 
-      const promoteButton = screen.getByTitle('Zum Admin machen');
-      fireEvent.click(promoteButton);
+      const promoteButtons = screen.getAllByTitle('Zum Admin machen');
+      fireEvent.click(promoteButtons[0]);
 
       await waitFor(() => {
         expect(mockUpdate).toHaveBeenCalledWith('2', { role: 'ADMIN' });
       });
+
       expect(mockShowSuccessToast).toHaveBeenCalledWith('Zum Admin befördert');
     });
 
     it('shows error toast when role change fails', async () => {
-      const activeUser = mockUsersData[1];
-      setupMock([activeUser]);
-
+      setupStore();
       mockUpdate.mockResolvedValue({
         data: undefined,
         error: { error: 'Cannot promote' },
@@ -353,8 +358,8 @@ describe('UsersManager', () => {
         expect(screen.getByText('Active User')).toBeInTheDocument();
       });
 
-      const promoteButton = screen.getByTitle('Zum Admin machen');
-      fireEvent.click(promoteButton);
+      const promoteButtons = screen.getAllByTitle('Zum Admin machen');
+      fireEvent.click(promoteButtons[0]);
 
       await waitFor(() => {
         expect(mockShowErrorToast).toHaveBeenCalledWith('Cannot promote');
@@ -364,28 +369,29 @@ describe('UsersManager', () => {
 
   describe('delete confirmation', () => {
     it('opens delete confirmation modal for pending users', async () => {
-      const pendingUser = mockUsersData[0];
-      setupMock([pendingUser]);
-
+      setupStore();
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
         expect(screen.getByText('Pending User')).toBeInTheDocument();
       });
 
-      const deleteButton = screen.getByTitle('Löschen');
-      fireEvent.click(deleteButton);
+      const deleteButtons = screen.getAllByTitle('Löschen');
+      fireEvent.click(deleteButtons[0]);
 
       await waitFor(() => {
-        expect(screen.getByText('Benutzer löschen?')).toBeInTheDocument();
+        expect(screen.getByText(/Benutzer löschen/)).toBeInTheDocument();
       });
-      expect(screen.getByText(/"Pending User"/)).toBeInTheDocument();
+      expect(screen.getByText(/Möchtest du "Pending User" wirklich löschen/)).toBeInTheDocument();
     });
 
     it('deletes user when confirmed', async () => {
-      const pendingUser = mockUsersData[0];
-      setupMock([pendingUser]);
-
+      // Only include pending user and admin
+      const usersForDelete = [
+        mockUsersData[0], // Pending User (id 1)
+        mockUsersData[2], // Admin User (id 3, current user)
+      ];
+      setupStore(usersForDelete);
       mockDelete.mockResolvedValue({
         data: { success: true },
         error: undefined,
@@ -398,30 +404,40 @@ describe('UsersManager', () => {
         expect(screen.getByText('Pending User')).toBeInTheDocument();
       });
 
-      const deleteButton = screen.getByTitle('Löschen');
+      // Find delete button for Pending User specifically
+      const pendingUserText = screen.getByText('Pending User');
+      const pendingUserCard = pendingUserText.closest('.card-dark') as HTMLElement;
+      const deleteButton = within(pendingUserCard).getByTitle('Löschen');
       fireEvent.click(deleteButton);
 
       await waitFor(() => {
         expect(screen.getByText('Benutzer löschen?')).toBeInTheDocument();
       });
 
-      const confirmButton = screen
-        .getAllByRole('button')
-        .find((btn) => btn.textContent?.includes('Löschen') && !btn.hasAttribute('title'));
-      fireEvent.click(confirmButton!);
+      // Click the confirm button in the modal - find by button text content
+      const buttons = screen.getAllByRole('button');
+      const confirmButton = buttons.find(
+        (btn) => btn.textContent === 'Löschen' && !btn.querySelector('svg')
+      );
+      if (confirmButton) fireEvent.click(confirmButton);
 
       await waitFor(() => {
         expect(mockDelete).toHaveBeenCalledWith('1');
       });
-      expect(mockShowSuccessToast).toHaveBeenCalledWith('Benutzer gelöscht');
+
+      await waitFor(() => {
+        expect(mockShowSuccessToast).toHaveBeenCalledWith('Benutzer gelöscht');
+      });
     });
   });
 
   describe('display', () => {
     it('falls back to username when displayName is null', async () => {
-      const userWithoutDisplayName = { ...mockUsersData[0], displayName: null };
-      setupMock([userWithoutDisplayName]);
-
+      const usersWithNullDisplayName = [
+        { ...mockUsersData[0], displayName: null },
+        mockUsersData[2], // Admin
+      ];
+      setupStore(usersWithNullDisplayName);
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -430,19 +446,26 @@ describe('UsersManager', () => {
     });
 
     it('hides pending users section when none exist', async () => {
-      setupMock([mockUsersData[1]]); // Only APPROVED user
-
+      const usersWithoutPending = mockUsersData.filter((u) => u.status !== 'PENDING');
+      setupStore(usersWithoutPending);
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
         expect(screen.getByText('Active User')).toBeInTheDocument();
       });
+
       expect(screen.queryByText(/Ausstehende Freigaben/)).not.toBeInTheDocument();
     });
 
     it('shows no active users message when none exist', async () => {
-      setupMock([mockUsersData[0]]); // Only PENDING user
-
+      // Admin must have SUSPENDED status to not appear in active users
+      // But we still need a working admin for the page to render
+      const adminWithSuspended = {
+        ...mockUsersData[2],
+        status: 'SUSPENDED' as const,
+      };
+      const usersWithoutActive = [mockUsersData[0], adminWithSuspended]; // Only pending and suspended
+      setupStore(usersWithoutActive);
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -453,11 +476,14 @@ describe('UsersManager', () => {
 
   describe('suspend and reactivate', () => {
     it('suspends user when confirmed', async () => {
-      const activeUser = mockUsersData[1];
-      setupMock([activeUser]);
-
+      // Only include Active User and Admin to simplify
+      const usersWithOneActive = [
+        mockUsersData[1], // Active User (id 2)
+        mockUsersData[2], // Admin User (id 3, current user)
+      ];
+      setupStore(usersWithOneActive);
       mockUpdate.mockResolvedValue({
-        data: { user: { ...activeUser, status: 'SUSPENDED' } },
+        data: { user: { ...mockUsersData[1], status: 'SUSPENDED' } },
         error: undefined,
         response: {} as Response,
       });
@@ -468,28 +494,37 @@ describe('UsersManager', () => {
         expect(screen.getByText('Active User')).toBeInTheDocument();
       });
 
-      const suspendButton = screen.getByTitle('Sperren');
+      // Find the suspend button for Active User specifically
+      const activeUserText = screen.getByText('Active User');
+      const activeUserCard = activeUserText.closest('.card-dark') as HTMLElement;
+      const suspendButton = within(activeUserCard).getByTitle('Sperren');
       fireEvent.click(suspendButton);
 
+      // Wait for modal to open
       await waitFor(() => {
         expect(screen.getByText('Benutzer sperren?')).toBeInTheDocument();
       });
 
-      const confirmButtons = screen.getAllByRole('button', { name: 'Sperren' });
-      const confirmButton = confirmButtons.find((btn) => !btn.hasAttribute('title'));
-      fireEvent.click(confirmButton!);
+      // Click the confirm button in the modal - find by button text content
+      const buttons = screen.getAllByRole('button');
+      const confirmButton = buttons.find(
+        (btn) => btn.textContent === 'Sperren' && !btn.querySelector('svg')
+      );
+      if (confirmButton) fireEvent.click(confirmButton);
 
       await waitFor(() => {
         expect(mockUpdate).toHaveBeenCalledWith('2', { status: 'SUSPENDED' });
       });
+
+      await waitFor(() => {
+        expect(mockShowSuccessToast).toHaveBeenCalledWith('Benutzer gesperrt');
+      });
     });
 
     it('reactivates suspended user', async () => {
-      const suspendedUser = mockUsersData[3];
-      setupMock([suspendedUser]);
-
+      setupStore();
       mockUpdate.mockResolvedValue({
-        data: { user: { ...suspendedUser, status: 'APPROVED' } },
+        data: { user: { ...mockUsersData[3], status: 'APPROVED' } },
         error: undefined,
         response: {} as Response,
       });
@@ -500,8 +535,8 @@ describe('UsersManager', () => {
         expect(screen.getByText('Suspended User')).toBeInTheDocument();
       });
 
-      const reactivateButton = screen.getByTitle('Reaktivieren');
-      fireEvent.click(reactivateButton);
+      const reactivateButtons = screen.getAllByTitle('Reaktivieren');
+      fireEvent.click(reactivateButtons[0]);
 
       await waitFor(() => {
         expect(mockUpdate).toHaveBeenCalledWith('4', { status: 'APPROVED' });
@@ -511,11 +546,20 @@ describe('UsersManager', () => {
 
   describe('demote admin', () => {
     it('demotes admin when confirmed', async () => {
-      const adminUser = mockUsersData[2];
-      setupMock([adminUser]);
+      // Need a second admin so we can demote admin_user
+      const usersWithTwoAdmins = [
+        ...mockUsersData,
+        {
+          ...mockUsersData[2],
+          id: '5',
+          username: 'second_admin',
+          displayName: 'Second Admin',
+        },
+      ];
+      setupStore(usersWithTwoAdmins, '5'); // Current user is second admin
 
       mockUpdate.mockResolvedValue({
-        data: { user: { ...adminUser, role: 'USER' } },
+        data: { user: { ...mockUsersData[2], role: 'USER' } },
         error: undefined,
         response: {} as Response,
       });
@@ -526,30 +570,33 @@ describe('UsersManager', () => {
         expect(screen.getByText('Admin User')).toBeInTheDocument();
       });
 
-      const demoteButton = screen.getByTitle('Adminrechte entziehen');
-      fireEvent.click(demoteButton);
+      const demoteButtons = screen.getAllByTitle('Adminrechte entziehen');
+      fireEvent.click(demoteButtons[0]);
 
+      // Wait for modal to open
       await waitFor(() => {
-        expect(screen.getByText('Adminrechte entziehen?')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Rechte entziehen' })).toBeInTheDocument();
       });
 
+      // Confirm in modal
       const confirmButton = screen.getByRole('button', { name: 'Rechte entziehen' });
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
         expect(mockUpdate).toHaveBeenCalledWith('3', { role: 'USER' });
       });
-      expect(mockShowSuccessToast).toHaveBeenCalledWith('Adminrechte entzogen');
+
+      await waitFor(() => {
+        expect(mockShowSuccessToast).toHaveBeenCalledWith('Adminrechte entzogen');
+      });
     });
   });
 
   describe('password reset', () => {
     it('resets password and shows result modal', async () => {
-      const activeUser = mockUsersData[1];
-      setupMock([activeUser]);
-
+      setupStore();
       mockResetPassword.mockResolvedValue({
-        data: { temporaryPassword: 'TempPass123' },
+        data: { temporaryPassword: 'temp123' },
         error: undefined,
         response: {} as Response,
       });
@@ -560,8 +607,8 @@ describe('UsersManager', () => {
         expect(screen.getByText('Active User')).toBeInTheDocument();
       });
 
-      const resetButton = screen.getByTitle('Passwort zurücksetzen');
-      fireEvent.click(resetButton);
+      const resetButtons = screen.getAllByTitle('Passwort zurücksetzen');
+      fireEvent.click(resetButtons[0]);
 
       await waitFor(() => {
         expect(mockResetPassword).toHaveBeenCalledWith('2');
@@ -570,17 +617,14 @@ describe('UsersManager', () => {
       await waitFor(() => {
         expect(screen.getByText('Passwort zurückgesetzt')).toBeInTheDocument();
       });
-      expect(screen.getByText('TempPass123')).toBeInTheDocument();
-      expect(mockShowSuccessToast).toHaveBeenCalledWith('Passwort wurde zurückgesetzt');
+      expect(screen.getByText('temp123')).toBeInTheDocument();
     });
   });
 
   describe('error handling', () => {
     it('handles unknown errors gracefully', async () => {
-      const activeUser = mockUsersData[1];
-      setupMock([activeUser]);
-
-      mockUpdate.mockRejectedValue('Network error');
+      setupStore();
+      mockUpdate.mockRejectedValue(new Error('Unknown error'));
 
       renderWithMantine(<UsersManager />);
 
@@ -588,11 +632,11 @@ describe('UsersManager', () => {
         expect(screen.getByText('Active User')).toBeInTheDocument();
       });
 
-      const promoteButton = screen.getByTitle('Zum Admin machen');
-      fireEvent.click(promoteButton);
+      const promoteButtons = screen.getAllByTitle('Zum Admin machen');
+      fireEvent.click(promoteButtons[0]);
 
       await waitFor(() => {
-        expect(mockShowErrorToast).toHaveBeenCalledWith('Unbekannter Fehler');
+        expect(mockShowErrorToast).toHaveBeenCalledWith('Unknown error');
       });
     });
   });

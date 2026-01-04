@@ -18,6 +18,11 @@ interface ProphecyWithRelations {
   }>;
 }
 
+// Resolved prophecy has fulfilled !== null
+interface ResolvedProphecy extends ProphecyWithRelations {
+  fulfilled: boolean;
+}
+
 // Calculate average rating from ratings (excluding zero values and bot ratings)
 function calculateAverageRating(ratings: ProphecyWithRelations['ratings']): number | null {
   const humanNonZeroRatings = ratings.filter((r) => r.value !== 0 && !r.user.isBot);
@@ -90,14 +95,15 @@ function calculateCreatorPercentages(stats: CreatorStats): void {
     stats.maxPossibleScore > 0 ? Math.round((stats.totalScore / stats.maxPossibleScore) * 100) : 0;
 }
 
-function isCorrectRating(ratingValue: number, fulfilled: boolean | null): boolean {
-  return (ratingValue > 0 && fulfilled === true) || (ratingValue < 0 && fulfilled === false);
+// Rating scale: -10 = "will happen" (fulfilled), +10 = "won't happen" (not fulfilled)
+function isCorrectRating(ratingValue: number, fulfilled: boolean): boolean {
+  return (ratingValue < 0 && fulfilled) || (ratingValue > 0 && !fulfilled);
 }
 
 function updateRaterStatsForRating(
   stats: RaterStats,
   ratingValue: number,
-  fulfilled: boolean | null
+  fulfilled: boolean
 ): void {
   stats.totalRatings++;
   const absValue = Math.abs(ratingValue);
@@ -138,7 +144,7 @@ function buildCreatorStats(prophecies: ProphecyWithRelations[]): CreatorStats[] 
   return Array.from(creatorMap.values()).sort((a, b) => b.totalScore - a.totalScore);
 }
 
-function buildRaterStats(resolvedProphecies: ProphecyWithRelations[]): RaterStats[] {
+function buildRaterStats(resolvedProphecies: ResolvedProphecy[]): RaterStats[] {
   const raterMap = new Map<string, RaterStats>();
 
   for (const prophecy of resolvedProphecies) {
@@ -182,7 +188,10 @@ export async function calculateRoundStatistics(roundId: string): Promise<RoundSt
   });
 
   const acceptedProphecies = prophecies.filter(isAcceptedProphecy);
-  const resolvedProphecies = acceptedProphecies.filter((p) => p.fulfilled !== null);
+  // Filter to resolved prophecies - fulfilled is guaranteed to be non-null after this filter
+  const resolvedProphecies = acceptedProphecies
+    .filter((p) => p.fulfilled !== null)
+    .map((p) => ({ ...p, fulfilled: p.fulfilled as boolean }));
 
   return {
     roundId,

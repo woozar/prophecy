@@ -184,7 +184,12 @@ describe('Header', () => {
 
   it('displays user role for regular user', () => {
     render(<Header user={defaultUser} />);
-    expect(screen.getByText('Benutzer')).toBeInTheDocument();
+    // The role badge is in a <p> element with text-(--text-muted) class
+    const roleBadges = screen.getAllByText('Benutzer');
+    const roleBadge = roleBadges.find(
+      (el) => el.tagName === 'P' && el.classList.contains('text-(--text-muted)')
+    );
+    expect(roleBadge).toBeInTheDocument();
   });
 
   it('displays Administrator role for admin', () => {
@@ -383,16 +388,14 @@ describe('Header', () => {
   });
 
   it('applies active style to current route', () => {
-    mockPathname = '/admin/users';
-    mockUsers = { [adminUser.id]: adminUser };
-    mockCurrentUserId = adminUser.id;
-    render(<Header user={adminUser} />);
+    mockPathname = '/users';
+    render(<Header user={defaultUser} />);
 
     const benutzerLinks = screen.getAllByText('Benutzer');
-    const activeLink = benutzerLinks.find((link) =>
-      link.classList.contains('link-underline-active')
-    );
-    expect(activeLink).toBeDefined();
+    // Find the link element (not the role badge)
+    const navLink = benutzerLinks.find((el) => el.tagName === 'A');
+    expect(navLink).toBeDefined();
+    expect(navLink?.classList.contains('link-underline-active')).toBe(true);
   });
 
   it('handles mobile logout click', async () => {

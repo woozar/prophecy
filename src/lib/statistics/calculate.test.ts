@@ -88,13 +88,14 @@ describe('calculateRoundStatistics', () => {
 
   it('calculates rater stats correctly', async () => {
     // Note: Only prophecies with positive average AND resolved status are used for rater stats
+    // Rating scale: -10 = "will happen", +10 = "won't happen"
     vi.mocked(prisma.prophecy.findMany).mockResolvedValue([
       createMockProphecy({
         id: 'p1',
         fulfilled: true,
         ratings: [
-          { value: 3, user: createMockUser('rater-1', 'rater1') },
-          { value: -2, user: createMockUser('rater-2', 'rater2') },
+          { value: 3, user: createMockUser('rater-1', 'rater1') }, // +3 = "won't happen" but it did = incorrect
+          { value: -2, user: createMockUser('rater-2', 'rater2') }, // -2 = "will happen" and it did = correct
         ],
       }),
       createMockProphecy({
@@ -102,8 +103,8 @@ describe('calculateRoundStatistics', () => {
         fulfilled: false,
         ratings: [
           // Avg must be positive for prophecy to be "accepted" and included in rater stats
-          { value: -4, user: createMockUser('rater-1', 'rater1') },
-          { value: 6, user: createMockUser('rater-2', 'rater2') },
+          { value: -4, user: createMockUser('rater-1', 'rater1') }, // -4 = "will happen" but it didn't = incorrect
+          { value: 6, user: createMockUser('rater-2', 'rater2') }, // +6 = "won't happen" and it didn't = correct
         ],
       }),
     ] as never);
@@ -112,19 +113,19 @@ describe('calculateRoundStatistics', () => {
 
     expect(result.raterStats).toHaveLength(2);
 
-    // rater-1: +3 correct (fulfilled), -4 correct (not fulfilled) = +7 correct, 0 incorrect
+    // rater-1: +3 incorrect (said won't happen, did), -4 incorrect (said will happen, didn't) = 0 correct, 7 incorrect
     const rater1 = result.raterStats.find((r) => r.userId === 'rater-1');
     expect(rater1).toBeDefined();
-    expect(rater1!.correctPoints).toBe(7);
-    expect(rater1!.incorrectPoints).toBe(0);
-    expect(rater1!.netScore).toBe(7);
+    expect(rater1!.correctPoints).toBe(0);
+    expect(rater1!.incorrectPoints).toBe(7);
+    expect(rater1!.netScore).toBe(-7);
 
-    // rater-2: -2 incorrect (fulfilled), +6 incorrect (not fulfilled) = 0 correct, 8 incorrect
+    // rater-2: -2 correct (said will happen, did), +6 correct (said won't happen, didn't) = 8 correct, 0 incorrect
     const rater2 = result.raterStats.find((r) => r.userId === 'rater-2');
     expect(rater2).toBeDefined();
-    expect(rater2!.correctPoints).toBe(0);
-    expect(rater2!.incorrectPoints).toBe(8);
-    expect(rater2!.netScore).toBe(-8);
+    expect(rater2!.correctPoints).toBe(8);
+    expect(rater2!.incorrectPoints).toBe(0);
+    expect(rater2!.netScore).toBe(8);
   });
 
   it('excludes zero ratings from rater stats', async () => {
@@ -168,19 +169,24 @@ describe('calculateRoundStatistics', () => {
   });
 
   it('sorts raters by netScore descending', async () => {
+    // Rating scale: -10 = "will happen", +10 = "won't happen"
+    // Need avg rating > 0 for prophecy to be "accepted"
+    // Use two prophecies: one fulfilled, one not
     vi.mocked(prisma.prophecy.findMany).mockResolvedValue([
       createMockProphecy({
         id: 'p1',
         fulfilled: true,
         ratings: [
-          { value: 2, user: createMockUser('rater-1', 'low') },
-          { value: 5, user: createMockUser('rater-2', 'high') },
+          { value: -2, user: createMockUser('rater-1', 'low') }, // correct: said will happen, did
+          { value: -5, user: createMockUser('rater-2', 'high') }, // correct: said will happen, did
+          { value: 10, user: createMockUser('rater-3', 'filler') }, // makes avg positive
         ],
       }),
     ] as never);
 
     const result = await calculateRoundStatistics('round-1');
 
+    // rater-2 has higher correct points (5) than rater-1 (2)
     expect(result.raterStats[0].userId).toBe('rater-2');
     expect(result.raterStats[1].userId).toBe('rater-1');
   });

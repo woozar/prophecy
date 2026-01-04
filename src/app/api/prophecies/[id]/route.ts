@@ -4,6 +4,7 @@ import { Errors, getProphecyWithAccessCheck, handleApiError } from '@/lib/api';
 import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 import { createAuditLog } from '@/lib/audit/audit-service';
 import { getSession } from '@/lib/auth/session';
+import { awardBadge } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
 import { updateProphecySchema } from '@/lib/schemas/prophecy';
 import { sseEmitter } from '@/lib/sse/event-emitter';
@@ -95,6 +96,38 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       data: prophecyData,
     });
 
+    // Award "Perfektionist" badge for editing a prophecy
+    const badgeResult = await awardBadge(session.userId, 'special_perfectionist');
+    if (badgeResult?.isNew) {
+      sseEmitter.broadcast({
+        type: 'badge:awarded',
+        data: {
+          id: badgeResult.userBadge.id,
+          earnedAt: badgeResult.userBadge.earnedAt.toISOString(),
+          userId: badgeResult.userBadge.userId,
+          badgeId: badgeResult.userBadge.badgeId,
+          badge: badgeResult.userBadge.badge,
+        },
+      });
+    }
+
+    // Award "Romanschreiber" badge for long description
+    if (description.length >= 500) {
+      const novelistResult = await awardBadge(session.userId, 'special_novelist');
+      if (novelistResult?.isNew) {
+        sseEmitter.broadcast({
+          type: 'badge:awarded',
+          data: {
+            id: novelistResult.userBadge.id,
+            earnedAt: novelistResult.userBadge.earnedAt.toISOString(),
+            userId: novelistResult.userBadge.userId,
+            badgeId: novelistResult.userBadge.badgeId,
+            badge: novelistResult.userBadge.badge,
+          },
+        });
+      }
+    }
+
     return NextResponse.json({ prophecy: prophecyData });
   }, 'Error updating prophecy:');
 }
@@ -132,6 +165,21 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       type: 'prophecy:deleted',
       data: { id, roundId: prophecy.roundId },
     });
+
+    // Award "Reue" badge for deleting a prophecy
+    const badgeResult = await awardBadge(session.userId, 'special_regret');
+    if (badgeResult?.isNew) {
+      sseEmitter.broadcast({
+        type: 'badge:awarded',
+        data: {
+          id: badgeResult.userBadge.id,
+          earnedAt: badgeResult.userBadge.earnedAt.toISOString(),
+          userId: badgeResult.userBadge.userId,
+          badgeId: badgeResult.userBadge.badgeId,
+          badge: badgeResult.userBadge.badge,
+        },
+      });
+    }
 
     return NextResponse.json({ success: true });
   }, 'Error deleting prophecy:');

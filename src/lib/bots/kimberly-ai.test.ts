@@ -46,12 +46,14 @@ describe('generateKimberlyRating', () => {
   });
 
   it('returns 0 and null reasoning on error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(generateText).mockRejectedValue(new Error('API Error'));
 
     const result = await generateKimberlyRating('Test Prophezeiung', null, new Date('2026-12-31'));
 
     expect(result.rating).toBe(0);
     expect(result.reasoning).toBeNull();
+    consoleSpy.mockRestore();
   });
 
   it('includes fulfillment date in prompt', async () => {

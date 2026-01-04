@@ -10,9 +10,12 @@ export async function GET() {
     return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   }
 
-  const [users, rounds, prophecies, ratings] = await Promise.all([
+  const isAdmin = session.role === 'ADMIN';
+
+  const [users, rounds, prophecies, ratings, badges, myBadges, allUserBadges] = await Promise.all([
+    // Admins see all users, non-admins only approved
     prisma.user.findMany({
-      where: { status: 'APPROVED' },
+      where: isAdmin ? {} : { status: 'APPROVED' },
       select: {
         id: true,
         username: true,
@@ -24,6 +27,12 @@ export async function GET() {
         status: true,
         isBot: true,
         createdAt: true,
+        _count: {
+          select: {
+            prophecies: true,
+            ratings: true,
+          },
+        },
       },
     }),
     prisma.round.findMany({
@@ -55,13 +64,46 @@ export async function GET() {
         createdAt: true,
       },
     }),
+    // All badge definitions
+    prisma.badge.findMany({
+      orderBy: { createdAt: 'asc' },
+    }),
+    // Current user's badges
+    prisma.userBadge.findMany({
+      where: { userId: session.userId },
+      include: { badge: true },
+      orderBy: { earnedAt: 'desc' },
+    }),
+    // All user badges with earnedAt (for displaying badges on user cards and modals)
+    prisma.userBadge.findMany({
+      select: {
+        userId: true,
+        badgeId: true,
+        earnedAt: true,
+      },
+    }),
   ]);
+
+  // Build a map of userId -> badgeIds and transform allUserBadges
+  const userBadgeMap = new Map<string, string[]>();
+  const transformedAllUserBadges = allUserBadges.map((ub) => {
+    const existing = userBadgeMap.get(ub.userId) || [];
+    existing.push(ub.badgeId);
+    userBadgeMap.set(ub.userId, existing);
+    return {
+      userId: ub.userId,
+      badgeId: ub.badgeId,
+      earnedAt: ub.earnedAt.toISOString(),
+    };
+  });
 
   // Transform dates to ISO strings and parse JSON fields
   const transformedUsers = users.map((user) => ({
     ...user,
     createdAt: user.createdAt.toISOString(),
     avatarEffectColors: user.avatarEffectColors ? JSON.parse(user.avatarEffectColors) : undefined,
+    badgeIds: userBadgeMap.get(user.id) || [],
+    _count: user._count,
   }));
 
   const transformedRounds = rounds.map((round) => ({
@@ -86,11 +128,28 @@ export async function GET() {
     createdAt: rating.createdAt.toISOString(),
   }));
 
+  const transformedBadges = badges.map((badge) => ({
+    ...badge,
+    createdAt: badge.createdAt.toISOString(),
+  }));
+
+  const transformedMyBadges = myBadges.map((userBadge) => ({
+    ...userBadge,
+    earnedAt: userBadge.earnedAt.toISOString(),
+    badge: {
+      ...userBadge.badge,
+      createdAt: userBadge.badge.createdAt.toISOString(),
+    },
+  }));
+
   return NextResponse.json({
     users: transformedUsers,
     rounds: transformedRounds,
     prophecies: transformedProphecies,
     ratings: transformedRatings,
+    badges: transformedBadges,
+    myBadges: transformedMyBadges,
+    allUserBadges: transformedAllUserBadges,
     currentUserId: session.userId,
   });
 }

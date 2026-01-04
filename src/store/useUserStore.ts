@@ -13,6 +13,7 @@ export interface User {
   status: string;
   isBot?: boolean;
   createdAt?: string;
+  badgeIds?: string[];
   _count?: {
     prophecies: number;
     ratings: number;
@@ -69,7 +70,8 @@ export const useUserStore = create<UserState>((set) => ({
         existing.avatarEffect === user.avatarEffect &&
         JSON.stringify(existing.avatarEffectColors) === JSON.stringify(user.avatarEffectColors) &&
         existing.role === user.role &&
-        existing.status === user.status
+        existing.status === user.status &&
+        JSON.stringify(existing.badgeIds) === JSON.stringify(user.badgeIds)
       ) {
         return state;
       }

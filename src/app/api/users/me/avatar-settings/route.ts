@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { validateBody } from '@/lib/api/validation';
 import { getSession } from '@/lib/auth/session';
+import { awardBadge } from '@/lib/badges/badge-service';
 import { ensureInitialized, prisma } from '@/lib/db/prisma';
 import { updateAvatarSettingsSchema } from '@/lib/schemas/user';
 import { sseEmitter } from '@/lib/sse/event-emitter';
@@ -54,6 +55,23 @@ export async function PATCH(request: NextRequest) {
       type: 'user:updated',
       data: user,
     });
+
+    // Award "Modebewusst" badge if user has both avatar and effect
+    if (user.avatarUrl && user.avatarEffect) {
+      const badgeResult = await awardBadge(session.userId, 'special_stylist');
+      if (badgeResult?.isNew) {
+        sseEmitter.broadcast({
+          type: 'badge:awarded',
+          data: {
+            id: badgeResult.userBadge.id,
+            earnedAt: badgeResult.userBadge.earnedAt.toISOString(),
+            userId: badgeResult.userBadge.userId,
+            badgeId: badgeResult.userBadge.badgeId,
+            badge: badgeResult.userBadge.badge,
+          },
+        });
+      }
+    }
 
     return NextResponse.json({
       success: true,

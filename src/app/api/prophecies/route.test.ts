@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getSession } from '@/lib/auth/session';
+import { awardBadge } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
@@ -243,5 +244,44 @@ describe('POST /api/prophecies', () => {
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Erstellen der Prophezeiung');
     consoleSpy.mockRestore();
+  });
+
+  it('awards novelist badge for long description (500+ chars)', async () => {
+    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(prisma.round.findUnique).mockResolvedValue(createMockRound());
+    const longDescription = 'A'.repeat(500);
+    const mockProphecy = createMockProphecy({ description: longDescription });
+    vi.mocked(prisma.prophecy.create).mockResolvedValue(mockProphecy);
+
+    const request = new NextRequest('http://localhost/api/prophecies', {
+      method: 'POST',
+      body: JSON.stringify({
+        roundId: 'round-1',
+        title: 'New Prophecy',
+        description: longDescription,
+      }),
+    });
+    await POST(request);
+
+    expect(awardBadge).toHaveBeenCalledWith('user-1', 'special_novelist');
+  });
+
+  it('does not award novelist badge for short description', async () => {
+    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(prisma.round.findUnique).mockResolvedValue(createMockRound());
+    const mockProphecy = createMockProphecy();
+    vi.mocked(prisma.prophecy.create).mockResolvedValue(mockProphecy);
+
+    const request = new NextRequest('http://localhost/api/prophecies', {
+      method: 'POST',
+      body: JSON.stringify({
+        roundId: 'round-1',
+        title: 'New Prophecy',
+        description: 'Short description',
+      }),
+    });
+    await POST(request);
+
+    expect(awardBadge).not.toHaveBeenCalledWith('user-1', 'special_novelist');
   });
 });

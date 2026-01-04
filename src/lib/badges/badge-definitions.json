@@ -1,0 +1,623 @@
+{
+  "creator": [
+    {
+      "key": "creator_1",
+      "name": "Anfänger-Seher",
+      "description": "Erste Schritte in die Zukunft",
+      "requirement": "1 Prophezeiung erstellt",
+      "icon": "🔮",
+      "category": "CREATOR",
+      "rarity": "BRONZE",
+      "threshold": 1
+    },
+    {
+      "key": "creator_5",
+      "name": "Mondleser",
+      "description": "Die Sterne beginnen zu sprechen",
+      "requirement": "5 Prophezeiungen erstellt",
+      "icon": "🌙",
+      "category": "CREATOR",
+      "rarity": "BRONZE",
+      "threshold": 5
+    },
+    {
+      "key": "creator_15",
+      "name": "Sternendeuter",
+      "description": "Ein aufgehender Stern am Prophetenhimmel",
+      "requirement": "15 Prophezeiungen erstellt",
+      "icon": "⭐",
+      "category": "CREATOR",
+      "rarity": "SILVER",
+      "threshold": 15
+    },
+    {
+      "key": "creator_30",
+      "name": "Orakel",
+      "description": "Die Zukunft offenbart sich dir",
+      "requirement": "30 Prophezeiungen erstellt",
+      "icon": "🌌",
+      "category": "CREATOR",
+      "rarity": "SILVER",
+      "threshold": 30
+    },
+    {
+      "key": "creator_50",
+      "name": "Hohepriester",
+      "description": "Meister der Weissagungen",
+      "requirement": "50 Prophezeiungen erstellt",
+      "icon": "🏛️",
+      "category": "CREATOR",
+      "rarity": "GOLD",
+      "threshold": 50
+    },
+    {
+      "key": "creator_100",
+      "name": "Allsehendes Auge",
+      "description": "Nichts entgeht deinem Blick",
+      "requirement": "100 Prophezeiungen erstellt",
+      "icon": "👁️",
+      "category": "CREATOR",
+      "rarity": "LEGENDARY",
+      "threshold": 100
+    }
+  ],
+  "accuracy": [
+    {
+      "key": "fulfilled_1",
+      "name": "Glückstreffer",
+      "description": "Auch ein blindes Huhn...",
+      "requirement": "1 erfüllte Prophezeiung",
+      "icon": "🎯",
+      "category": "ACCURACY",
+      "rarity": "BRONZE",
+      "threshold": 1
+    },
+    {
+      "key": "fulfilled_5",
+      "name": "Treffsicher",
+      "description": "Deine Worte haben Gewicht",
+      "requirement": "5 erfüllte Prophezeiungen",
+      "icon": "🏹",
+      "category": "ACCURACY",
+      "rarity": "BRONZE",
+      "threshold": 5
+    },
+    {
+      "key": "fulfilled_10",
+      "name": "Flamme der Wahrheit",
+      "description": "Die Zukunft brennt in dir",
+      "requirement": "10 erfüllte Prophezeiungen",
+      "icon": "🔥",
+      "category": "ACCURACY",
+      "rarity": "SILVER",
+      "threshold": 10
+    },
+    {
+      "key": "fulfilled_20",
+      "name": "Blitzseher",
+      "description": "Schneller als die Zeit",
+      "requirement": "20 erfüllte Prophezeiungen",
+      "icon": "⚡",
+      "category": "ACCURACY",
+      "rarity": "SILVER",
+      "threshold": 20
+    },
+    {
+      "key": "fulfilled_35",
+      "name": "Kristallklar",
+      "description": "Deine Visionen sind makellos",
+      "requirement": "35 erfüllte Prophezeiungen",
+      "icon": "💎",
+      "category": "ACCURACY",
+      "rarity": "GOLD",
+      "threshold": 35
+    },
+    {
+      "key": "fulfilled_50",
+      "name": "Nostradamus",
+      "description": "Legendärer Prophet",
+      "requirement": "50 erfüllte Prophezeiungen",
+      "icon": "🌟",
+      "category": "ACCURACY",
+      "rarity": "LEGENDARY",
+      "threshold": 50
+    }
+  ],
+  "accuracyRate": [
+    {
+      "key": "accuracy_rate_60",
+      "name": "Statistiker",
+      "description": "Überdurchschnittlich gut",
+      "requirement": ">60% Trefferquote (min. 10 Prophezeiungen)",
+      "icon": "📊",
+      "category": "ACCURACY",
+      "rarity": "BRONZE",
+      "threshold": 60
+    },
+    {
+      "key": "accuracy_rate_70",
+      "name": "Fortunas Liebling",
+      "description": "Das Glück ist mit dir",
+      "requirement": ">70% Trefferquote (min. 15 Prophezeiungen)",
+      "icon": "🎰",
+      "category": "ACCURACY",
+      "rarity": "SILVER",
+      "threshold": 70
+    },
+    {
+      "key": "accuracy_rate_80",
+      "name": "Weise Kassandra",
+      "description": "Du siehst was andere nicht sehen",
+      "requirement": ">80% Trefferquote (min. 20 Prophezeiungen)",
+      "icon": "🧙",
+      "category": "ACCURACY",
+      "rarity": "GOLD",
+      "threshold": 80
+    },
+    {
+      "key": "accuracy_rate_90",
+      "name": "Unfehlbar",
+      "description": "Deine Worte werden Gesetz",
+      "requirement": ">90% Trefferquote (min. 25 Prophezeiungen)",
+      "icon": "👑",
+      "category": "ACCURACY",
+      "rarity": "LEGENDARY",
+      "threshold": 90
+    }
+  ],
+  "rater": [
+    {
+      "key": "rater_10",
+      "name": "Kritiker",
+      "description": "Du hast eine Meinung",
+      "requirement": "10 Bewertungen abgegeben",
+      "icon": "⚖️",
+      "category": "RATER",
+      "rarity": "BRONZE",
+      "threshold": 10
+    },
+    {
+      "key": "rater_30",
+      "name": "Rezensent",
+      "description": "Fleißiger Bewerter",
+      "requirement": "30 Bewertungen abgegeben",
+      "icon": "📝",
+      "category": "RATER",
+      "rarity": "BRONZE",
+      "threshold": 30
+    },
+    {
+      "key": "rater_75",
+      "name": "Schiedsrichter",
+      "description": "Dein Urteil zählt",
+      "requirement": "75 Bewertungen abgegeben",
+      "icon": "🏆",
+      "category": "RATER",
+      "rarity": "SILVER",
+      "threshold": 75
+    },
+    {
+      "key": "rater_150",
+      "name": "Oberster Richter",
+      "description": "Niemand bewertet mehr als du",
+      "requirement": "150 Bewertungen abgegeben",
+      "icon": "👨‍⚖️",
+      "category": "RATER",
+      "rarity": "GOLD",
+      "threshold": 150
+    },
+    {
+      "key": "rater_300",
+      "name": "Weise Eule",
+      "description": "Allwissender Beobachter",
+      "requirement": "300 Bewertungen abgegeben",
+      "icon": "🦉",
+      "category": "RATER",
+      "rarity": "LEGENDARY",
+      "threshold": 300
+    }
+  ],
+  "raterAccuracy": [
+    {
+      "key": "rater_accuracy_60",
+      "name": "Scharfes Auge",
+      "description": "Du erkennst die Wahrheit",
+      "requirement": ">60% Rating-Genauigkeit (min. 20 Ratings)",
+      "icon": "🔍",
+      "category": "RATER_ACC",
+      "rarity": "BRONZE",
+      "threshold": 60
+    },
+    {
+      "key": "rater_accuracy_70",
+      "name": "Menschenkenner",
+      "description": "Du durchschaust jeden",
+      "requirement": ">70% Rating-Genauigkeit (min. 30 Ratings)",
+      "icon": "🎭",
+      "category": "RATER_ACC",
+      "rarity": "SILVER",
+      "threshold": 70
+    },
+    {
+      "key": "rater_accuracy_80",
+      "name": "Wahrheitsfinder",
+      "description": "Lügen haben kurze Beine",
+      "requirement": ">80% Rating-Genauigkeit (min. 40 Ratings)",
+      "icon": "🧿",
+      "category": "RATER_ACC",
+      "rarity": "GOLD",
+      "threshold": 80
+    },
+    {
+      "key": "rater_accuracy_90",
+      "name": "Gedankenleser",
+      "description": "Du weißt, wer Recht hat",
+      "requirement": ">90% Rating-Genauigkeit (min. 50 Ratings)",
+      "icon": "💫",
+      "category": "RATER_ACC",
+      "rarity": "LEGENDARY",
+      "threshold": 90
+    }
+  ],
+  "rounds": [
+    {
+      "key": "rounds_1",
+      "name": "Einsteiger",
+      "description": "Willkommen im Spiel",
+      "requirement": "1 Runde abgeschlossen",
+      "icon": "🚪",
+      "category": "ROUNDS",
+      "rarity": "BRONZE",
+      "threshold": 1
+    },
+    {
+      "key": "rounds_5",
+      "name": "Stammgast",
+      "description": "Du bist dabei",
+      "requirement": "5 Runden abgeschlossen",
+      "icon": "📅",
+      "category": "ROUNDS",
+      "rarity": "BRONZE",
+      "threshold": 5
+    },
+    {
+      "key": "rounds_15",
+      "name": "Veteran",
+      "description": "Alter Hase",
+      "requirement": "15 Runden abgeschlossen",
+      "icon": "🗓️",
+      "category": "ROUNDS",
+      "rarity": "SILVER",
+      "threshold": 15
+    },
+    {
+      "key": "rounds_30",
+      "name": "Zeitzeuge",
+      "description": "Du hast alles miterlebt",
+      "requirement": "30 Runden abgeschlossen",
+      "icon": "📆",
+      "category": "ROUNDS",
+      "rarity": "GOLD",
+      "threshold": 30
+    },
+    {
+      "key": "rounds_50",
+      "name": "Unsterblich",
+      "description": "Legende seit Anbeginn",
+      "requirement": "50 Runden abgeschlossen",
+      "icon": "♾️",
+      "category": "ROUNDS",
+      "rarity": "LEGENDARY",
+      "threshold": 50
+    }
+  ],
+  "leaderboard": [
+    {
+      "key": "leaderboard_3",
+      "name": "Bronze-Prophet",
+      "description": "Auf dem Podium",
+      "requirement": "1x Platz 3 im Creator-Leaderboard",
+      "icon": "🥉",
+      "category": "LEADERBOARD",
+      "rarity": "BRONZE",
+      "threshold": 3
+    },
+    {
+      "key": "leaderboard_2",
+      "name": "Silber-Prophet",
+      "description": "So nah dran",
+      "requirement": "1x Platz 2 im Creator-Leaderboard",
+      "icon": "🥈",
+      "category": "LEADERBOARD",
+      "rarity": "SILVER",
+      "threshold": 2
+    },
+    {
+      "key": "leaderboard_1",
+      "name": "Gold-Prophet",
+      "description": "Der Beste der Runde",
+      "requirement": "1x Platz 1 im Creator-Leaderboard",
+      "icon": "🥇",
+      "category": "LEADERBOARD",
+      "rarity": "GOLD",
+      "threshold": 1
+    },
+    {
+      "key": "leaderboard_champion_3",
+      "name": "Champion",
+      "description": "Mehrfacher Sieger",
+      "requirement": "3x Platz 1 im Creator-Leaderboard",
+      "icon": "👑",
+      "category": "LEADERBOARD",
+      "rarity": "GOLD",
+      "threshold": 3
+    },
+    {
+      "key": "leaderboard_champion_5",
+      "name": "Unbesiegbar",
+      "description": "Dominanz pur",
+      "requirement": "5x Platz 1 im Creator-Leaderboard",
+      "icon": "🏅",
+      "category": "LEADERBOARD",
+      "rarity": "LEGENDARY",
+      "threshold": 5
+    }
+  ],
+  "special": [
+    {
+      "key": "special_against_stream",
+      "name": "Gegen den Strom",
+      "description": "Alleine Recht gehabt",
+      "requirement": "Rating stark abweichend vom Durchschnitt, aber korrekt",
+      "icon": "🌈",
+      "category": "SPECIAL",
+      "rarity": "GOLD"
+    },
+    {
+      "key": "special_controversial",
+      "name": "Kontrovers",
+      "description": "Prophezeiung spaltet die Massen",
+      "requirement": "Prophezeiung mit Ratings von -10 bis +10",
+      "icon": "🎪",
+      "category": "SPECIAL",
+      "rarity": "SILVER"
+    },
+    {
+      "key": "special_unanimous",
+      "name": "Einstimmig",
+      "description": "Alle sind sich einig",
+      "requirement": "Prophezeiung mit >5 Ratings, alle im selben Bereich (±2)",
+      "icon": "🤝",
+      "category": "SPECIAL",
+      "rarity": "SILVER"
+    },
+    {
+      "key": "special_underdog",
+      "name": "Underdog",
+      "description": "Vom Außenseiter zum Sieger",
+      "requirement": "Mit niedrigstem Rating am Ende erfüllt",
+      "icon": "🎭",
+      "category": "SPECIAL",
+      "rarity": "GOLD"
+    },
+    {
+      "key": "special_unicorn",
+      "name": "Einhorn",
+      "description": "Das Unmögliche geschafft",
+      "requirement": "Prophezeiung mit Durchschnitts-Rating >5 erfüllt",
+      "icon": "🦄",
+      "category": "SPECIAL",
+      "rarity": "LEGENDARY"
+    },
+    {
+      "key": "special_party_crasher",
+      "name": "Party Crasher",
+      "description": "Du hast es versaut",
+      "requirement": "Top-Rating Prophezeiung nicht erfüllt",
+      "icon": "💀",
+      "category": "SPECIAL",
+      "rarity": "SILVER"
+    },
+    {
+      "key": "special_chaos_agent",
+      "name": "Chaos-Agent",
+      "description": "Unberechenbar",
+      "requirement": "3 Prophezeiungen in einer Runde: 1 erfüllt, 1 nicht, 1 kontrovers",
+      "icon": "🌪️",
+      "category": "SPECIAL",
+      "rarity": "GOLD"
+    },
+    {
+      "key": "special_comeback",
+      "name": "Comeback",
+      "description": "Zurück aus der Asche",
+      "requirement": "Nach 3 nicht-erfüllten wieder 3 erfüllte in Folge",
+      "icon": "🔄",
+      "category": "SPECIAL",
+      "rarity": "GOLD"
+    },
+    {
+      "key": "special_perfectionist",
+      "name": "Perfektionist",
+      "description": "Geht doch besser...",
+      "requirement": "Eine Prophezeiung bearbeitet",
+      "icon": "✏️",
+      "category": "SPECIAL",
+      "rarity": "BRONZE"
+    },
+    {
+      "key": "special_regret",
+      "name": "Reue",
+      "description": "Das hätte ich nicht sagen sollen",
+      "requirement": "Eine Prophezeiung gelöscht",
+      "icon": "🗑️",
+      "category": "SPECIAL",
+      "rarity": "BRONZE"
+    },
+    {
+      "key": "special_stylist",
+      "name": "Modebewusst",
+      "description": "Style ist alles",
+      "requirement": "Avatar hochgeladen und Effekt ausgewählt",
+      "icon": "✨",
+      "category": "SPECIAL",
+      "rarity": "SILVER"
+    },
+    {
+      "key": "special_novelist",
+      "name": "Romanschreiber",
+      "description": "Worte fließen wie ein Strom",
+      "requirement": "Prophezeiung mit über 500 Zeichen Beschreibung",
+      "icon": "📜",
+      "category": "SPECIAL",
+      "rarity": "SILVER",
+      "threshold": 500
+    }
+  ],
+  "social": [
+    {
+      "key": "social_friendly",
+      "name": "Freundlich",
+      "description": "Du glaubst an die Propheten",
+      "requirement": "Durchschnittliches Rating <-5 (min. 20 Ratings)",
+      "icon": "🤗",
+      "category": "SOCIAL",
+      "rarity": "BRONZE"
+    },
+    {
+      "key": "social_skeptic",
+      "name": "Skeptiker",
+      "description": "Traust niemandem",
+      "requirement": "Durchschnittliches Rating >2 (min. 20 Ratings)",
+      "icon": "😈",
+      "category": "SOCIAL",
+      "rarity": "BRONZE"
+    },
+    {
+      "key": "social_neutral",
+      "name": "Neutraler Beobachter",
+      "description": "Perfekt ausbalanciert",
+      "requirement": "Durchschnittliches Rating zwischen -1 und +1 (min. 30 Ratings)",
+      "icon": "⚖️",
+      "category": "SOCIAL",
+      "rarity": "SILVER"
+    },
+    {
+      "key": "social_generous",
+      "name": "Großzügig",
+      "description": "Du glaubst an andere",
+      "requirement": "10x Rating von -10 vergeben",
+      "icon": "🎁",
+      "category": "SOCIAL",
+      "rarity": "BRONZE",
+      "threshold": 10
+    },
+    {
+      "key": "social_ruthless",
+      "name": "Gnadenlos",
+      "description": "Kein Erbarmen",
+      "requirement": "10x Rating von +10 vergeben",
+      "icon": "💔",
+      "category": "SOCIAL",
+      "rarity": "BRONZE",
+      "threshold": 10
+    }
+  ],
+  "hidden": [
+    {
+      "key": "hidden_bot_beater",
+      "name": "Bot-Besieger",
+      "description": "Besser als die KI",
+      "requirement": "Bessere Trefferquote als Kimberly über 5 Runden",
+      "icon": "🤖",
+      "category": "HIDDEN",
+      "rarity": "LEGENDARY"
+    },
+    {
+      "key": "hidden_worse_than_random",
+      "name": "Schlechter als Zufall",
+      "description": "Das ist auch eine Leistung",
+      "requirement": "Schlechtere Trefferquote als Randolf über 3 Runden",
+      "icon": "🎲",
+      "category": "HIDDEN",
+      "rarity": "GOLD"
+    },
+    {
+      "key": "hidden_night_owl",
+      "name": "Nachtaktiv",
+      "description": "Die Nacht ist jung",
+      "requirement": "10 Prophezeiungen zwischen 00:00 und 05:00 erstellt",
+      "icon": "🌙",
+      "category": "HIDDEN",
+      "rarity": "SILVER",
+      "threshold": 10
+    },
+    {
+      "key": "hidden_beta_tester",
+      "name": "Beta-Tester",
+      "description": "Von Anfang an dabei",
+      "requirement": "Account in den ersten 30 Tagen erstellt",
+      "icon": "📱",
+      "category": "HIDDEN",
+      "rarity": "LEGENDARY"
+    },
+    {
+      "key": "hidden_bug_hunter",
+      "name": "Bug-Hunter",
+      "description": "Du hast etwas Seltsames gefunden",
+      "requirement": "Manuell vom Admin vergeben",
+      "icon": "🐛",
+      "category": "HIDDEN",
+      "rarity": "LEGENDARY"
+    }
+  ],
+  "time": [
+    {
+      "key": "time_early_bird",
+      "name": "Frühaufsteher",
+      "description": "Immer der Erste",
+      "requirement": "5x erste Prophezeiung der Runde",
+      "icon": "⏰",
+      "category": "SPECIAL",
+      "rarity": "SILVER",
+      "threshold": 5
+    },
+    {
+      "key": "time_morning_glory",
+      "name": "Morgenstund",
+      "description": "Die ersten Ratings",
+      "requirement": "10x in den ersten 24h alle Ratings abgegeben",
+      "icon": "🌅",
+      "category": "SPECIAL",
+      "rarity": "SILVER",
+      "threshold": 10
+    },
+    {
+      "key": "time_last_minute",
+      "name": "Last Minute",
+      "description": "Knapp vor Deadline",
+      "requirement": "Prophezeiung weniger als 24h vor Deadline eingereicht",
+      "icon": "⏳",
+      "category": "SPECIAL",
+      "rarity": "BRONZE"
+    },
+    {
+      "key": "time_speedrunner",
+      "name": "Speedrunner",
+      "description": "Blitzschnell",
+      "requirement": "Alle Ratings einer Runde in unter 10 Minuten",
+      "icon": "🏃",
+      "category": "SPECIAL",
+      "rarity": "GOLD"
+    },
+    {
+      "key": "time_clutch_rater",
+      "name": "Clutch-Bewerter",
+      "description": "Gerade noch geschafft",
+      "requirement": "Bewertung weniger als 1h vor Deadline abgegeben",
+      "icon": "😰",
+      "category": "SPECIAL",
+      "rarity": "BRONZE"
+    }
+  ]
+}

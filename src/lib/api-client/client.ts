@@ -211,6 +211,58 @@ export const apiClient = {
   },
 
   // ============================================================================
+  // Badges
+  // ============================================================================
+  badges: {
+    list: () =>
+      fetch('/api/badges', { credentials: 'include' }).then(async (res) => ({
+        data: res.ok ? await res.json() : null,
+        error: res.ok ? null : await res.json(),
+        response: res,
+      })),
+
+    awarded: () =>
+      fetch('/api/badges/awarded', { credentials: 'include' }).then(async (res) => ({
+        data: res.ok ? await res.json() : null,
+        error: res.ok ? null : await res.json(),
+        response: res,
+      })),
+
+    getHolders: (id: string) =>
+      fetch(`/api/badges/${id}/holders`, { credentials: 'include' }).then(async (res) => ({
+        data: res.ok ? await res.json() : null,
+        error: res.ok ? null : await res.json(),
+        response: res,
+      })),
+  },
+
+  // ============================================================================
+  // Users (public)
+  // ============================================================================
+  users: {
+    list: () =>
+      fetch('/api/users', { credentials: 'include' }).then(async (res) => ({
+        data: res.ok ? await res.json() : null,
+        error: res.ok ? null : await res.json(),
+        response: res,
+      })),
+
+    get: (id: string) =>
+      fetch(`/api/users/${id}`, { credentials: 'include' }).then(async (res) => ({
+        data: res.ok ? await res.json() : null,
+        error: res.ok ? null : await res.json(),
+        response: res,
+      })),
+
+    getBadges: (id: string) =>
+      fetch(`/api/users/${id}/badges`, { credentials: 'include' }).then(async (res) => ({
+        data: res.ok ? await res.json() : null,
+        error: res.ok ? null : await res.json(),
+        response: res,
+      })),
+  },
+
+  // ============================================================================
   // Admin
   // ============================================================================
   admin: {

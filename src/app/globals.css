@@ -23,6 +23,13 @@
   --glow-cyan-strong: rgba(6, 182, 212, 0.6);
   --glow-cyan-subtle: rgba(6, 182, 212, 0.2);
 
+  /* Purple/Violet Glow for Badges */
+  --color-violet-500: #8b5cf6;
+  --color-violet-400: #a78bfa;
+  --glow-violet: rgba(139, 92, 246, 0.4);
+  --glow-violet-strong: rgba(139, 92, 246, 0.6);
+  --glow-violet-subtle: rgba(139, 92, 246, 0.2);
+
   /* Text Colors */
   --text-primary: #f0f4f8;
   --text-secondary: #9fb3c8;
@@ -34,6 +41,9 @@
   --color-foreground: var(--text-primary);
   --color-primary: var(--color-cyan-500);
   --color-accent: var(--color-teal-500);
+
+  /* Custom breakpoint */
+  --breakpoint-xs: 480px;
 }
 
 /* AI Button flowing border animation */
@@ -255,7 +265,7 @@ body {
 /* Card Styles */
 .card-dark {
   background: linear-gradient(135deg, rgba(16, 42, 67, 0.8), rgba(20, 50, 70, 0.6));
-  border: 1px solid rgba(6, 182, 212, 0.25);
+  border: 2px solid rgba(6, 182, 212, 0.5);
   border-radius: 16px;
   cursor: pointer;
   box-shadow:
@@ -347,6 +357,69 @@ body {
   box-shadow:
     0 0 20px rgba(6, 182, 212, 0.15),
     0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* Tooltip glow animation */
+@keyframes tooltip-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 15px rgba(6, 182, 212, 0.2),
+      0 0 30px rgba(6, 182, 212, 0.1),
+      0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(6, 182, 212, 0.35),
+      0 0 40px rgba(6, 182, 212, 0.15),
+      0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Mantine Tooltip Styling */
+.mantine-Tooltip-tooltip {
+  background: rgba(16, 32, 48, 0.98) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid rgba(6, 182, 212, 0.4) !important;
+  border-radius: 12px !important;
+  padding: 12px !important;
+  box-shadow:
+    0 0 15px rgba(6, 182, 212, 0.2),
+    0 0 30px rgba(6, 182, 212, 0.1),
+    0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  animation: tooltip-glow 3s ease-in-out infinite;
+  backdrop-filter: blur(8px);
+}
+
+.mantine-Tooltip-arrow {
+  background: rgba(16, 32, 48, 0.98) !important;
+  border-color: rgba(6, 182, 212, 0.4) !important;
+}
+
+/* Achievement Tooltip - Purple Theme */
+@keyframes achievement-tooltip-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 20px rgba(139, 92, 246, 0.25),
+      0 0 40px rgba(139, 92, 246, 0.15),
+      0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(139, 92, 246, 0.4),
+      0 0 50px rgba(139, 92, 246, 0.2),
+      0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.achievement-tooltip.mantine-Tooltip-tooltip {
+  border: 2px solid rgba(139, 92, 246, 0.5) !important;
+  box-shadow:
+    0 0 20px rgba(139, 92, 246, 0.25),
+    0 0 40px rgba(139, 92, 246, 0.15),
+    0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  animation: achievement-tooltip-glow 3s ease-in-out infinite;
 }
 
 /* Animated Fog Effect */
@@ -646,6 +719,22 @@ body {
 
 .animate-orbit {
   animation: orbit 3s linear infinite;
+}
+
+/* Badge Card Styles - Purple Theme */
+.badge-card {
+  background: rgba(10, 25, 41, 0.6);
+  border: 2px solid rgba(167, 139, 250, 0.7);
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 15px var(--glow-violet);
+}
+
+.badge-card:hover {
+  border-color: rgba(167, 139, 250, 0.9);
+  box-shadow:
+    0 0 25px var(--glow-violet-strong),
+    0 0 50px var(--glow-violet);
 }
 
 /* Badge running animation - liquid flowing effect with bubbles */

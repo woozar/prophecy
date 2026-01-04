@@ -8,8 +8,10 @@ import { type Passkey, PasskeyManager } from '@/components/PasskeyManager';
 import { PasswordManagement } from '@/components/PasswordManagement';
 import { ProfileAvatarSection } from '@/components/ProfileAvatarSection';
 import { UserAvatar } from '@/components/UserAvatar';
+import { UserStatsGrid } from '@/components/UserStatsGrid';
 import { useCurrentUser } from '@/hooks/useUser';
 import { apiClient } from '@/lib/api-client/client';
+import { useBadgeStore } from '@/store/useBadgeStore';
 import { useProphecyStore } from '@/store/useProphecyStore';
 import { useRatingStore } from '@/store/useRatingStore';
 
@@ -35,6 +37,17 @@ export default function ProfilePage() {
       (state) =>
         currentUser
           ? Object.values(state.ratings).filter((r) => r.userId === currentUser.id).length
+          : 0,
+      [currentUser]
+    )
+  );
+
+  // Get badge count from store
+  const badgeCount = useBadgeStore(
+    useCallback(
+      (state) =>
+        currentUser && state.allUserBadges[currentUser.id]
+          ? Object.keys(state.allUserBadges[currentUser.id]).length
           : 0,
       [currentUser]
     )
@@ -100,16 +113,12 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-cyan-400">{prophecyCount}</p>
-            <p className="text-sm text-(--text-muted)">Prophezeiungen</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-cyan-400">{ratingCount}</p>
-            <p className="text-sm text-(--text-muted)">Bewertungen</p>
-          </div>
-        </div>
+        <UserStatsGrid
+          prophecyCount={prophecyCount}
+          ratingCount={ratingCount}
+          badgeCount={badgeCount}
+          className="pt-4 border-t border-[rgba(98,125,152,0.2)]"
+        />
       </Card>
 
       {/* Avatar Upload & Effects */}

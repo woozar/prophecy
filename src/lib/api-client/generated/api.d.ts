@@ -2231,7 +2231,7 @@ export interface components {
     /** @enum {string} */
     Role: 'USER' | 'ADMIN';
     /** @enum {string} */
-    UserStatus: 'PENDING' | 'APPROVED' | 'SUSPENDED';
+    UserStatus: 'PENDING' | 'APPROVED' | 'SUSPENDED' | 'REJECTED';
     User: {
       id: string;
       username: string;
@@ -2427,6 +2427,11 @@ export interface components {
       isBot: boolean;
       /** Format: date-time */
       createdAt: string;
+      badgeIds: string[];
+      _count: {
+        prophecies: number;
+        ratings: number;
+      };
     };
     Round: {
       id: string;
@@ -2465,11 +2470,54 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    /** @enum {string} */
+    BadgeCategory:
+      | 'CREATOR'
+      | 'ACCURACY'
+      | 'RATER'
+      | 'RATER_ACC'
+      | 'ROUNDS'
+      | 'LEADERBOARD'
+      | 'SPECIAL'
+      | 'SOCIAL'
+      | 'HIDDEN';
+    /** @enum {string} */
+    BadgeRarity: 'BRONZE' | 'SILVER' | 'GOLD' | 'LEGENDARY';
+    Badge: {
+      id: string;
+      key: string;
+      name: string;
+      description: string;
+      requirement: string;
+      icon: string;
+      category: components['schemas']['BadgeCategory'];
+      rarity: components['schemas']['BadgeRarity'];
+      threshold: number | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    UserBadge: {
+      id: string;
+      badgeId: string;
+      userId: string;
+      /** Format: date-time */
+      earnedAt: string;
+      badge: components['schemas']['Badge'];
+    };
+    UserBadgeSimple: {
+      userId: string;
+      badgeId: string;
+      /** Format: date-time */
+      earnedAt: string;
+    };
     InitialDataResponse: {
       users: components['schemas']['InitialDataUser'][];
       rounds: components['schemas']['Round'][];
       prophecies: components['schemas']['Prophecy'][];
       ratings: components['schemas']['Rating'][];
+      badges: components['schemas']['Badge'][];
+      myBadges: components['schemas']['UserBadge'][];
+      allUserBadges: components['schemas']['UserBadgeSimple'][];
       currentUserId: string;
     };
     PropheciesListResponse: {

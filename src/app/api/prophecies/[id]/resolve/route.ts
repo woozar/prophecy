@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 import { validateBody } from '@/lib/api/validation';
 import { validateAdminSession } from '@/lib/auth/admin-validation';
+import { checkAndAwardBadges } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
 import { resolveSchema } from '@/lib/schemas/rating';
 import { sseEmitter } from '@/lib/sse/event-emitter';
@@ -51,6 +52,23 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         resolvedAt: now,
       },
     });
+
+    // Check and award badges for the prophecy creator (not the admin resolving it)
+    const newBadges = await checkAndAwardBadges(prophecy.creatorId);
+
+    // Broadcast new badges via SSE
+    for (const userBadge of newBadges) {
+      sseEmitter.broadcast({
+        type: 'badge:awarded',
+        data: {
+          id: userBadge.id,
+          earnedAt: userBadge.earnedAt.toISOString(),
+          userId: userBadge.userId,
+          badgeId: userBadge.badgeId,
+          badge: userBadge.badge,
+        },
+      });
+    }
 
     const prophecyData = transformProphecyToResponse(updatedProphecy);
 

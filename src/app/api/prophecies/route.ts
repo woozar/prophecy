@@ -4,6 +4,7 @@ import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 import { validateBody } from '@/lib/api/validation';
 import { createAuditLog } from '@/lib/audit/audit-service';
 import { getSession } from '@/lib/auth/session';
+import { awardBadge, checkAndAwardBadges } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
 import { createProphecySchema } from '@/lib/schemas/prophecy';
 import { sseEmitter } from '@/lib/sse/event-emitter';
@@ -139,6 +140,42 @@ export async function POST(request: NextRequest) {
       userId: session.userId,
       newValue: { title, description },
     });
+
+    // Check and award badges for the user
+    const newBadges = await checkAndAwardBadges(session.userId);
+
+    // Check for last-minute badge (prophecy created within 24h of deadline)
+    const now = new Date();
+    const hoursUntilDeadline =
+      (round.submissionDeadline.getTime() - now.getTime()) / (1000 * 60 * 60);
+    if (hoursUntilDeadline < 24) {
+      const lastMinuteResult = await awardBadge(session.userId, 'time_last_minute');
+      if (lastMinuteResult?.isNew) {
+        newBadges.push(lastMinuteResult.userBadge);
+      }
+    }
+
+    // Check for novelist badge (long description)
+    if (description.length >= 500) {
+      const novelistResult = await awardBadge(session.userId, 'special_novelist');
+      if (novelistResult?.isNew) {
+        newBadges.push(novelistResult.userBadge);
+      }
+    }
+
+    // Broadcast new badges via SSE
+    for (const userBadge of newBadges) {
+      sseEmitter.broadcast({
+        type: 'badge:awarded',
+        data: {
+          id: userBadge.id,
+          earnedAt: userBadge.earnedAt.toISOString(),
+          userId: userBadge.userId,
+          badgeId: userBadge.badgeId,
+          badge: userBadge.badge,
+        },
+      });
+    }
 
     const prophecyData = transformProphecyToResponse(prophecy);
 

@@ -3,6 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { apiClient } from '@/lib/api-client';
+import {
+  type Badge,
+  type UserBadge,
+  type UserBadgeSimple,
+  useBadgeStore,
+} from '@/store/useBadgeStore';
 import { type Prophecy, useProphecyStore } from '@/store/useProphecyStore';
 import { type Rating, useRatingStore } from '@/store/useRatingStore';
 import { type Round, useRoundStore } from '@/store/useRoundStore';
@@ -22,7 +28,8 @@ type SSEEventType =
   | 'prophecy:deleted'
   | 'rating:created'
   | 'rating:updated'
-  | 'rating:deleted';
+  | 'rating:deleted'
+  | 'badge:awarded';
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
 
@@ -50,6 +57,7 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
   const { setUser, removeUser } = useUserStore();
   const { setProphecy, removeProphecy } = useProphecyStore();
   const { setRating, removeRating } = useRatingStore();
+  const { addMyBadge } = useBadgeStore();
 
   // Load/reload data from server
   const loadInitialData = useCallback(async () => {
@@ -64,6 +72,18 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
       useRoundStore.getState().setRounds(data.rounds as Round[]);
       useProphecyStore.getState().setProphecies(data.prophecies as Prophecy[]);
       useRatingStore.getState().setRatings(data.ratings as Rating[]);
+
+      // Populate badge store
+      if (data.badges) {
+        useBadgeStore.getState().setBadges(data.badges as Badge[]);
+      }
+      if (data.myBadges) {
+        useBadgeStore.getState().setMyBadges(data.myBadges as UserBadge[]);
+      }
+      if (data.allUserBadges) {
+        useBadgeStore.getState().setAllUserBadges(data.allUserBadges as UserBadgeSimple[]);
+      }
+      useBadgeStore.getState().setInitialized(true);
 
       setIsInitialized(true);
     } catch (error) {
@@ -82,87 +102,76 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
     loadInitialData();
   }, [loadInitialData]);
 
+  const handleBadgeAwarded = useCallback(
+    (data: unknown, shouldTriggerCallbacks: boolean) => {
+      const userBadge = data as UserBadge;
+      const currentUserId = useUserStore.getState().currentUserId;
+      if (userBadge.userId === currentUserId) {
+        addMyBadge(userBadge);
+      }
+      useBadgeStore.getState().addUserBadge({
+        userId: userBadge.userId,
+        badgeId: userBadge.badgeId,
+        earnedAt: userBadge.earnedAt,
+      });
+      const user = useUserStore.getState().users[userBadge.userId];
+      if (user) {
+        setUser({ ...user, badgeIds: [...(user.badgeIds || []), userBadge.badgeId] });
+      }
+      if (shouldTriggerCallbacks) {
+        callbacksRef.current?.onBadgeAwarded?.(userBadge);
+      }
+    },
+    [addMyBadge, setUser]
+  );
+
   const handleEvent = useCallback(
     (type: SSEEventType, data: unknown) => {
-      // Don't trigger callbacks during reconnect (data reload handles that)
       const shouldTriggerCallbacks = !isReconnectingRef.current;
 
-      switch (type) {
-        // Round events
-        case 'round:created': {
+      const handlers: Record<SSEEventType, () => void> = {
+        'round:created': () => {
           const round = data as Round;
           setRound(round);
-          if (shouldTriggerCallbacks) {
-            callbacksRef.current?.onRoundCreated?.(round);
-          }
-          break;
-        }
-        case 'round:updated': {
+          if (shouldTriggerCallbacks) callbacksRef.current?.onRoundCreated?.(round);
+        },
+        'round:updated': () => {
           const round = data as Round;
-          // Get previous state BEFORE updating
           const previousRound = useRoundStore.getState().rounds[round.id];
           setRound(round);
-          if (shouldTriggerCallbacks) {
-            callbacksRef.current?.onRoundUpdated?.(round, previousRound);
-          }
-          break;
-        }
-        case 'round:deleted':
-          removeRound((data as { id: string }).id);
-          break;
-
-        // User events
-        case 'user:created':
-          setUser(data as User);
-          break;
-        case 'user:updated': {
+          if (shouldTriggerCallbacks) callbacksRef.current?.onRoundUpdated?.(round, previousRound);
+        },
+        'round:deleted': () => removeRound((data as { id: string }).id),
+        'user:created': () => setUser(data as User),
+        'user:updated': () => {
           const user = data as User;
-          // Get previous state BEFORE updating
           const previousUser = useUserStore.getState().users[user.id];
           setUser(user);
-          if (shouldTriggerCallbacks) {
-            callbacksRef.current?.onUserUpdated?.(user, previousUser);
-          }
-          break;
-        }
-        case 'user:deleted':
-          removeUser((data as { id: string }).id);
-          break;
-
-        // Prophecy events
-        case 'prophecy:created': {
+          if (shouldTriggerCallbacks) callbacksRef.current?.onUserUpdated?.(user, previousUser);
+        },
+        'user:deleted': () => removeUser((data as { id: string }).id),
+        'prophecy:created': () => {
           const prophecy = data as Prophecy;
           setProphecy(prophecy);
-          if (shouldTriggerCallbacks) {
-            callbacksRef.current?.onProphecyCreated?.(prophecy);
-          }
-          break;
-        }
-        case 'prophecy:updated':
-          setProphecy(data as Prophecy);
-          break;
-        case 'prophecy:deleted':
-          removeProphecy((data as { id: string }).id);
-          break;
-
-        // Rating events
-        case 'rating:created': {
+          if (shouldTriggerCallbacks) callbacksRef.current?.onProphecyCreated?.(prophecy);
+        },
+        'prophecy:updated': () => setProphecy(data as Prophecy),
+        'prophecy:deleted': () => removeProphecy((data as { id: string }).id),
+        'rating:created': () => {
           const rating = data as Rating;
           setRating(rating);
-          if (shouldTriggerCallbacks) {
-            callbacksRef.current?.onRatingCreated?.(rating);
-          }
-          break;
-        }
-        case 'rating:updated':
-          setRating(data as Rating);
-          break;
-        case 'rating:deleted':
-          removeRating((data as { id: string }).id);
-          break;
+          if (shouldTriggerCallbacks) callbacksRef.current?.onRatingCreated?.(rating);
+        },
+        'rating:updated': () => setRating(data as Rating),
+        'rating:deleted': () => removeRating((data as { id: string }).id),
+        'badge:awarded': () => handleBadgeAwarded(data, shouldTriggerCallbacks),
+      };
 
-        default:
-          console.log(`[SSE] Unhandled event: ${type}`, data);
+      const handler = handlers[type];
+      if (handler) {
+        handler();
+      } else {
+        console.log(`[SSE] Unhandled event: ${type}`, data);
       }
     },
     [
@@ -174,6 +183,7 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
       removeProphecy,
       setRating,
       removeRating,
+      handleBadgeAwarded,
     ]
   );
 
@@ -265,6 +275,7 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
       'rating:created',
       'rating:updated',
       'rating:deleted',
+      'badge:awarded',
     ];
 
     eventTypes.forEach((type) => {

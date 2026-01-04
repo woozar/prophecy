@@ -2,7 +2,8 @@
 
 import { useCallback } from 'react';
 
-import { showInfoToast } from '@/lib/toast/toast';
+import { showInfoToast, showSuccessToast } from '@/lib/toast/toast';
+import { type UserBadge } from '@/store/useBadgeStore';
 import { type Prophecy, useProphecyStore } from '@/store/useProphecyStore';
 import { type Rating } from '@/store/useRatingStore';
 import { type Round, useRoundStore } from '@/store/useRoundStore';
@@ -15,6 +16,7 @@ export interface SSEEventCallbacks {
   onRoundCreated?: (round: Round) => void;
   onRoundUpdated?: (round: Round, previousRound: Round | undefined) => void;
   onUserUpdated?: (user: User, previousUser: User | undefined) => void;
+  onBadgeAwarded?: (userBadge: UserBadge) => void;
 }
 
 /**
@@ -118,11 +120,28 @@ export function useSSEToasts(): SSEEventCallbacks {
     [currentUser?.role]
   );
 
+  /**
+   * Show toast when the current user earns a new badge
+   */
+  const handleBadgeAwarded = useCallback(
+    (userBadge: UserBadge) => {
+      // Only show toast for own badges
+      if (userBadge.userId !== currentUserId) return;
+
+      showSuccessToast(
+        `${userBadge.badge.icon} Neues Badge erhalten!`,
+        `${userBadge.badge.name}: ${userBadge.badge.description}`
+      );
+    },
+    [currentUserId]
+  );
+
   return {
     onProphecyCreated: handleProphecyCreated,
     onRatingCreated: handleRatingCreated,
     onRoundCreated: handleRoundCreated,
     onRoundUpdated: handleRoundUpdated,
     onUserUpdated: handleUserUpdated,
+    onBadgeAwarded: handleBadgeAwarded,
   };
 }

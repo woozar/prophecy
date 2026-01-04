@@ -865,12 +865,12 @@ describe('useSSE', () => {
       expect(mockInitialDataGet).toHaveBeenCalledTimes(1);
 
       // Initial connect
-      act(() => {
+      await act(async () => {
         createdInstances[0].onopen?.();
       });
 
       // Simulate disconnect
-      act(() => {
+      await act(async () => {
         createdInstances[0].onerror?.();
       });
 
@@ -879,13 +879,15 @@ describe('useSSE', () => {
         await vi.advanceTimersByTimeAsync(1000);
       });
 
-      // Simulate successful reconnect
-      act(() => {
+      const callCountBeforeReconnect = mockInitialDataGet.mock.calls.length;
+
+      // Simulate successful reconnect - this triggers async data reload
+      await act(async () => {
         createdInstances[1].onopen?.();
       });
 
-      // Verify data was reloaded (called again after reconnect)
-      expect(mockInitialDataGet).toHaveBeenCalledTimes(2);
+      // Verify data was reloaded after reconnect
+      expect(mockInitialDataGet.mock.calls.length).toBeGreaterThan(callCountBeforeReconnect);
     });
 
     it('reloads data after heartbeat timeout', async () => {

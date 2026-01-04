@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAuditLog } from '@/lib/audit/audit-service';
 import { getSession } from '@/lib/auth/session';
+import { awardBadge } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
@@ -163,6 +164,41 @@ describe('PUT /api/prophecies/[id]', () => {
     const response = await PUT(request, createRouteParams('prophecy-1'));
 
     expect(response.status).toBe(400);
+  });
+
+  it('awards novelist badge for long description (500+ chars)', async () => {
+    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy());
+    vi.mocked(prisma.rating.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.rating.deleteMany).mockResolvedValue({ count: 0 });
+    const longDescription = 'A'.repeat(500);
+    vi.mocked(prisma.prophecy.update).mockResolvedValue(
+      createMockProphecy({ description: longDescription })
+    );
+
+    const request = new NextRequest('http://localhost/api/prophecies/prophecy-1', {
+      method: 'PUT',
+      body: JSON.stringify({ title: 'Updated Title', description: longDescription }),
+    });
+    await PUT(request, createRouteParams('prophecy-1'));
+
+    expect(awardBadge).toHaveBeenCalledWith('user-1', 'special_novelist');
+  });
+
+  it('does not award novelist badge for short description', async () => {
+    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy());
+    vi.mocked(prisma.rating.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.rating.deleteMany).mockResolvedValue({ count: 0 });
+    vi.mocked(prisma.prophecy.update).mockResolvedValue(createMockProphecy());
+
+    const request = new NextRequest('http://localhost/api/prophecies/prophecy-1', {
+      method: 'PUT',
+      body: JSON.stringify({ title: 'Updated Title', description: 'Short' }),
+    });
+    await PUT(request, createRouteParams('prophecy-1'));
+
+    expect(awardBadge).not.toHaveBeenCalledWith('user-1', 'special_novelist');
   });
 });
 

@@ -12,7 +12,11 @@ vi.mock('@/lib/db/prisma', () => ({
   prisma: {
     round: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
       update: vi.fn(),
+    },
+    prophecy: {
+      findMany: vi.fn(),
     },
     user: {
       findUnique: vi.fn(),
@@ -28,6 +32,21 @@ vi.mock('@/lib/sse/event-emitter', () => ({
   sseEmitter: {
     broadcast: vi.fn(),
   },
+}));
+
+vi.mock('@/lib/badges/badge-service', () => ({
+  awardLeaderboardBadges: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('@/lib/statistics/calculate', () => ({
+  calculateRoundStatistics: vi.fn().mockResolvedValue({
+    roundId: 'round-1',
+    creatorStats: [],
+    raterStats: [],
+    totalAcceptedProphecies: 0,
+    resolvedProphecies: 0,
+    isComplete: true,
+  }),
 }));
 
 const mockAdmin = { userId: 'admin-1', username: 'admin', role: 'ADMIN' as const, iat: Date.now() };

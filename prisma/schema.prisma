@@ -28,6 +28,7 @@ model User {
   prophecies     Prophecy[]
   ratings        Rating[]
   auditLogs      AuditLog[]
+  badges         UserBadge[]
 }
 
 model Authenticator {
@@ -114,4 +115,55 @@ model AuditLog {
   @@index([prophecyId])
   @@index([userId])
   @@index([createdAt])
+}
+
+// Badge System
+model Badge {
+  id          String        @id @default(cuid())
+  key         String        @unique  // z.B. "creator_5", "accuracy_80"
+  name        String                 // "Mondleser"
+  description String                 // "Die Sterne beginnen zu sprechen"
+  requirement String        @default("")  // "5 Prophezeiungen erstellt"
+  icon        String                 // Emoji: "🌙"
+  category    BadgeCategory
+  rarity      BadgeRarity
+  threshold   Int?                   // Schwellwert für automatische Vergabe
+
+  createdAt   DateTime      @default(now())
+
+  users       UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  earnedAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@index([badgeId])
+  @@index([earnedAt])
+}
+
+enum BadgeCategory {
+  CREATOR      // Prophezeiungen erstellen
+  ACCURACY     // Trefferquote
+  RATER        // Bewertungen abgeben
+  RATER_ACC    // Rating-Genauigkeit
+  ROUNDS       // Rundenteilnahme
+  LEADERBOARD  // Platzierungen
+  SPECIAL      // Seltene Ereignisse
+  SOCIAL       // Soziale Badges
+  HIDDEN       // Easter Eggs
+}
+
+enum BadgeRarity {
+  BRONZE
+  SILVER
+  GOLD
+  LEGENDARY
 }

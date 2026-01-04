@@ -1,8 +1,10 @@
 import { NextRequest } from 'next/server';
 
+import { BadgeCategory, BadgeRarity } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getSession } from '@/lib/auth/session';
+import { awardBadge } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
@@ -39,6 +41,11 @@ vi.mock('sharp', () => ({
     webp: vi.fn().mockReturnThis(),
     toBuffer: vi.fn().mockResolvedValue(Buffer.from('processed-image-data')),
   }),
+}));
+
+// Mock badge service
+vi.mock('@/lib/badges/badge-service', () => ({
+  awardBadge: vi.fn(),
 }));
 
 const mockUserFull = {
@@ -233,8 +240,11 @@ describe('POST /api/users/me/avatar', () => {
           role: 'USER',
           iat: Date.now(),
         });
-        // The request will fail at DB/filesystem level, but should pass validation
         vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUserFull);
+        vi.mocked(prisma.user.update).mockResolvedValue({
+          ...mockUserFull,
+          avatarUrl: '/api/uploads/avatars/test.webp',
+        });
 
         const file = new File(['test-content'], `avatar.${ext}`, { type });
         const formData = new FormData();
@@ -246,10 +256,154 @@ describe('POST /api/users/me/avatar', () => {
         });
         const response = await POST(request);
 
-        // If it passes validation, it will try to process - not get 400
-        expect(response.status).not.toBe(400);
+        // Should succeed
+        expect(response.status).toBe(200);
       });
     }
+  });
+
+  it('returns success with avatarUrl on successful upload', async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      userId: 'user-1',
+      username: 'testuser',
+      role: 'USER',
+      iat: Date.now(),
+    });
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUserFull);
+    vi.mocked(prisma.user.update).mockResolvedValue({
+      ...mockUserFull,
+      avatarUrl: '/api/uploads/avatars/somehash.webp',
+    });
+
+    const file = new File(['test-content'], 'avatar.jpg', { type: 'image/jpeg' });
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const request = new NextRequest('http://localhost/api/users/me/avatar', {
+      method: 'POST',
+      body: formData,
+    });
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.avatarUrl).toContain('/api/uploads/avatars/');
+    expect(data.avatarUrl).toContain('.webp');
+  });
+
+  it('broadcasts user:updated on successful upload', async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      userId: 'user-1',
+      username: 'testuser',
+      role: 'USER',
+      iat: Date.now(),
+    });
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUserFull);
+    const updatedUser = {
+      ...mockUserFull,
+      avatarUrl: '/api/uploads/avatars/somehash.webp',
+    };
+    vi.mocked(prisma.user.update).mockResolvedValue(updatedUser);
+
+    const file = new File(['test-content'], 'avatar.jpg', { type: 'image/jpeg' });
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const request = new NextRequest('http://localhost/api/users/me/avatar', {
+      method: 'POST',
+      body: formData,
+    });
+    await POST(request);
+
+    expect(sseEmitter.broadcast).toHaveBeenCalledWith({
+      type: 'user:updated',
+      data: expect.objectContaining({
+        id: 'user-1',
+        avatarUrl: expect.stringContaining('/api/uploads/avatars/'),
+      }),
+    });
+  });
+
+  it('awards special_stylist badge when user has avatar and effect', async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      userId: 'user-1',
+      username: 'testuser',
+      role: 'USER',
+      iat: Date.now(),
+    });
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUserFull);
+    const updatedUser = {
+      ...mockUserFull,
+      avatarUrl: '/api/uploads/avatars/somehash.webp',
+      avatarEffect: 'glow',
+    };
+    vi.mocked(prisma.user.update).mockResolvedValue(updatedUser);
+    vi.mocked(awardBadge).mockResolvedValue({
+      userBadge: {
+        id: 'ub-1',
+        earnedAt: new Date(),
+        userId: 'user-1',
+        badgeId: 'badge-stylist',
+        badge: {
+          id: 'badge-stylist',
+          key: 'special_stylist',
+          name: 'Stylist',
+          description: 'Custom avatar with effect',
+          icon: '🎨',
+          category: BadgeCategory.SPECIAL,
+          rarity: BadgeRarity.GOLD,
+          threshold: null,
+        },
+      },
+      isNew: true,
+    });
+
+    const file = new File(['test-content'], 'avatar.jpg', { type: 'image/jpeg' });
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const request = new NextRequest('http://localhost/api/users/me/avatar', {
+      method: 'POST',
+      body: formData,
+    });
+    await POST(request);
+
+    expect(awardBadge).toHaveBeenCalledWith('user-1', 'special_stylist');
+    // Should broadcast badge:awarded event
+    expect(sseEmitter.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'badge:awarded',
+      })
+    );
+  });
+
+  it('does not award badge when user has no avatar effect', async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      userId: 'user-1',
+      username: 'testuser',
+      role: 'USER',
+      iat: Date.now(),
+    });
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUserFull);
+    const updatedUser = {
+      ...mockUserFull,
+      avatarUrl: '/api/uploads/avatars/somehash.webp',
+      avatarEffect: null, // No effect
+    };
+    vi.mocked(prisma.user.update).mockResolvedValue(updatedUser);
+
+    const file = new File(['test-content'], 'avatar.jpg', { type: 'image/jpeg' });
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const request = new NextRequest('http://localhost/api/users/me/avatar', {
+      method: 'POST',
+      body: formData,
+    });
+    await POST(request);
+
+    expect(awardBadge).not.toHaveBeenCalled();
   });
 });
 

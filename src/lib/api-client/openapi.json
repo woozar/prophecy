@@ -32,7 +32,7 @@
       },
       "UserStatus": {
         "type": "string",
-        "enum": ["PENDING", "APPROVED", "SUSPENDED"]
+        "enum": ["PENDING", "APPROVED", "SUSPENDED", "REJECTED"]
       },
       "User": {
         "type": "object",
@@ -659,6 +659,24 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "badgeIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_count": {
+            "type": "object",
+            "properties": {
+              "prophecies": {
+                "type": "number"
+              },
+              "ratings": {
+                "type": "number"
+              }
+            },
+            "required": ["prophecies", "ratings"]
           }
         },
         "required": [
@@ -671,7 +689,9 @@
           "role",
           "status",
           "isBot",
-          "createdAt"
+          "createdAt",
+          "badgeIds",
+          "_count"
         ]
       },
       "Round": {
@@ -790,6 +810,111 @@
         },
         "required": ["id", "value", "prophecyId", "userId", "createdAt"]
       },
+      "BadgeCategory": {
+        "type": "string",
+        "enum": [
+          "CREATOR",
+          "ACCURACY",
+          "RATER",
+          "RATER_ACC",
+          "ROUNDS",
+          "LEADERBOARD",
+          "SPECIAL",
+          "SOCIAL",
+          "HIDDEN"
+        ]
+      },
+      "BadgeRarity": {
+        "type": "string",
+        "enum": ["BRONZE", "SILVER", "GOLD", "LEGENDARY"]
+      },
+      "Badge": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "requirement": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/BadgeCategory"
+          },
+          "rarity": {
+            "$ref": "#/components/schemas/BadgeRarity"
+          },
+          "threshold": {
+            "type": "number",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "name",
+          "description",
+          "requirement",
+          "icon",
+          "category",
+          "rarity",
+          "threshold",
+          "createdAt"
+        ]
+      },
+      "UserBadge": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "badgeId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "earnedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "badge": {
+            "$ref": "#/components/schemas/Badge"
+          }
+        },
+        "required": ["id", "badgeId", "userId", "earnedAt", "badge"]
+      },
+      "UserBadgeSimple": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "badgeId": {
+            "type": "string"
+          },
+          "earnedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["userId", "badgeId", "earnedAt"]
+      },
       "InitialDataResponse": {
         "type": "object",
         "properties": {
@@ -817,11 +942,38 @@
               "$ref": "#/components/schemas/Rating"
             }
           },
+          "badges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Badge"
+            }
+          },
+          "myBadges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserBadge"
+            }
+          },
+          "allUserBadges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserBadgeSimple"
+            }
+          },
           "currentUserId": {
             "type": "string"
           }
         },
-        "required": ["users", "rounds", "prophecies", "ratings", "currentUserId"]
+        "required": [
+          "users",
+          "rounds",
+          "prophecies",
+          "ratings",
+          "badges",
+          "myBadges",
+          "allUserBadges",
+          "currentUserId"
+        ]
       },
       "PropheciesListResponse": {
         "type": "object",

@@ -1,3 +1,4 @@
+import { BadgeCategory, BadgeRarity } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getSession } from '@/lib/auth/session';
@@ -32,6 +33,7 @@ describe('GET /api/initial-data', () => {
       isBot: false,
       createdAt: new Date('2025-01-01'),
       updatedAt: new Date('2025-01-01'),
+      _count: { prophecies: 2, ratings: 5 },
     },
     {
       id: 'user-2',
@@ -47,6 +49,41 @@ describe('GET /api/initial-data', () => {
       isBot: false,
       createdAt: new Date('2025-01-02'),
       updatedAt: new Date('2025-01-02'),
+      _count: { prophecies: 3, ratings: 10 },
+    },
+  ];
+
+  const mockBadges = [
+    {
+      id: 'badge-1',
+      key: 'creator_1',
+      name: 'Anfänger-Seher',
+      description: 'Erste Schritte',
+      requirement: '1 Prophezeiung erstellt',
+      icon: '🔮',
+      category: BadgeCategory.CREATOR,
+      rarity: BadgeRarity.BRONZE,
+      threshold: 1,
+      createdAt: new Date('2025-01-01'),
+    },
+  ];
+
+  const mockMyBadges = [
+    {
+      id: 'user-badge-1',
+      userId: 'user-1',
+      badgeId: 'badge-1',
+      earnedAt: new Date('2025-01-05'),
+      badge: mockBadges[0],
+    },
+  ];
+
+  const mockAllUserBadges = [
+    {
+      id: 'user-badge-1',
+      userId: 'user-1',
+      badgeId: 'badge-1',
+      earnedAt: new Date('2025-01-05'),
     },
   ];
 
@@ -104,6 +141,26 @@ describe('GET /api/initial-data', () => {
     },
   ];
 
+  // Helper to set up all required mocks
+  const setupMocks = (overrides?: {
+    users?: typeof mockUsers;
+    rounds?: typeof mockRounds;
+    prophecies?: typeof mockProphecies;
+    ratings?: typeof mockRatings;
+    badges?: typeof mockBadges;
+    myBadges?: typeof mockMyBadges;
+    allUserBadges?: typeof mockAllUserBadges;
+  }) => {
+    vi.mocked(prisma.user.findMany).mockResolvedValue(overrides?.users ?? mockUsers);
+    vi.mocked(prisma.round.findMany).mockResolvedValue(overrides?.rounds ?? mockRounds);
+    vi.mocked(prisma.prophecy.findMany).mockResolvedValue(overrides?.prophecies ?? mockProphecies);
+    vi.mocked(prisma.rating.findMany).mockResolvedValue(overrides?.ratings ?? mockRatings);
+    vi.mocked(prisma.badge.findMany).mockResolvedValue(overrides?.badges ?? mockBadges);
+    vi.mocked(prisma.userBadge.findMany)
+      .mockResolvedValueOnce(overrides?.myBadges ?? mockMyBadges)
+      .mockResolvedValueOnce(overrides?.allUserBadges ?? mockAllUserBadges);
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -120,10 +177,7 @@ describe('GET /api/initial-data', () => {
 
   it('returns all data for authenticated user', async () => {
     vi.mocked(getSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers);
-    vi.mocked(prisma.round.findMany).mockResolvedValue(mockRounds);
-    vi.mocked(prisma.prophecy.findMany).mockResolvedValue(mockProphecies);
-    vi.mocked(prisma.rating.findMany).mockResolvedValue(mockRatings);
+    setupMocks();
 
     const response = await GET();
     const data = await response.json();
@@ -134,14 +188,14 @@ describe('GET /api/initial-data', () => {
     expect(data.rounds).toHaveLength(1);
     expect(data.prophecies).toHaveLength(2);
     expect(data.ratings).toHaveLength(1);
+    expect(data.badges).toHaveLength(1);
+    expect(data.myBadges).toHaveLength(1);
+    expect(data.allUserBadges).toHaveLength(1);
   });
 
   it('transforms dates to ISO strings', async () => {
     vi.mocked(getSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers);
-    vi.mocked(prisma.round.findMany).mockResolvedValue(mockRounds);
-    vi.mocked(prisma.prophecy.findMany).mockResolvedValue(mockProphecies);
-    vi.mocked(prisma.rating.findMany).mockResolvedValue(mockRatings);
+    setupMocks();
 
     const response = await GET();
     const data = await response.json();
@@ -162,14 +216,16 @@ describe('GET /api/initial-data', () => {
 
     // Check rating dates
     expect(data.ratings[0].createdAt).toBe('2025-01-10T00:00:00.000Z');
+
+    // Check badge dates
+    expect(data.badges[0].createdAt).toBe('2025-01-01T00:00:00.000Z');
+    expect(data.myBadges[0].earnedAt).toBe('2025-01-05T00:00:00.000Z');
+    expect(data.allUserBadges[0].earnedAt).toBe('2025-01-05T00:00:00.000Z');
   });
 
   it('parses avatarEffectColors JSON string', async () => {
     vi.mocked(getSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers);
-    vi.mocked(prisma.round.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.prophecy.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.rating.findMany).mockResolvedValue([]);
+    setupMocks({ rounds: [], prophecies: [], ratings: [] });
 
     const response = await GET();
     const data = await response.json();
@@ -183,10 +239,7 @@ describe('GET /api/initial-data', () => {
 
   it('includes prophecy count in rounds', async () => {
     vi.mocked(getSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.round.findMany).mockResolvedValue(mockRounds);
-    vi.mocked(prisma.prophecy.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.rating.findMany).mockResolvedValue([]);
+    setupMocks({ users: [], prophecies: [], ratings: [] });
 
     const response = await GET();
     const data = await response.json();
@@ -194,12 +247,22 @@ describe('GET /api/initial-data', () => {
     expect(data.rounds[0]._count.prophecies).toBe(5);
   });
 
-  it('only fetches approved users', async () => {
+  it('includes user badge ids from allUserBadges', async () => {
     vi.mocked(getSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.round.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.prophecy.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.rating.findMany).mockResolvedValue([]);
+    setupMocks();
+
+    const response = await GET();
+    const data = await response.json();
+
+    // User 1 has badge-1
+    expect(data.users[0].badgeIds).toEqual(['badge-1']);
+    // User 2 has no badges
+    expect(data.users[1].badgeIds).toEqual([]);
+  });
+
+  it('only fetches approved users for non-admin', async () => {
+    vi.mocked(getSession).mockResolvedValue(mockSession);
+    setupMocks({ users: [], rounds: [], prophecies: [], ratings: [] });
 
     await GET();
 
@@ -214,17 +277,32 @@ describe('GET /api/initial-data', () => {
         avatarEffectColors: true,
         role: true,
         status: true,
+        isBot: true,
         createdAt: true,
+        _count: expect.any(Object),
+      }),
+    });
+  });
+
+  it('fetches all users for admin', async () => {
+    const adminSession = { ...mockSession, role: 'ADMIN' as const };
+    vi.mocked(getSession).mockResolvedValue(adminSession);
+    setupMocks({ users: [], rounds: [], prophecies: [], ratings: [] });
+
+    await GET();
+
+    expect(prisma.user.findMany).toHaveBeenCalledWith({
+      where: {},
+      select: expect.objectContaining({
+        id: true,
+        username: true,
       }),
     });
   });
 
   it('fetches rounds ordered by createdAt descending', async () => {
     vi.mocked(getSession).mockResolvedValue(mockSession);
-    vi.mocked(prisma.user.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.round.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.prophecy.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.rating.findMany).mockResolvedValue([]);
+    setupMocks({ users: [], rounds: [], prophecies: [], ratings: [] });
 
     await GET();
 

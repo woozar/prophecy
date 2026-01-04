@@ -266,10 +266,114 @@ describe('SSEEventEmitter', () => {
       expect(sseEmitter.getClientCount()).toBe(countWithBoth - 1);
     });
   });
+});
 
-  // Note: Heartbeat tests are skipped because the SSEEventEmitter singleton
-  // starts its interval at module load time with real timers. Fake timers
-  // set up in tests cannot intercept this already-running interval.
-  // The heartbeat functionality is tested indirectly through error handling
-  // in broadcast and sendToClient tests.
+// Separate describe block with module reset to test heartbeat with fake timers
+describe('SSEEventEmitter heartbeat', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    // Reset the global singleton
+    globalThis.sseEmitterInstance = undefined;
+    vi.resetModules();
+  });
+
+  it('removes stale clients after timeout and sends ping to active clients', async () => {
+    // Reset modules and set up fake timers before importing
+    vi.resetModules();
+    globalThis.sseEmitterInstance = undefined;
+
+    // Now import with fake timers already active
+    const { sseEmitter: freshEmitter } = await import('./event-emitter');
+
+    const activeController = {
+      enqueue: vi.fn(),
+    } as unknown as ReadableStreamDefaultController<Uint8Array>;
+
+    const staleController = {
+      enqueue: vi.fn(),
+    } as unknown as ReadableStreamDefaultController<Uint8Array>;
+
+    freshEmitter.addClient('active-client', activeController);
+    freshEmitter.addClient('stale-client', staleController);
+
+    // Simulate time passing - stale client hasn't had activity
+    // Move time forward past the 60s stale timeout but run heartbeat at 30s intervals
+    vi.advanceTimersByTime(30001); // First heartbeat - both clients are active
+
+    expect(activeController.enqueue).toHaveBeenCalled(); // Ping sent
+    expect(staleController.enqueue).toHaveBeenCalled(); // Ping sent
+
+    // Clear the mock to track next heartbeat
+    (activeController.enqueue as ReturnType<typeof vi.fn>).mockClear();
+    (staleController.enqueue as ReturnType<typeof vi.fn>).mockClear();
+
+    // Next heartbeat at 60s total
+    vi.advanceTimersByTime(30000);
+
+    // Both should still receive pings (not stale yet - activity was updated at 30s)
+    expect(freshEmitter.getClientCount()).toBe(2);
+
+    // Clean up
+    freshEmitter.removeClient('active-client');
+    freshEmitter.removeClient('stale-client');
+  });
+
+  it('removes client when ping fails during heartbeat', async () => {
+    vi.resetModules();
+    globalThis.sseEmitterInstance = undefined;
+
+    const { sseEmitter: freshEmitter } = await import('./event-emitter');
+
+    const failingController = {
+      enqueue: vi.fn(() => {
+        throw new Error('Connection closed');
+      }),
+    } as unknown as ReadableStreamDefaultController<Uint8Array>;
+
+    freshEmitter.addClient('failing-client', failingController);
+    expect(freshEmitter.getClientCount()).toBe(1);
+
+    // Trigger heartbeat
+    vi.advanceTimersByTime(30001);
+
+    // Client should be removed after ping failure
+    expect(freshEmitter.getClientCount()).toBe(0);
+  });
+
+  it('removes stale client during heartbeat when inactive too long', async () => {
+    vi.resetModules();
+    globalThis.sseEmitterInstance = undefined;
+
+    const { sseEmitter: freshEmitter } = await import('./event-emitter');
+
+    const controller = {
+      enqueue: vi.fn(),
+    } as unknown as ReadableStreamDefaultController<Uint8Array>;
+
+    freshEmitter.addClient('will-be-stale', controller);
+
+    // Mock Date.now to make the client appear stale
+    const originalDateNow = Date.now;
+    let currentTime = originalDateNow();
+    vi.spyOn(Date, 'now').mockImplementation(() => currentTime);
+
+    // Advance mock time by more than 60s (stale timeout)
+    currentTime += 61000;
+
+    // Trigger heartbeat
+    vi.advanceTimersByTime(30001);
+
+    // Client should be removed as stale
+    expect(freshEmitter.getClientCount()).toBe(0);
+
+    // Restore
+    vi.spyOn(Date, 'now').mockRestore();
+  });
 });

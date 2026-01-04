@@ -225,10 +225,16 @@ describe('ensureBotsExist', () => {
   });
 
   it('creates upload directory if it does not exist', async () => {
-    // Source exists, but upload dir doesn't on first call
+    // For each bot: check source file, then check upload dir
+    // Bot 1: source exists, upload dir doesn't exist (triggers mkdir)
+    // Bot 2 & 3: source exists, upload dir now exists
     mockExistsSync
-      .mockReturnValueOnce(true) // source file exists
-      .mockReturnValueOnce(false); // upload dir doesn't exist
+      .mockReturnValueOnce(true) // bot 1: source file exists
+      .mockReturnValueOnce(false) // bot 1: upload dir doesn't exist
+      .mockReturnValueOnce(true) // bot 2: source file exists
+      .mockReturnValueOnce(true) // bot 2: upload dir exists (after mkdir)
+      .mockReturnValueOnce(true) // bot 3: source file exists
+      .mockReturnValueOnce(true); // bot 3: upload dir exists
     mockMkdir.mockResolvedValue(undefined);
     mockCopyFile.mockResolvedValue(undefined);
     vi.mocked(prisma.user.upsert).mockResolvedValue({

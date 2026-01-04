@@ -1,0 +1,281 @@
+'use client';
+
+import { memo, useMemo, useState } from 'react';
+
+import { Tooltip } from '@mantine/core';
+import type { BadgeRarity } from '@prisma/client';
+import { IconLoader2 } from '@tabler/icons-react';
+
+import { BadgeTooltipContent } from '@/components/BadgeTooltipContent';
+import { Card } from '@/components/Card';
+import { Link } from '@/components/Link';
+import { Modal } from '@/components/Modal';
+import { UserAvatar } from '@/components/UserAvatar';
+import { formatDate } from '@/lib/formatting/date';
+import { useBadgeStore } from '@/store/useBadgeStore';
+import { useUserStore } from '@/store/useUserStore';
+
+interface AwardedBadgeInfo {
+  badgeId: string;
+  icon: string;
+  name: string;
+  description: string;
+  requirement: string;
+  rarity: BadgeRarity;
+  firstAchieverId: string;
+  firstAchievedAt: string;
+  totalAchievers: number;
+}
+
+interface BadgeAchiever {
+  userId: string;
+  earnedAt: string;
+}
+
+export default function BadgesPage() {
+  const badges = useBadgeStore((state) => state.badges);
+  const allUserBadges = useBadgeStore((state) => state.allUserBadges);
+  const isInitialized = useBadgeStore((state) => state.isInitialized);
+  const users = useUserStore((state) => state.users);
+
+  const [selectedBadge, setSelectedBadge] = useState<AwardedBadgeInfo | null>(null);
+
+  // Calculate awarded badges from allUserBadges
+  const awardedBadges = useMemo((): AwardedBadgeInfo[] => {
+    const badgeStats: Record<
+      string,
+      { firstAchieverId: string; firstAchievedAt: string; count: number }
+    > = {};
+
+    // Iterate through all user badges
+    for (const userId of Object.keys(allUserBadges)) {
+      const userBadgeMap = allUserBadges[userId];
+      for (const badgeId of Object.keys(userBadgeMap)) {
+        const ub = userBadgeMap[badgeId];
+        if (badgeStats[badgeId]) {
+          badgeStats[badgeId].count++;
+          // Check if this is earlier
+          if (new Date(ub.earnedAt) < new Date(badgeStats[badgeId].firstAchievedAt)) {
+            badgeStats[badgeId].firstAchieverId = userId;
+            badgeStats[badgeId].firstAchievedAt = ub.earnedAt;
+          }
+        } else {
+          badgeStats[badgeId] = {
+            firstAchieverId: userId,
+            firstAchievedAt: ub.earnedAt,
+            count: 1,
+          };
+        }
+      }
+    }
+
+    // Convert to array with badge info
+    return Object.entries(badgeStats)
+      .map(([badgeId, stats]) => {
+        const badge = badges[badgeId];
+        if (!badge) return null;
+        return {
+          badgeId,
+          icon: badge.icon,
+          name: badge.name,
+          description: badge.description,
+          requirement: badge.requirement,
+          rarity: badge.rarity,
+          firstAchieverId: stats.firstAchieverId,
+          firstAchievedAt: stats.firstAchievedAt,
+          totalAchievers: stats.count,
+        };
+      })
+      .filter((b): b is AwardedBadgeInfo => b !== null)
+      .sort(
+        (a, b) => new Date(a.firstAchievedAt).getTime() - new Date(b.firstAchievedAt).getTime()
+      );
+  }, [badges, allUserBadges]);
+
+  // Get all achievers for the selected badge
+  const selectedBadgeAchievers = useMemo((): BadgeAchiever[] => {
+    if (!selectedBadge) return [];
+    const achievers: BadgeAchiever[] = [];
+    for (const userId of Object.keys(allUserBadges)) {
+      const userBadgeMap = allUserBadges[userId];
+      const ub = userBadgeMap[selectedBadge.badgeId];
+      if (ub) {
+        achievers.push({ userId, earnedAt: ub.earnedAt });
+      }
+    }
+    return achievers.sort(
+      (a, b) => new Date(a.earnedAt).getTime() - new Date(b.earnedAt).getTime()
+    );
+  }, [selectedBadge, allUserBadges]);
+
+  if (!isInitialized) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <h1 className="text-2xl font-bold text-white">Achievements</h1>
+        <Card padding="p-6">
+          <div className="flex items-center justify-center gap-2 text-(--text-muted)">
+            <IconLoader2 size={20} className="animate-spin" />
+            <span>Achievements werden geladen...</span>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-white">Achievements</h1>
+        <Link href="/users" className="text-sm text-cyan-400 hover:text-cyan-300">
+          ← Zurück zu Benutzer
+        </Link>
+      </div>
+
+      <p className="text-(--text-muted)">
+        Alle Achievements, die bereits freigeschaltet wurden. Sortiert nach dem Datum der ersten
+        Freischaltung.
+      </p>
+
+      {awardedBadges.length === 0 ? (
+        <Card padding="p-6">
+          <p className="text-center text-(--text-muted)">Noch keine Achievements freigeschaltet.</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {awardedBadges.map((badge) => {
+            const firstAchiever = users[badge.firstAchieverId];
+            return (
+              <BadgeCard
+                key={badge.badgeId}
+                badge={badge}
+                firstAchiever={firstAchiever}
+                onClick={() => setSelectedBadge(badge)}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {/* Badge Detail Modal */}
+      <Modal
+        opened={!!selectedBadge}
+        onClose={() => setSelectedBadge(null)}
+        title={selectedBadge ? `${selectedBadge.icon} ${selectedBadge.name}` : ''}
+        size="md"
+      >
+        {selectedBadge && (
+          <div className="space-y-4">
+            <p className="text-(--text-secondary) italic">{selectedBadge.description}</p>
+            <p className="text-sm font-medium text-cyan-400">{selectedBadge.requirement}</p>
+
+            <div className="text-sm text-(--text-muted)">
+              {selectedBadge.totalAchievers}{' '}
+              {selectedBadge.totalAchievers === 1 ? 'Benutzer hat' : 'Benutzer haben'} dieses
+              Achievement
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-(--text-muted)">Erreicht von:</h3>
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {selectedBadgeAchievers.map(({ userId, earnedAt }, index) => {
+                  const user = users[userId];
+                  if (!user) return null;
+                  return (
+                    <div
+                      key={userId}
+                      className="flex items-center gap-3 p-2 rounded-lg bg-[rgba(10,25,41,0.4)]"
+                    >
+                      {index === 0 && <span className="text-yellow-400">🥇</span>}
+                      {index === 1 && <span className="text-gray-300">🥈</span>}
+                      {index === 2 && <span className="text-amber-600">🥉</span>}
+                      {index > 2 && (
+                        <span className="w-5 text-center text-xs text-(--text-muted)">
+                          {index + 1}
+                        </span>
+                      )}
+                      <UserAvatar user={user} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">
+                          {user.displayName || user.username}
+                        </p>
+                      </div>
+                      <span className="text-xs text-(--text-muted)">{formatDate(earnedAt)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
+
+interface BadgeCardProps {
+  badge: AwardedBadgeInfo;
+  firstAchiever?: {
+    id: string;
+    username: string;
+    displayName: string | null;
+    avatarUrl?: string | null;
+    avatarEffect?: string | null;
+    avatarEffectColors?: string[];
+  };
+  onClick: () => void;
+}
+
+const BadgeCard = memo(function BadgeCard({
+  badge,
+  firstAchiever,
+  onClick,
+}: Readonly<BadgeCardProps>) {
+  return (
+    <Tooltip
+      label={
+        <BadgeTooltipContent
+          icon={badge.icon}
+          name={badge.name}
+          description={badge.description}
+          requirement={badge.requirement}
+          rarity={badge.rarity}
+        />
+      }
+      multiline
+      position="top"
+      classNames={{
+        tooltip: 'achievement-tooltip',
+      }}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full text-left p-4 badge-card cursor-pointer"
+      >
+        <div className="flex items-start gap-4">
+          <span className="text-4xl">{badge.icon}</span>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-white">{badge.name}</h3>
+            <p className="text-sm text-(--text-muted) line-clamp-2">{badge.requirement}</p>
+
+            <div className="mt-3 flex items-center gap-2">
+              {firstAchiever && (
+                <>
+                  <UserAvatar user={firstAchiever} size="sm" />
+                  <span className="text-xs text-(--text-muted)">
+                    Zuerst erreicht von{' '}
+                    <span className="text-cyan-400">
+                      {firstAchiever.displayName || firstAchiever.username}
+                    </span>
+                  </span>
+                </>
+              )}
+            </div>
+
+            <div className="mt-1 text-xs text-(--text-muted)">{badge.totalAchievers} Besitzer</div>
+          </div>
+        </div>
+      </button>
+    </Tooltip>
+  );
+});

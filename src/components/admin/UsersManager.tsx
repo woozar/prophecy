@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import {
   IconBan,
@@ -12,6 +12,7 @@ import {
   IconUser,
   IconX,
 } from '@tabler/icons-react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
@@ -19,9 +20,12 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { GlowBadge } from '@/components/GlowBadge';
 import { Modal } from '@/components/Modal';
 import { UserAvatar } from '@/components/UserAvatar';
+import { UserProfileModal } from '@/components/UserProfileModal';
 import { apiClient } from '@/lib/api-client/client';
+import { formatDate } from '@/lib/formatting/date';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
-import { type User } from '@/store/useUserStore';
+import { type Badge, type UserBadgeSimple, useBadgeStore } from '@/store/useBadgeStore';
+import { type User, useUserStore } from '@/store/useUserStore';
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: 'Ausstehend',
@@ -49,39 +53,20 @@ interface PasswordResetResult {
 }
 
 export const UsersManager = memo(function UsersManager() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Get users from store (SSE keeps them up-to-date)
+  const users = useUserStore(useShallow((state) => Object.values(state.users)));
+  const setUser = useUserStore((state) => state.setUser);
+  const removeUserFromStore = useUserStore((state) => state.removeUser);
+  const isLoading = useUserStore((state) => !state.isInitialized);
+
+  // Get badges from badge store
+  const badges = useBadgeStore((state) => state.badges);
+  const allUserBadges = useBadgeStore((state) => state.allUserBadges);
+
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordResetResult, setPasswordResetResult] = useState<PasswordResetResult | null>(null);
-
-  // Fetch all users from admin API (includes PENDING users)
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const { data, error } = await apiClient.admin.users.list();
-        if (data && !error) {
-          setUsers(data.users as User[]);
-        } else {
-          showErrorToast('Fehler beim Laden der Benutzer');
-        }
-      } catch {
-        showErrorToast('Fehler beim Laden der Benutzer');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, []);
-
-  const updateUser = useCallback((updatedUser: User) => {
-    setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
-  }, []);
-
-  const removeUser = useCallback((userId: string) => {
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
-  }, []);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const handleStatusChange = useCallback(
     async (userId: string, status: string) => {
@@ -95,7 +80,7 @@ export const UsersManager = memo(function UsersManager() {
           throw new Error((error as { error?: string })?.error || 'Fehler beim Aktualisieren');
         }
 
-        updateUser(data.user as User);
+        setUser(data.user as User);
         showSuccessToast(`Benutzer ${STATUS_LABELS[status].toLowerCase()}`);
         setConfirmAction(null);
       } catch (error) {
@@ -104,7 +89,7 @@ export const UsersManager = memo(function UsersManager() {
         setIsSubmitting(false);
       }
     },
-    [updateUser]
+    [setUser]
   );
 
   const handleRoleChange = useCallback(
@@ -119,7 +104,7 @@ export const UsersManager = memo(function UsersManager() {
           throw new Error((error as { error?: string })?.error || 'Fehler beim Aktualisieren');
         }
 
-        updateUser(data.user as User);
+        setUser(data.user as User);
         showSuccessToast(role === 'ADMIN' ? 'Zum Admin befördert' : 'Adminrechte entzogen');
         setConfirmAction(null);
       } catch (error) {
@@ -128,7 +113,7 @@ export const UsersManager = memo(function UsersManager() {
         setIsSubmitting(false);
       }
     },
-    [updateUser]
+    [setUser]
   );
 
   const handleDelete = useCallback(
@@ -141,7 +126,7 @@ export const UsersManager = memo(function UsersManager() {
           throw new Error((error as { error?: string })?.error || 'Fehler beim Löschen');
         }
 
-        removeUser(userId);
+        removeUserFromStore(userId);
         showSuccessToast('Benutzer gelöscht');
         setConfirmAction(null);
       } catch (error) {
@@ -150,7 +135,7 @@ export const UsersManager = memo(function UsersManager() {
         setIsSubmitting(false);
       }
     },
-    [removeUser]
+    [removeUserFromStore]
   );
 
   const handleResetPassword = useCallback(async (userId: string, username: string) => {
@@ -189,14 +174,6 @@ export const UsersManager = memo(function UsersManager() {
         break;
     }
   }, [confirmAction, handleDelete, handleStatusChange, handleRoleChange]);
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
 
   // Sort function for alphabetical ordering by display name or username
   const sortAlphabetically = useCallback(
@@ -273,6 +250,9 @@ export const UsersManager = memo(function UsersManager() {
             <UserCard
               key={user.id}
               user={user}
+              badges={badges}
+              userBadgeMap={allUserBadges[user.id]}
+              onClick={() => setSelectedUser(user)}
               onApprove={() => handleStatusChange(user.id, 'APPROVED')}
               onReject={() => handleStatusChange(user.id, 'REJECTED')}
               onDelete={() =>
@@ -283,7 +263,6 @@ export const UsersManager = memo(function UsersManager() {
                 })
               }
               isSubmitting={isSubmitting}
-              formatDate={formatDate}
             />
           ))}
         </div>
@@ -301,6 +280,9 @@ export const UsersManager = memo(function UsersManager() {
             <UserCard
               key={user.id}
               user={user}
+              badges={badges}
+              userBadgeMap={allUserBadges[user.id]}
+              onClick={() => setSelectedUser(user)}
               onSuspend={() =>
                 setConfirmAction({
                   userId: user.id,
@@ -330,7 +312,6 @@ export const UsersManager = memo(function UsersManager() {
                 })
               }
               isSubmitting={isSubmitting}
-              formatDate={formatDate}
             />
           ))
         )}
@@ -346,6 +327,9 @@ export const UsersManager = memo(function UsersManager() {
             <UserCard
               key={user.id}
               user={user}
+              badges={badges}
+              userBadgeMap={allUserBadges[user.id]}
+              onClick={() => setSelectedUser(user)}
               onReactivate={() => handleStatusChange(user.id, 'APPROVED')}
               onDelete={() =>
                 setConfirmAction({
@@ -355,7 +339,6 @@ export const UsersManager = memo(function UsersManager() {
                 })
               }
               isSubmitting={isSubmitting}
-              formatDate={formatDate}
             />
           ))}
         </div>
@@ -404,12 +387,22 @@ export const UsersManager = memo(function UsersManager() {
           </div>
         </div>
       </Modal>
+
+      {/* User Profile Modal */}
+      <UserProfileModal
+        user={selectedUser}
+        opened={!!selectedUser}
+        onClose={() => setSelectedUser(null)}
+      />
     </>
   );
 });
 
 interface UserCardProps {
   user: User;
+  badges: Record<string, Badge>;
+  userBadgeMap: Record<string, UserBadgeSimple> | undefined;
+  onClick: () => void;
   onApprove?: () => void;
   onReject?: () => void;
   onSuspend?: () => void;
@@ -418,11 +411,13 @@ interface UserCardProps {
   onResetPassword?: () => void;
   onDelete?: () => void;
   isSubmitting: boolean;
-  formatDate: (date: string) => string;
 }
 
 const UserCard = memo(function UserCard({
   user,
+  badges,
+  userBadgeMap,
+  onClick,
   onApprove,
   onReject,
   onSuspend,
@@ -431,10 +426,36 @@ const UserCard = memo(function UserCard({
   onResetPassword,
   onDelete,
   isSubmitting,
-  formatDate,
 }: Readonly<UserCardProps>) {
+  // Get user's newest badges (up to 5 displayed, sorted by earnedAt descending)
+  const userBadges = useMemo(() => {
+    if (!user.badgeIds || user.badgeIds.length === 0 || !userBadgeMap) return [];
+
+    // Get badge data with earnedAt info and sort by newest first
+    return user.badgeIds
+      .map((id) => {
+        const badge = badges[id];
+        const userBadge = userBadgeMap[id];
+        if (!badge || !userBadge) return null;
+        return { badge, earnedAt: userBadge.earnedAt };
+      })
+      .filter((b): b is { badge: Badge; earnedAt: string } => !!b)
+      .toSorted((a, b) => new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime())
+      .slice(0, 5)
+      .map((b) => b.badge);
+  }, [user.badgeIds, badges, userBadgeMap]);
+
+  const handleCardClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Only trigger if clicking on the card itself, not the action buttons
+      if ((e.target as HTMLElement).closest('[data-action-buttons]')) return;
+      onClick();
+    },
+    [onClick]
+  );
+
   return (
-    <Card padding="p-4">
+    <Card padding="p-4" onClick={handleCardClick} className="cursor-pointer">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <UserAvatar user={user} size="md" />
@@ -448,11 +469,12 @@ const UserCard = memo(function UserCard({
                   Admin
                 </GlowBadge>
               )}
-              {user.isBot ? (
+              {user.isBot && (
                 <GlowBadge size="sm" color="cyan">
                   Bot
                 </GlowBadge>
-              ) : (
+              )}
+              {!user.isBot && user.status !== 'APPROVED' && (
                 <GlowBadge size="sm" color={STATUS_COLORS[user.status]}>
                   {STATUS_LABELS[user.status]}
                 </GlowBadge>
@@ -466,11 +488,25 @@ const UserCard = memo(function UserCard({
               {!user.isBot && <>{user._count?.prophecies || 0} Prophezeiungen · </>}
               {user._count?.ratings || 0} Bewertungen
             </p>
+            {userBadges.length > 0 && (
+              <div className="flex gap-1 mt-1" title={userBadges.map((b) => b.name).join(', ')}>
+                {userBadges.map((badge) => (
+                  <span key={badge.id} className="text-base" title={badge.name}>
+                    {badge.icon}
+                  </span>
+                ))}
+                {user.badgeIds && user.badgeIds.length > 5 && (
+                  <span className="text-xs text-(--text-muted) my-auto">
+                    +{user.badgeIds.length - 5}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         {!user.isBot && (
-          <div className="flex gap-2 shrink-0">
+          <div className="flex gap-2 shrink-0" data-action-buttons>
             {onApprove && (
               <Button
                 variant="ghost"

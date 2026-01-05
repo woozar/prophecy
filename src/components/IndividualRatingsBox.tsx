@@ -41,18 +41,9 @@ const RatingItem = memo(function RatingItem({
   const valueColorClass = useMemo(() => getRatingColor(rating.value), [rating.value]);
   const formattedValue = useMemo(() => formatRatingValue(rating.value), [rating.value]);
 
-  const userData = useMemo(
-    () => ({
-      username: rating.username,
-      displayName: rating.displayName,
-      avatarUrl: rating.avatarUrl,
-    }),
-    [rating.username, rating.displayName, rating.avatarUrl]
-  );
-
   return (
     <div className="flex items-center gap-2 py-1.5 px-2 rounded-md bg-white/5 hover:bg-white/10 transition-colors">
-      <UserAvatar user={userData} size="sm" />
+      <UserAvatar userId={rating.userId} size="sm" clickable />
       <div className="flex-1 min-w-0 flex items-center gap-1.5">
         <span className="text-sm text-(--text-secondary) truncate">
           {rating.displayName || rating.username}

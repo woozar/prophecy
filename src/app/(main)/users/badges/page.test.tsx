@@ -80,8 +80,8 @@ vi.mock('@/store/useUserStore', () => ({
 
 // Mock UserAvatar to avoid complex rendering
 vi.mock('@/components/UserAvatar', () => ({
-  UserAvatar: ({ user }: { user: { username: string } }) => (
-    <div data-testid={`avatar-${user.username}`}>{user.username}</div>
+  UserAvatar: ({ userId }: { userId: string }) => (
+    <div data-testid={`avatar-${userId}`}>{userId}</div>
   ),
 }));
 
@@ -294,8 +294,8 @@ describe('BadgesPage', () => {
     expect(screen.getByText('🥈')).toBeInTheDocument();
 
     // Multiple avatars exist (in badge cards and modal), just verify there are at least 2 of each user
-    expect(screen.getAllByTestId('avatar-testuser').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByTestId('avatar-anotheruser').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByTestId('avatar-user-1').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByTestId('avatar-user-2').length).toBeGreaterThanOrEqual(1);
   });
 
   it('uses username when displayName is null', async () => {
@@ -320,8 +320,8 @@ describe('BadgesPage', () => {
 
     // Wait for modal to render, then check user-2 is in the achievers list
     await waitFor(() => {
-      // anotheruser appears in modal achievers list
-      expect(screen.getAllByTestId('avatar-anotheruser').length).toBeGreaterThanOrEqual(1);
+      // user-2 appears in modal achievers list (by userId)
+      expect(screen.getAllByTestId('avatar-user-2').length).toBeGreaterThanOrEqual(1);
     });
   });
 

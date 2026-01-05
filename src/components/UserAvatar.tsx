@@ -1,9 +1,10 @@
 'use client';
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
+import { UserProfileModalContext } from '@/contexts/UserProfileModalContext';
 import { useAnimationLoop } from '@/hooks/useAnimationLoop';
 import { useColorCycling } from '@/hooks/useColorCycling';
 import { useUser } from '@/hooks/useUser';
@@ -101,6 +102,10 @@ export type UserAvatarProps = {
   size?: AvatarSize;
   /** Additional CSS classes */
   className?: string;
+  /** Makes the avatar clickable to open user profile modal */
+  clickable?: boolean;
+  /** Custom click handler (overrides default modal behavior) */
+  onClick?: () => void;
 } & ({ userId: string } | { user: UserData });
 
 /** Props for AvatarPreview - used for previews in editors */
@@ -1012,13 +1017,26 @@ export const AvatarPreview = memo(function AvatarPreview({
  * Can be used with either userId (fetches from store) or user object (direct data)
  */
 export const UserAvatar = memo(function UserAvatar(props: Readonly<UserAvatarProps>) {
-  const { size = 'md', className = '' } = props;
+  const { size = 'md', className = '', clickable = false, onClick } = props;
 
   // Get user from store if userId is provided
   const userFromStore = useUser('userId' in props ? props.userId : undefined);
 
-  // Use provided user data or store data
+  // Use provided user data or store data for display
   const user = 'user' in props && props.user ? props.user : userFromStore;
+
+  // Get modal context (may be null if not within provider)
+  const modalContext = useContext(UserProfileModalContext);
+
+  // For modal, we need the full User object from store
+  // userFromStore is always the full User type when available
+  const handleClick = useCallback(() => {
+    if (onClick) {
+      onClick();
+    } else if (modalContext && userFromStore) {
+      modalContext.openUserProfile(userFromStore);
+    }
+  }, [onClick, modalContext, userFromStore]);
 
   // User not found - show placeholder
   if (!user) {
@@ -1033,7 +1051,7 @@ export const UserAvatar = memo(function UserAvatar(props: Readonly<UserAvatarPro
     );
   }
 
-  return (
+  const avatar = (
     <AvatarPreview
       username={user.username}
       displayName={user.displayName}
@@ -1044,4 +1062,18 @@ export const UserAvatar = memo(function UserAvatar(props: Readonly<UserAvatarPro
       className={className}
     />
   );
+
+  if (clickable || onClick) {
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        className="cursor-pointer rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50"
+      >
+        {avatar}
+      </button>
+    );
+  }
+
+  return avatar;
 });

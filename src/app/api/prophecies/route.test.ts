@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getSession } from '@/lib/auth/session';
-import { awardBadge } from '@/lib/badges/badge-service';
+import { awardBadge, checkAndAwardBadges } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
@@ -283,5 +283,100 @@ describe('POST /api/prophecies', () => {
     await POST(request);
 
     expect(awardBadge).not.toHaveBeenCalledWith('user-1', 'special_novelist');
+  });
+
+  it('awards last-minute badge when submitting within 24h of deadline', async () => {
+    vi.mocked(getSession).mockResolvedValue(mockUser);
+    // Deadline is 12 hours from now (within 24h)
+    vi.mocked(prisma.round.findUnique).mockResolvedValue(
+      createMockRound({ submissionDeadline: new Date(Date.now() + 12 * 60 * 60 * 1000) })
+    );
+    const mockProphecy = createMockProphecy();
+    vi.mocked(prisma.prophecy.create).mockResolvedValue(mockProphecy);
+
+    const request = new NextRequest('http://localhost/api/prophecies', {
+      method: 'POST',
+      body: JSON.stringify({
+        roundId: 'round-1',
+        title: 'Last Minute Prophecy',
+        description: 'Test',
+      }),
+    });
+    await POST(request);
+
+    expect(awardBadge).toHaveBeenCalledWith('user-1', 'time_last_minute');
+  });
+
+  it('does not award last-minute badge when submitting more than 24h before deadline', async () => {
+    vi.mocked(getSession).mockResolvedValue(mockUser);
+    // Deadline is 48 hours from now (more than 24h)
+    vi.mocked(prisma.round.findUnique).mockResolvedValue(
+      createMockRound({ submissionDeadline: new Date(Date.now() + 48 * 60 * 60 * 1000) })
+    );
+    const mockProphecy = createMockProphecy();
+    vi.mocked(prisma.prophecy.create).mockResolvedValue(mockProphecy);
+
+    const request = new NextRequest('http://localhost/api/prophecies', {
+      method: 'POST',
+      body: JSON.stringify({
+        roundId: 'round-1',
+        title: 'Early Prophecy',
+        description: 'Test',
+      }),
+    });
+    await POST(request);
+
+    expect(awardBadge).not.toHaveBeenCalledWith('user-1', 'time_last_minute');
+  });
+
+  it('broadcasts badge:awarded SSE event when new badge is earned', async () => {
+    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(prisma.round.findUnique).mockResolvedValue(createMockRound());
+    const mockProphecy = createMockProphecy();
+    vi.mocked(prisma.prophecy.create).mockResolvedValue(mockProphecy);
+
+    const mockBadge = {
+      id: 'badge-1',
+      key: 'test',
+      name: 'Test Badge',
+      icon: '🏆',
+      description: 'Test',
+      requirement: 'Test',
+      category: 'CREATOR' as const,
+      rarity: 'BRONZE' as const,
+      threshold: 1,
+      createdAt: new Date(),
+    };
+
+    // Mock checkAndAwardBadges returning a new badge
+    vi.mocked(checkAndAwardBadges).mockResolvedValue([
+      {
+        id: 'ub-1',
+        earnedAt: new Date(),
+        userId: 'user-1',
+        badgeId: 'badge-1',
+        badge: mockBadge,
+      },
+    ]);
+
+    const request = new NextRequest('http://localhost/api/prophecies', {
+      method: 'POST',
+      body: JSON.stringify({
+        roundId: 'round-1',
+        title: 'New Prophecy',
+        description: 'Test',
+      }),
+    });
+    await POST(request);
+
+    expect(sseEmitter.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'badge:awarded',
+        data: expect.objectContaining({
+          userId: 'user-1',
+          badgeId: 'badge-1',
+        }),
+      })
+    );
   });
 });

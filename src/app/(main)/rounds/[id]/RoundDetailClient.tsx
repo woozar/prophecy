@@ -799,7 +799,7 @@ const ProphecyCard = memo(function ProphecyCard({
           <p className="text-sm text-(--text-secondary) mb-3">{prophecy.description}</p>
           <div className="flex items-center gap-4 text-xs text-(--text-muted)">
             <span className="flex items-center gap-1.5">
-              <UserAvatar userId={prophecy.creatorId} size="sm" />
+              <UserAvatar userId={prophecy.creatorId} size="sm" clickable />
               <span>von {creatorName}</span>
             </span>
             <span>{formatDate(prophecy.createdAt, 'date')}</span>

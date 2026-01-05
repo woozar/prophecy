@@ -20,7 +20,7 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { GlowBadge } from '@/components/GlowBadge';
 import { Modal } from '@/components/Modal';
 import { UserAvatar } from '@/components/UserAvatar';
-import { UserProfileModal } from '@/components/UserProfileModal';
+import { useUserProfileModal } from '@/contexts/UserProfileModalContext';
 import { apiClient } from '@/lib/api-client/client';
 import { formatDate } from '@/lib/formatting/date';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
@@ -66,7 +66,7 @@ export const UsersManager = memo(function UsersManager() {
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordResetResult, setPasswordResetResult] = useState<PasswordResetResult | null>(null);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const { openUserProfile } = useUserProfileModal();
 
   const handleStatusChange = useCallback(
     async (userId: string, status: string) => {
@@ -252,7 +252,7 @@ export const UsersManager = memo(function UsersManager() {
               user={user}
               badges={badges}
               userBadgeMap={allUserBadges[user.id]}
-              onClick={() => setSelectedUser(user)}
+              onClick={() => openUserProfile(user)}
               onApprove={() => handleStatusChange(user.id, 'APPROVED')}
               onReject={() => handleStatusChange(user.id, 'REJECTED')}
               onDelete={() =>
@@ -282,7 +282,7 @@ export const UsersManager = memo(function UsersManager() {
               user={user}
               badges={badges}
               userBadgeMap={allUserBadges[user.id]}
-              onClick={() => setSelectedUser(user)}
+              onClick={() => openUserProfile(user)}
               onSuspend={() =>
                 setConfirmAction({
                   userId: user.id,
@@ -329,7 +329,7 @@ export const UsersManager = memo(function UsersManager() {
               user={user}
               badges={badges}
               userBadgeMap={allUserBadges[user.id]}
-              onClick={() => setSelectedUser(user)}
+              onClick={() => openUserProfile(user)}
               onReactivate={() => handleStatusChange(user.id, 'APPROVED')}
               onDelete={() =>
                 setConfirmAction({
@@ -387,13 +387,6 @@ export const UsersManager = memo(function UsersManager() {
           </div>
         </div>
       </Modal>
-
-      {/* User Profile Modal */}
-      <UserProfileModal
-        user={selectedUser}
-        opened={!!selectedUser}
-        onClose={() => setSelectedUser(null)}
-      />
     </>
   );
 });

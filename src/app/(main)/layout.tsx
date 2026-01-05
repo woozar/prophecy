@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
 import { ParticleBurst } from '@/components/ParticleBurst';
 import { SSEProvider } from '@/components/SSEProvider';
+import { UserProfileModalProvider } from '@/contexts/UserProfileModalContext';
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 
@@ -63,7 +64,9 @@ export default async function MainLayout({ children }: MainLayoutProps) {
       <FogBackground />
       <Header user={headerUser} />
       <main className="relative z-10 pt-16 pb-12 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">{children}</div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <UserProfileModalProvider>{children}</UserProfileModalProvider>
+        </div>
       </main>
       <Footer />
     </>

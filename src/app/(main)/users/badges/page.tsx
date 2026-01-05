@@ -193,7 +193,7 @@ export default function BadgesPage() {
                           {index + 1}
                         </span>
                       )}
-                      <UserAvatar user={user} size="sm" />
+                      <UserAvatar userId={userId} size="sm" clickable />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-white truncate">
                           {user.displayName || user.username}
@@ -261,7 +261,7 @@ const BadgeCard = memo(function BadgeCard({
             <div className="mt-3 flex items-center gap-2">
               {firstAchiever && (
                 <>
-                  <UserAvatar user={firstAchiever} size="sm" />
+                  <UserAvatar userId={firstAchiever.id} size="sm" clickable />
                   <span className="text-xs text-(--text-muted)">
                     Zuerst erreicht von{' '}
                     <span className="text-cyan-400">

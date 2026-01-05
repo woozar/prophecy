@@ -72,7 +72,7 @@ const CreatorRow = memo(function CreatorRow({ creator, rank }: Readonly<CreatorR
 
       {/* Avatar and Name */}
       <div className="flex items-center gap-2 min-w-0 flex-1">
-        <UserAvatar userId={creator.userId} size="sm" />
+        <UserAvatar userId={creator.userId} size="sm" clickable />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-white truncate">
             {creator.displayName || creator.username}

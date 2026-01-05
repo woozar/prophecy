@@ -1,7 +1,22 @@
-import { render, screen } from '@testing-library/react';
+import { createContext } from 'react';
+
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AvatarPreview, UserAvatar } from './UserAvatar';
+
+// Mock the UserProfileModalContext - use vi.hoisted for proper hoisting
+const { mockOpenUserProfile, mockCloseUserProfile } = vi.hoisted(() => ({
+  mockOpenUserProfile: vi.fn(),
+  mockCloseUserProfile: vi.fn(),
+}));
+
+vi.mock('@/contexts/UserProfileModalContext', () => ({
+  UserProfileModalContext: createContext({
+    openUserProfile: mockOpenUserProfile,
+    closeUserProfile: mockCloseUserProfile,
+  }),
+}));
 
 // Mock the useUser hook
 type MockUser = {
@@ -158,6 +173,23 @@ describe('AvatarPreview with effects', () => {
     expect(screen.getByRole('img')).toBeInTheDocument();
   });
 
+  it('shows initials when avatar image fails to load', () => {
+    render(<AvatarPreview username="testuser" avatarUrl="/broken-image.webp" />);
+    const img = screen.getByRole('img');
+    fireEvent.error(img);
+    expect(screen.getByText('TE')).toBeInTheDocument();
+  });
+
+  it('handles image load event', async () => {
+    const { container } = render(<AvatarPreview username="test" avatarUrl="/test-avatar.webp" />);
+    const img = screen.getByRole('img');
+    await act(async () => {
+      fireEvent.load(img);
+    });
+    // Image should still be visible after load
+    expect(container.querySelector('img')).toBeInTheDocument();
+  });
+
   it('applies multiple colors for glow effect starting with first color', () => {
     const { container } = render(
       <AvatarPreview username="test" avatarEffect="glow" avatarEffectColors={['violet', 'rose']} />
@@ -299,5 +331,53 @@ describe('AvatarPreview with color fallback', () => {
     );
     const glowElement = container.querySelector('.animate-avatar-pulse-glow');
     expect(glowElement).toHaveStyle({ '--avatar-glow-color': '#f472b6' });
+  });
+});
+
+describe('UserAvatar clickable behavior', () => {
+  beforeEach(() => {
+    mockUsersRecord = {
+      'user-1': {
+        id: 'user-1',
+        username: 'testuser',
+        displayName: 'Test User',
+      },
+    };
+    mockOpenUserProfile.mockClear();
+  });
+
+  it('renders as button when clickable is true', () => {
+    render(<UserAvatar userId="user-1" clickable />);
+    expect(screen.getByRole('button')).toBeInTheDocument();
+  });
+
+  it('does not render as button when clickable is false', () => {
+    render(<UserAvatar userId="user-1" />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('calls openUserProfile from context when clicked', () => {
+    render(<UserAvatar userId="user-1" clickable />);
+    fireEvent.click(screen.getByRole('button'));
+    expect(mockOpenUserProfile).toHaveBeenCalledWith(mockUsersRecord['user-1']);
+  });
+
+  it('calls custom onClick instead of openUserProfile when provided', () => {
+    const customClick = vi.fn();
+    render(<UserAvatar userId="user-1" clickable onClick={customClick} />);
+    fireEvent.click(screen.getByRole('button'));
+    expect(customClick).toHaveBeenCalled();
+    expect(mockOpenUserProfile).not.toHaveBeenCalled();
+  });
+
+  it('renders as button when onClick is provided even without clickable prop', () => {
+    const customClick = vi.fn();
+    render(<UserAvatar userId="user-1" onClick={customClick} />);
+    expect(screen.getByRole('button')).toBeInTheDocument();
+  });
+
+  it('applies cursor-pointer class to clickable avatar', () => {
+    render(<UserAvatar userId="user-1" clickable />);
+    expect(screen.getByRole('button')).toHaveClass('cursor-pointer');
   });
 });

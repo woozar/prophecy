@@ -49,6 +49,18 @@ vi.mock('@/lib/api-client/client', () => ({
   },
 }));
 
+// Mock UserProfileModalContext
+vi.mock('@/contexts/UserProfileModalContext', async () => {
+  const { createContext } = await import('react');
+  return {
+    UserProfileModalContext: createContext(null),
+    useUserProfileModal: () => ({
+      openUserProfile: vi.fn(),
+      closeUserProfile: vi.fn(),
+    }),
+  };
+});
+
 const mockUpdate = vi.mocked(apiClient.admin.users.update);
 const mockDelete = vi.mocked(apiClient.admin.users.delete);
 const mockResetPassword = vi.mocked(apiClient.admin.users.resetPassword);
@@ -618,6 +630,154 @@ describe('UsersManager', () => {
         expect(screen.getByText('Passwort zurückgesetzt')).toBeInTheDocument();
       });
       expect(screen.getByText('temp123')).toBeInTheDocument();
+    });
+  });
+
+  describe('user card click opens profile modal', () => {
+    it('opens profile modal when clicking pending user card', async () => {
+      setupStore();
+      renderWithMantine(<UsersManager />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Pending User')).toBeInTheDocument();
+      });
+
+      // Click on the pending user card (not an action button)
+      const pendingUserCard = screen.getByText('Pending User').closest('[class*="card"]');
+      expect(pendingUserCard).toBeInTheDocument();
+      fireEvent.click(pendingUserCard!);
+    });
+
+    it('opens profile modal when clicking active user card', async () => {
+      setupStore();
+      renderWithMantine(<UsersManager />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Active User')).toBeInTheDocument();
+      });
+
+      // Click on the active user card
+      const activeUserCard = screen.getByText('Active User').closest('[class*="card"]');
+      expect(activeUserCard).toBeInTheDocument();
+      fireEvent.click(activeUserCard!);
+    });
+
+    it('opens profile modal when clicking suspended user card', async () => {
+      setupStore();
+      renderWithMantine(<UsersManager />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Suspended User')).toBeInTheDocument();
+      });
+
+      // Click on the suspended user card
+      const suspendedUserCard = screen.getByText('Suspended User').closest('[class*="card"]');
+      expect(suspendedUserCard).toBeInTheDocument();
+      fireEvent.click(suspendedUserCard!);
+    });
+  });
+
+  describe('user card with badges', () => {
+    it('displays badge icons when user has badges', async () => {
+      const userWithBadges = {
+        ...mockUsersData[1],
+        badgeIds: ['badge-1', 'badge-2'],
+      };
+      const usersWithBadges = [
+        mockUsersData[0],
+        userWithBadges,
+        mockUsersData[2],
+        mockUsersData[3],
+      ];
+
+      useUserStore.setState({
+        users: usersWithBadges.reduce(
+          (acc, user) => {
+            acc[user.id] = user;
+            return acc;
+          },
+          {} as Record<string, MockUser>
+        ),
+        currentUserId: '3',
+        isInitialized: true,
+      });
+
+      useBadgeStore.setState({
+        badges: {
+          'badge-1': {
+            id: 'badge-1',
+            key: 'test-1',
+            name: 'Test Badge 1',
+            icon: '🏆',
+            description: 'Test',
+            requirement: 'Test',
+            category: 'CREATOR',
+            rarity: 'BRONZE',
+            threshold: 1,
+            createdAt: new Date().toISOString(),
+          },
+          'badge-2': {
+            id: 'badge-2',
+            key: 'test-2',
+            name: 'Test Badge 2',
+            icon: '⭐',
+            description: 'Test',
+            requirement: 'Test',
+            category: 'CREATOR',
+            rarity: 'SILVER',
+            threshold: 5,
+            createdAt: new Date().toISOString(),
+          },
+        },
+        allUserBadges: {
+          '2': {
+            'badge-1': {
+              id: 'ub-1',
+              badgeId: 'badge-1',
+              userId: '2',
+              earnedAt: '2025-01-10T00:00:00Z',
+            },
+            'badge-2': {
+              id: 'ub-2',
+              badgeId: 'badge-2',
+              userId: '2',
+              earnedAt: '2025-01-11T00:00:00Z',
+            },
+          },
+        },
+        isInitialized: true,
+      });
+
+      renderWithMantine(<UsersManager />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Active User')).toBeInTheDocument();
+      });
+
+      // Badge icons should be visible
+      expect(screen.getByText('🏆')).toBeInTheDocument();
+      expect(screen.getByText('⭐')).toBeInTheDocument();
+    });
+
+    it('does not open profile modal when clicking action buttons', async () => {
+      setupStore();
+      renderWithMantine(<UsersManager />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Active User')).toBeInTheDocument();
+      });
+
+      // Get the mock to check it wasn't called
+      const { useUserProfileModal } = await import('@/contexts/UserProfileModalContext');
+      const mockOpenUserProfile = vi.mocked(useUserProfileModal().openUserProfile);
+      mockOpenUserProfile.mockClear();
+
+      // Click on an action button (promote to admin)
+      const promoteButtons = screen.getAllByTitle('Zum Admin machen');
+      fireEvent.click(promoteButtons[0]);
+
+      // The openUserProfile should NOT have been called
+      expect(mockOpenUserProfile).not.toHaveBeenCalled();
     });
   });
 

@@ -22,7 +22,12 @@ export const Link = memo(function Link({ children, onClick, ...props }: NextLink
 
   return (
     <>
-      <NextLink ref={containerRef} onClick={onLinkClick} {...props}>
+      <NextLink
+        ref={containerRef}
+        onClick={onLinkClick}
+        className="link-underline text-cyan-400"
+        {...props}
+      >
         {children}
       </NextLink>
       <ClickParticles particles={particles} />

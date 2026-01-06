@@ -2,6 +2,8 @@
 
 import { memo } from 'react';
 
+import { Link } from '@/components/Link';
+
 export const Footer = memo(function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -12,14 +14,13 @@ export const Footer = memo(function Footer() {
           {/* Copyright */}
           <p className="text-xs text-(--text-muted)">
             &copy; {currentYear}{' '}
-            <a
+            <Link
               href="https://github.com/woozar/prophecy"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-(--accent-primary) transition-colors duration-200"
             >
               Prophezeiung
-            </a>
+            </Link>
           </p>
 
           {/* Version / Links */}

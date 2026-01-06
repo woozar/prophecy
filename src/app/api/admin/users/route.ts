@@ -29,12 +29,6 @@ export async function GET() {
         status: true,
         isBot: true,
         createdAt: true,
-        _count: {
-          select: {
-            prophecies: true,
-            ratings: true,
-          },
-        },
       },
     });
 

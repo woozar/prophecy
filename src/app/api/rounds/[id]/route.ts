@@ -22,11 +22,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const round = await prisma.round.findUnique({
       where: { id },
-      include: {
-        _count: {
-          select: { prophecies: true },
-        },
-      },
     });
 
     if (!round) {
@@ -66,11 +61,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         submissionDeadline,
         ratingDeadline,
         fulfillmentDate,
-      },
-      include: {
-        _count: {
-          select: { prophecies: true },
-        },
       },
     });
 

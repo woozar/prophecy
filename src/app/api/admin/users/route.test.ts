@@ -22,10 +22,6 @@ const createMockUser = (overrides = {}) => ({
   isBot: false,
   createdAt: new Date(),
   updatedAt: new Date(),
-  _count: {
-    prophecies: 5,
-    ratings: 10,
-  },
   ...overrides,
 });
 
@@ -67,7 +63,7 @@ describe('GET /api/admin/users', () => {
 
     expect(response.status).toBe(200);
     expect(data.users).toHaveLength(2);
-    expect(data.users[0]._count.prophecies).toBe(5);
+    expect(data.users[0].username).toBe('user1');
   });
 
   it('returns 500 on database error', async () => {

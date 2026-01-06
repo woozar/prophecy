@@ -68,12 +68,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         role: true,
         status: true,
         createdAt: true,
-        _count: {
-          select: {
-            prophecies: true,
-            ratings: true,
-          },
-        },
       },
     });
 

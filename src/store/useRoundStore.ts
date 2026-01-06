@@ -8,9 +8,6 @@ export interface Round {
   fulfillmentDate: string;
   resultsPublishedAt: string | null;
   createdAt: string;
-  _count?: {
-    prophecies: number;
-  };
 }
 
 interface RoundState {

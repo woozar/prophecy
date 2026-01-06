@@ -2361,10 +2361,6 @@ export interface components {
       status: components['schemas']['UserStatus'];
       /** Format: date-time */
       createdAt: string;
-      _count?: {
-        prophecies: number;
-        ratings: number;
-      };
     };
     UsersListResponse: {
       users: components['schemas']['User'][];
@@ -2574,10 +2570,6 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
       badgeIds: string[];
-      _count: {
-        prophecies: number;
-        ratings: number;
-      };
     };
     Round: {
       id: string;
@@ -2592,9 +2584,6 @@ export interface components {
       resultsPublishedAt: string | null;
       /** Format: date-time */
       createdAt: string;
-      _count?: {
-        prophecies: number;
-      };
     };
     Prophecy: {
       id: string;

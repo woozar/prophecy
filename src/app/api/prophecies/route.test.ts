@@ -29,7 +29,6 @@ const createMockProphecy = (overrides = {}) => ({
     displayName: 'Test User',
   },
   ratings: [],
-  _count: { ratings: 0 },
   ...overrides,
 });
 

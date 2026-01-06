@@ -15,6 +15,8 @@ import { apiClient } from '@/lib/api-client/client';
 import { formatDate } from '@/lib/formatting/date';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 import { type Badge, useBadgeStore } from '@/store/useBadgeStore';
+import { selectProphecyCountByUserId, useProphecyStore } from '@/store/useProphecyStore';
+import { selectRatingCountByUserId, useRatingStore } from '@/store/useRatingStore';
 import { type User, useUserStore } from '@/store/useUserStore';
 
 interface UserProfileModalProps {
@@ -40,6 +42,8 @@ export const UserProfileModal = memo(function UserProfileModal({
   const allUserBadges = useBadgeStore((state) => state.allUserBadges);
   const currentUserId = useUserStore((state) => state.currentUserId);
   const users = useUserStore((state) => state.users);
+  const prophecyCount = useProphecyStore(selectProphecyCountByUserId(user?.id ?? ''));
+  const ratingCount = useRatingStore(selectRatingCountByUserId(user?.id ?? ''));
   const [isAwarding, setIsAwarding] = useState<string | null>(null);
 
   // Check if current user is admin
@@ -135,8 +139,8 @@ export const UserProfileModal = memo(function UserProfileModal({
         {/* Statistics */}
         <div className="shrink-0">
           <UserStatsGrid
-            prophecyCount={user._count?.prophecies || 0}
-            ratingCount={user._count?.ratings || 0}
+            prophecyCount={prophecyCount}
+            ratingCount={ratingCount}
             badgeCount={userBadges.length}
           />
         </div>

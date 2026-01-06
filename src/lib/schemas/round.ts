@@ -54,11 +54,6 @@ export const roundResponseSchema = z
     fulfillmentDate: z.string().datetime(),
     resultsPublishedAt: z.string().datetime().nullable(),
     createdAt: z.string().datetime(),
-    _count: z
-      .object({
-        prophecies: z.number(),
-      })
-      .optional(),
   })
   .openapi('Round');
 

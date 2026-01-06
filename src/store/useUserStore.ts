@@ -14,10 +14,6 @@ export interface User {
   isBot?: boolean;
   createdAt?: string;
   badgeIds?: string[];
-  _count?: {
-    prophecies: number;
-    ratings: number;
-  };
 }
 
 interface UserState {

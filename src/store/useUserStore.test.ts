@@ -17,7 +17,6 @@ describe('useUserStore', () => {
     role: 'USER',
     status: 'ACTIVE',
     createdAt: '2024-12-01T00:00:00Z',
-    _count: { prophecies: 5, ratings: 10 },
   };
 
   const mockUser2: User = {
@@ -27,7 +26,6 @@ describe('useUserStore', () => {
     role: 'ADMIN',
     status: 'ACTIVE',
     createdAt: '2024-11-01T00:00:00Z',
-    _count: { prophecies: 15, ratings: 30 },
   };
 
   beforeEach(() => {

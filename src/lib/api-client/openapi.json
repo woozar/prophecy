@@ -70,18 +70,6 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "_count": {
-            "type": "object",
-            "properties": {
-              "prophecies": {
-                "type": "number"
-              },
-              "ratings": {
-                "type": "number"
-              }
-            },
-            "required": ["prophecies", "ratings"]
           }
         },
         "required": [
@@ -745,18 +733,6 @@
             "items": {
               "type": "string"
             }
-          },
-          "_count": {
-            "type": "object",
-            "properties": {
-              "prophecies": {
-                "type": "number"
-              },
-              "ratings": {
-                "type": "number"
-              }
-            },
-            "required": ["prophecies", "ratings"]
           }
         },
         "required": [
@@ -770,8 +746,7 @@
           "status",
           "isBot",
           "createdAt",
-          "badgeIds",
-          "_count"
+          "badgeIds"
         ]
       },
       "Round": {
@@ -803,15 +778,6 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "_count": {
-            "type": "object",
-            "properties": {
-              "prophecies": {
-                "type": "number"
-              }
-            },
-            "required": ["prophecies"]
           }
         },
         "required": [

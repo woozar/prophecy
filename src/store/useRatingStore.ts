@@ -133,3 +133,6 @@ export const selectAverageRatingByProphecyId =
     const sum = humanNonZeroRatings.reduce((acc, r) => acc + r.value, 0);
     return sum / humanNonZeroRatings.length;
   };
+
+export const selectRatingCountByUserId = (userId: string) => (state: RatingState) =>
+  Object.values(state.ratings).filter((r) => r.userId === userId).length;

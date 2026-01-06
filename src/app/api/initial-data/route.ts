@@ -27,21 +27,10 @@ export async function GET() {
         status: true,
         isBot: true,
         createdAt: true,
-        _count: {
-          select: {
-            prophecies: true,
-            ratings: true,
-          },
-        },
       },
     }),
     prisma.round.findMany({
       orderBy: { createdAt: 'desc' },
-      include: {
-        _count: {
-          select: { prophecies: true },
-        },
-      },
     }),
     prisma.prophecy.findMany({
       select: {
@@ -103,7 +92,6 @@ export async function GET() {
     createdAt: user.createdAt.toISOString(),
     avatarEffectColors: user.avatarEffectColors ? JSON.parse(user.avatarEffectColors) : undefined,
     badgeIds: userBadgeMap.get(user.id) || [],
-    _count: user._count,
   }));
 
   const transformedRounds = rounds.map((round) => ({
@@ -114,7 +102,6 @@ export async function GET() {
     fulfillmentDate: round.fulfillmentDate.toISOString(),
     resultsPublishedAt: round.resultsPublishedAt?.toISOString() ?? null,
     createdAt: round.createdAt.toISOString(),
-    _count: round._count,
   }));
 
   const transformedProphecies = prophecies.map((prophecy) => ({

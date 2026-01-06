@@ -46,11 +46,6 @@ const mockUsers = [
     passwordHash: null,
     forcePasswordChange: false,
     updatedAt: new Date('2025-01-01'),
-    _count: {
-      prophecies: 5,
-      ratings: 10,
-      badges: 2,
-    },
     badges: [
       {
         id: 'ub-1',
@@ -78,11 +73,6 @@ const mockUsers = [
     passwordHash: null,
     forcePasswordChange: false,
     updatedAt: new Date('2025-01-02'),
-    _count: {
-      prophecies: 0,
-      ratings: 0,
-      badges: 0,
-    },
     badges: [],
   },
 ];
@@ -101,11 +91,6 @@ const mockPendingUser = {
   passwordHash: null,
   forcePasswordChange: false,
   updatedAt: new Date('2025-01-03'),
-  _count: {
-    prophecies: 0,
-    ratings: 0,
-    badges: 0,
-  },
   badges: [],
 };
 
@@ -156,7 +141,7 @@ describe('GET /api/users', () => {
     );
   });
 
-  it('includes user badges and counts', async () => {
+  it('includes user badges', async () => {
     vi.mocked(getSession).mockResolvedValue(mockSession);
     vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers);
 
@@ -164,8 +149,6 @@ describe('GET /api/users', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.users[0]._count.prophecies).toBe(5);
-    expect(data.users[0]._count.ratings).toBe(10);
     expect(data.users[0].badges).toHaveLength(1);
     expect(data.users[0].badges[0].badge.key).toBe('creator_1');
   });

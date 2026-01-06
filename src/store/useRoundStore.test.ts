@@ -18,7 +18,6 @@ describe('useRoundStore', () => {
     fulfillmentDate: '2025-02-01T00:00:00Z',
     resultsPublishedAt: null,
     createdAt: '2024-12-01T00:00:00Z',
-    _count: { prophecies: 5 },
   };
 
   const mockRound2: Round = {
@@ -29,7 +28,6 @@ describe('useRoundStore', () => {
     fulfillmentDate: '2025-03-01T00:00:00Z',
     resultsPublishedAt: null,
     createdAt: '2024-12-15T00:00:00Z',
-    _count: { prophecies: 3 },
   };
 
   beforeEach(() => {

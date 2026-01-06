@@ -25,6 +25,8 @@ import { apiClient } from '@/lib/api-client/client';
 import { formatDate } from '@/lib/formatting/date';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 import { type Badge, useBadgeStore } from '@/store/useBadgeStore';
+import { selectProphecyCountByUserId, useProphecyStore } from '@/store/useProphecyStore';
+import { selectRatingCountByUserId, useRatingStore } from '@/store/useRatingStore';
 import { type User, useUserStore } from '@/store/useUserStore';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -414,6 +416,9 @@ const UserCard = memo(function UserCard({
   onDelete,
   isSubmitting,
 }: Readonly<UserCardProps>) {
+  const prophecyCount = useProphecyStore(selectProphecyCountByUserId(user.id));
+  const ratingCount = useRatingStore(selectRatingCountByUserId(user.id));
+
   // Count badges by rarity
   const badgeRarityCounts = useMemo(() => {
     if (!user.badgeIds || user.badgeIds.length === 0) return null;
@@ -468,8 +473,8 @@ const UserCard = memo(function UserCard({
               {user.createdAt && <> · Seit {formatDate(user.createdAt)}</>}
             </p>
             <p className="text-xs text-(--text-muted)">
-              {!user.isBot && <>{user._count?.prophecies || 0} Prophezeiungen · </>}
-              {user._count?.ratings || 0} Bewertungen
+              {!user.isBot && <>{prophecyCount} Prophezeiungen · </>}
+              {ratingCount} Bewertungen
             </p>
             {badgeRarityCounts && (
               <div className="flex gap-2 mt-1 text-xs">

@@ -62,3 +62,7 @@ export const selectPropheciesByRoundId = (roundId: string) => (state: ProphecySt
   Object.values(state.prophecies).filter((p) => p.roundId === roundId);
 export const selectPropheciesByCreatorId = (creatorId: string) => (state: ProphecyState) =>
   Object.values(state.prophecies).filter((p) => p.creatorId === creatorId);
+export const selectProphecyCountByRoundId = (roundId: string) => (state: ProphecyState) =>
+  Object.values(state.prophecies).filter((p) => p.roundId === roundId).length;
+export const selectProphecyCountByUserId = (userId: string) => (state: ProphecyState) =>
+  Object.values(state.prophecies).filter((p) => p.creatorId === userId).length;

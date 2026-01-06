@@ -48,10 +48,12 @@ interface BadgeState {
   // Badges des aktuellen Users
   myBadges: Record<string, UserBadge>;
 
-  // Alle User-Badges (userId -> badgeId -> UserBadgeSimple)
+  // Welche Badges hat welcher User? Für User-Profile (Badge-Icons anzeigen)
+  // Map: userId -> badgeId -> UserBadgeSimple (leichtgewichtig, nur earnedAt)
   allUserBadges: Record<string, Record<string, UserBadgeSimple>>;
 
-  // Vergebene Badges (für Hall of Fame)
+  // Hall of Fame: Welche Badges wurden vergeben, wer war Erster, wie viele haben ihn?
+  // Enthält firstAchiever, firstAchievedAt, totalAchievers pro Badge
   awardedBadges: AwardedBadge[];
 
   isInitialized: boolean;
@@ -110,6 +112,7 @@ export const useBadgeStore = create<BadgeState>((set) => ({
 
   removeMyBadge: (badgeId) =>
     set((state) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [badgeId]: _, ...rest } = state.myBadges;
       return { myBadges: rest };
     }),
@@ -146,6 +149,7 @@ export const useBadgeStore = create<BadgeState>((set) => ({
     set((state) => {
       const existingUserBadges = state.allUserBadges[userId];
       if (!existingUserBadges) return state;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [badgeId]: _, ...rest } = existingUserBadges;
       return {
         allUserBadges: {
@@ -170,7 +174,11 @@ export const selectAllBadges = (state: BadgeState) => Object.values(state.badges
 export const selectMyBadges = (state: BadgeState) => Object.values(state.myBadges);
 export const selectMyBadgeIds = (state: BadgeState) => Object.keys(state.myBadges);
 export const selectHasBadge = (badgeId: string) => (state: BadgeState) => !!state.myBadges[badgeId];
+
+// Hall of Fame: Alle vergebenen Badges mit Statistiken (firstAchiever, totalAchievers)
 export const selectAwardedBadges = (state: BadgeState) => state.awardedBadges;
+
+// User-Profile: Welche Badges hat ein bestimmter User? (leichtgewichtig)
 export const selectUserBadges = (userId: string) => (state: BadgeState) =>
   state.allUserBadges[userId] ? Object.values(state.allUserBadges[userId]) : [];
 

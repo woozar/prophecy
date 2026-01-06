@@ -33,7 +33,6 @@ describe('GET /api/initial-data', () => {
       isBot: false,
       createdAt: new Date('2025-01-01'),
       updatedAt: new Date('2025-01-01'),
-      _count: { prophecies: 2, ratings: 5 },
     },
     {
       id: 'user-2',
@@ -49,7 +48,6 @@ describe('GET /api/initial-data', () => {
       isBot: false,
       createdAt: new Date('2025-01-02'),
       updatedAt: new Date('2025-01-02'),
-      _count: { prophecies: 3, ratings: 10 },
     },
   ];
 
@@ -97,7 +95,6 @@ describe('GET /api/initial-data', () => {
       resultsPublishedAt: null,
       createdAt: new Date('2025-01-01'),
       updatedAt: new Date('2025-01-01'),
-      _count: { prophecies: 5 },
     },
   ];
 
@@ -244,7 +241,8 @@ describe('GET /api/initial-data', () => {
     const response = await GET();
     const data = await response.json();
 
-    expect(data.rounds[0]._count.prophecies).toBe(5);
+    expect(data.rounds[0].id).toBe('round-1');
+    expect(data.rounds[0].title).toBe('Round 1');
   });
 
   it('includes user badge ids from allUserBadges', async () => {
@@ -279,7 +277,6 @@ describe('GET /api/initial-data', () => {
         status: true,
         isBot: true,
         createdAt: true,
-        _count: expect.any(Object),
       }),
     });
   });
@@ -308,11 +305,6 @@ describe('GET /api/initial-data', () => {
 
     expect(prisma.round.findMany).toHaveBeenCalledWith({
       orderBy: { createdAt: 'desc' },
-      include: {
-        _count: {
-          select: { prophecies: true },
-        },
-      },
     });
   });
 });

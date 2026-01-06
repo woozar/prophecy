@@ -32,13 +32,6 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         status: true,
         isBot: true,
         createdAt: true,
-        _count: {
-          select: {
-            prophecies: true,
-            ratings: true,
-            badges: true,
-          },
-        },
         badges: {
           include: {
             badge: true,

@@ -80,7 +80,6 @@ interface MockUser {
   isBot: boolean;
   createdAt: string;
   badgeIds?: string[];
-  _count: { prophecies: number; ratings: number };
 }
 
 describe('UsersManager', () => {
@@ -97,7 +96,6 @@ describe('UsersManager', () => {
       isBot: false,
       createdAt: '2025-01-15T10:00:00Z',
       badgeIds: [],
-      _count: { prophecies: 0, ratings: 0 },
     },
     {
       id: '2',
@@ -111,7 +109,6 @@ describe('UsersManager', () => {
       isBot: false,
       createdAt: '2025-01-10T10:00:00Z',
       badgeIds: [],
-      _count: { prophecies: 5, ratings: 10 },
     },
     {
       id: '3',
@@ -125,7 +122,6 @@ describe('UsersManager', () => {
       isBot: false,
       createdAt: '2025-01-05T10:00:00Z',
       badgeIds: [],
-      _count: { prophecies: 3, ratings: 7 },
     },
     {
       id: '4',
@@ -139,7 +135,6 @@ describe('UsersManager', () => {
       isBot: false,
       createdAt: '2025-01-01T10:00:00Z',
       badgeIds: [],
-      _count: { prophecies: 1, ratings: 2 },
     },
   ];
 

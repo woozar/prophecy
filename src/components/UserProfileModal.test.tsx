@@ -45,10 +45,6 @@ const mockUser: User = {
   avatarEffect: null,
   avatarEffectColors: [],
   createdAt: '2025-01-01T00:00:00.000Z',
-  _count: {
-    prophecies: 10,
-    ratings: 25,
-  },
 };
 
 const mockBadge = {
@@ -251,20 +247,18 @@ describe('UserProfileModal', () => {
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
-  it('renders UserStatsGrid with correct counts', () => {
+  it('renders UserStatsGrid with counts from stores', () => {
+    // Counts come from ProphecyStore and RatingStore, which are empty in tests
     renderWithMantine(<UserProfileModal user={mockUser} opened={true} onClose={mockOnClose} />);
 
-    expect(screen.getByText('10')).toBeInTheDocument(); // prophecies
-    expect(screen.getByText('25')).toBeInTheDocument(); // ratings
+    // With empty stores, counts will be 0
+    expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(2);
   });
 
-  it('handles user without _count', () => {
-    const userWithoutCount = { ...mockUser, _count: undefined };
-    renderWithMantine(
-      <UserProfileModal user={userWithoutCount} opened={true} onClose={mockOnClose} />
-    );
+  it('handles user without stats data in stores', () => {
+    renderWithMantine(<UserProfileModal user={mockUser} opened={true} onClose={mockOnClose} />);
 
-    // Should render without errors, showing 0 for counts
+    // Should render without errors, showing 0 for counts when stores are empty
     expect(screen.getByText('Prophezeiungen')).toBeInTheDocument();
   });
 

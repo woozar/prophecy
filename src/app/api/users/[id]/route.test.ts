@@ -53,11 +53,6 @@ const mockUser = {
   passwordHash: null,
   forcePasswordChange: false,
   updatedAt: new Date('2025-01-01'),
-  _count: {
-    prophecies: 5,
-    ratings: 10,
-    badges: 2,
-  },
   badges: [
     {
       id: 'ub-1',
@@ -186,7 +181,7 @@ describe('GET /api/users/[id]', () => {
     consoleSpy.mockRestore();
   });
 
-  it('includes user counts in response', async () => {
+  it('includes user stats in response', async () => {
     vi.mocked(getSession).mockResolvedValue(mockSession);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
     vi.mocked(getUserStats).mockResolvedValue(mockStats);
@@ -194,8 +189,7 @@ describe('GET /api/users/[id]', () => {
     const response = await GET(createRequest(), createParams('user-1'));
     const data = await response.json();
 
-    expect(data.user._count.prophecies).toBe(5);
-    expect(data.user._count.ratings).toBe(10);
-    expect(data.user._count.badges).toBe(2);
+    expect(data.user.stats.propheciesCreated).toBe(5);
+    expect(data.user.stats.ratingsGiven).toBe(10);
   });
 });

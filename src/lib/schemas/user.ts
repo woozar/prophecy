@@ -17,12 +17,6 @@ export const userResponseSchema = z
     role: roleSchema,
     status: userStatusSchema,
     createdAt: z.string().datetime(),
-    _count: z
-      .object({
-        prophecies: z.number(),
-        ratings: z.number(),
-      })
-      .optional(),
   })
   .openapi('User');
 

@@ -8,6 +8,7 @@ import { Card } from '@/components/Card';
 import { Link } from '@/components/Link';
 import { RoundStatusBadge } from '@/components/RoundStatusBadge';
 import { useCurrentUser } from '@/hooks/useUser';
+import { selectProphecyCountByRoundId, useProphecyStore } from '@/store/useProphecyStore';
 import { type Round, useRoundStore } from '@/store/useRoundStore';
 
 export default function HomePage() {
@@ -95,6 +96,8 @@ interface RoundCardProps {
 }
 
 const RoundCard = memo(function RoundCard({ round, formatDate }: RoundCardProps) {
+  const prophecyCount = useProphecyStore(selectProphecyCountByRoundId(round.id));
+
   return (
     <Card padding="p-6">
       <div className="flex items-start justify-between mb-4">
@@ -141,8 +144,7 @@ const RoundCard = memo(function RoundCard({ round, formatDate }: RoundCardProps)
             <path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z" />
           </svg>
           <span>
-            {round._count?.prophecies ?? 0} Prophezeiung
-            {(round._count?.prophecies ?? 0) === 1 ? '' : 'en'}
+            {prophecyCount} Prophezeiung{prophecyCount === 1 ? '' : 'en'}
           </span>
         </div>
       </div>

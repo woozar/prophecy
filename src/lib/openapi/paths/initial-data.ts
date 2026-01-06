@@ -78,10 +78,6 @@ const initialDataUserSchema = z
     isBot: z.boolean(),
     createdAt: z.string().datetime(),
     badgeIds: z.array(z.string()),
-    _count: z.object({
-      prophecies: z.number(),
-      ratings: z.number(),
-    }),
   })
   .openapi('InitialDataUser');
 

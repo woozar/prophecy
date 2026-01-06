@@ -25,10 +25,6 @@ const createMockUser = (overrides = {}) => ({
   isBot: false,
   createdAt: new Date(),
   updatedAt: new Date(),
-  _count: {
-    prophecies: 5,
-    ratings: 10,
-  },
   ...overrides,
 });
 

@@ -17,11 +17,6 @@ export async function GET() {
   try {
     const rounds = await prisma.round.findMany({
       orderBy: { createdAt: 'desc' },
-      include: {
-        _count: {
-          select: { prophecies: true },
-        },
-      },
     });
 
     return NextResponse.json({ rounds });
@@ -55,11 +50,6 @@ export async function POST(request: NextRequest) {
         submissionDeadline,
         ratingDeadline,
         fulfillmentDate,
-      },
-      include: {
-        _count: {
-          select: { prophecies: true },
-        },
       },
     });
 

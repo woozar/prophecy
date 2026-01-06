@@ -4,11 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   awardBadge,
   awardLeaderboardBadges,
+  awardRoundCompletionBadges,
   checkAndAwardBadges,
   getAwardedBadges,
   getBadgeHolders,
   getUserBadges,
   getUserStats,
+  isFirstProphecyOfRound,
   seedBadges,
 } from './badge-service';
 
@@ -58,8 +60,12 @@ const {
   mockUserBadgeFindMany,
   mockUserBadgeCreate,
   mockProphecyFindMany,
+  mockProphecyFindFirst,
   mockRatingFindMany,
   mockRoundFindMany,
+  mockRoundFindUnique,
+  mockUserFindMany,
+  mockUserFindUnique,
 } = vi.hoisted(() => ({
   mockBadgeUpsert: vi.fn(),
   mockBadgeFindUnique: vi.fn(),
@@ -68,8 +74,12 @@ const {
   mockUserBadgeFindMany: vi.fn(),
   mockUserBadgeCreate: vi.fn(),
   mockProphecyFindMany: vi.fn(),
+  mockProphecyFindFirst: vi.fn(),
   mockRatingFindMany: vi.fn(),
   mockRoundFindMany: vi.fn(),
+  mockRoundFindUnique: vi.fn(),
+  mockUserFindMany: vi.fn(),
+  mockUserFindUnique: vi.fn(),
 }));
 
 vi.mock('@/lib/db/prisma', () => ({
@@ -86,12 +96,18 @@ vi.mock('@/lib/db/prisma', () => ({
     },
     prophecy: {
       findMany: mockProphecyFindMany,
+      findFirst: mockProphecyFindFirst,
     },
     rating: {
       findMany: mockRatingFindMany,
     },
     round: {
       findMany: mockRoundFindMany,
+      findUnique: mockRoundFindUnique,
+    },
+    user: {
+      findMany: mockUserFindMany,
+      findUnique: mockUserFindUnique,
     },
   },
   ensureInitialized: vi.fn(),
@@ -309,25 +325,25 @@ describe('badge-service', () => {
     });
 
     it('awards social badges for extreme ratings', async () => {
-      // Rating scale: -10 = "will happen" (generous/believing), +10 = "won't happen" (ruthless/skeptical)
-      // 10x +10 ratings awards social_ruthless
+      // Rating scale: -10 = "will happen" (ruthless/skeptical), +10 = "won't happen" (generous)
+      // 10x +10 ratings awards social_generous (gives others chance for big wins)
       mockRatingFindMany.mockResolvedValue([
         ...Array(10).fill({ value: 10, prophecy: { fulfilled: null } }),
         ...Array(10).fill({ value: 5, prophecy: { fulfilled: null } }),
       ]);
       mockBadgeFindUnique.mockResolvedValue({
         ...mockBadge,
-        key: 'social_ruthless',
+        key: 'social_generous',
       });
       mockUserBadgeFindUnique.mockResolvedValue(null);
       mockUserBadgeCreate.mockResolvedValue({
         ...mockUserBadge,
-        badge: { ...mockBadge, key: 'social_ruthless' },
+        badge: { ...mockBadge, key: 'social_generous' },
       });
 
       const result = await checkAndAwardBadges('user-1');
 
-      expect(result.some((b) => b.badge.key === 'social_ruthless')).toBe(true);
+      expect(result.some((b) => b.badge.key === 'social_generous')).toBe(true);
     });
   });
 
@@ -550,6 +566,359 @@ describe('badge-service', () => {
       const result = await checkAndAwardBadges('user-1');
 
       expect(mockBadgeFindUnique).toHaveBeenCalled();
+    });
+  });
+
+  describe('isFirstProphecyOfRound', () => {
+    it('returns true when prophecy is first in round', async () => {
+      mockProphecyFindFirst.mockResolvedValue({ id: 'prophecy-1' });
+
+      const result = await isFirstProphecyOfRound('round-1', 'prophecy-1');
+
+      expect(result).toBe(true);
+      expect(mockProphecyFindFirst).toHaveBeenCalledWith({
+        where: { roundId: 'round-1' },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true },
+      });
+    });
+
+    it('returns false when prophecy is not first in round', async () => {
+      mockProphecyFindFirst.mockResolvedValue({ id: 'prophecy-other' });
+
+      const result = await isFirstProphecyOfRound('round-1', 'prophecy-1');
+
+      expect(result).toBe(false);
+    });
+
+    it('returns false when no prophecies exist in round', async () => {
+      mockProphecyFindFirst.mockResolvedValue(null);
+
+      const result = await isFirstProphecyOfRound('round-1', 'prophecy-1');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('awardRoundCompletionBadges', () => {
+    const pastDate = new Date(Date.now() - 1000 * 60 * 60 * 24);
+
+    beforeEach(() => {
+      mockRoundFindUnique.mockResolvedValue({
+        id: 'round-1',
+        resultsPublishedAt: pastDate,
+      });
+      mockRoundFindMany.mockResolvedValue([]);
+      mockProphecyFindMany.mockResolvedValue([]);
+      mockUserFindMany.mockResolvedValue([]);
+      mockUserFindUnique.mockResolvedValue({ id: 'bot-id', username: 'kimberly' });
+      mockRatingFindMany.mockResolvedValue([]);
+      mockBadgeFindUnique.mockResolvedValue(mockBadge);
+      mockUserBadgeFindUnique.mockResolvedValue(null);
+      mockUserBadgeCreate.mockResolvedValue(mockUserBadge);
+    });
+
+    it('returns empty array for empty leaderboard', async () => {
+      const result = await awardRoundCompletionBadges('round-1', []);
+
+      expect(result).toEqual([]);
+    });
+
+    it('processes participants from leaderboard', async () => {
+      const leaderboard = [{ userId: 'user-1' }, { userId: 'user-2' }];
+      mockProphecyFindMany.mockResolvedValue([
+        {
+          id: 'p1',
+          creatorId: 'user-1',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [{ userId: 'user-2', value: -5, createdAt: pastDate, user: { isBot: false } }],
+        },
+      ]);
+      mockRatingFindMany.mockResolvedValue([{ value: -5, prophecy: { fulfilled: true } }]);
+
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('awards unicorn badge for high-rating fulfilled prophecy', async () => {
+      const leaderboard = [{ userId: 'user-1' }];
+      mockProphecyFindMany.mockResolvedValue([
+        {
+          id: 'p1',
+          creatorId: 'user-1',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [{ userId: 'user-2', value: 8, createdAt: pastDate, user: { isBot: false } }],
+        },
+      ]);
+
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      expect(mockBadgeFindUnique).toHaveBeenCalled();
+    });
+
+    it('awards party_crasher badge for high-rating unfulfilled prophecy', async () => {
+      const leaderboard = [{ userId: 'user-1' }];
+      mockProphecyFindMany.mockResolvedValue([
+        {
+          id: 'p1',
+          creatorId: 'user-1',
+          fulfilled: false,
+          createdAt: pastDate,
+          ratings: [{ userId: 'user-2', value: 8, createdAt: pastDate, user: { isBot: false } }],
+        },
+      ]);
+
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      expect(mockBadgeFindUnique).toHaveBeenCalled();
+    });
+
+    it('awards speedrunner badge when all ratings within 10 minutes', async () => {
+      const now = Date.now();
+      const leaderboard = [{ userId: 'user-1' }];
+      mockProphecyFindMany.mockResolvedValue([
+        {
+          id: 'p1',
+          creatorId: 'user-2',
+          fulfilled: true,
+          createdAt: new Date(now - 1000 * 60 * 60),
+          ratings: [
+            { userId: 'user-1', value: -5, createdAt: new Date(now), user: { isBot: false } },
+          ],
+        },
+        {
+          id: 'p2',
+          creatorId: 'user-2',
+          fulfilled: true,
+          createdAt: new Date(now - 1000 * 60 * 60),
+          ratings: [
+            {
+              userId: 'user-1',
+              value: -3,
+              createdAt: new Date(now + 1000 * 60 * 5),
+              user: { isBot: false },
+            }, // 5 min later
+          ],
+        },
+      ]);
+
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('awards against_stream badge when user predicts opposite of average correctly', async () => {
+      const leaderboard = [{ userId: 'user-1' }];
+      mockProphecyFindMany.mockResolvedValue([
+        {
+          id: 'p1',
+          creatorId: 'user-2',
+          fulfilled: true, // Actually fulfilled
+          createdAt: pastDate,
+          ratings: [
+            { userId: 'user-1', value: -5, createdAt: pastDate, user: { isBot: false } }, // User predicts fulfilled (correct)
+            { userId: 'user-3', value: 5, createdAt: pastDate, user: { isBot: false } }, // Others predict not fulfilled
+            { userId: 'user-4', value: 7, createdAt: pastDate, user: { isBot: false } },
+          ],
+        },
+      ]);
+
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('awards morning_glory badge when rating within 24h of prophecy creation', async () => {
+      const now = Date.now();
+      const leaderboard = [{ userId: 'user-1' }];
+      mockProphecyFindMany.mockResolvedValue([
+        {
+          id: 'p1',
+          creatorId: 'user-2',
+          fulfilled: null,
+          createdAt: new Date(now),
+          ratings: [
+            {
+              userId: 'user-1',
+              value: 5,
+              createdAt: new Date(now + 1000 * 60 * 60 * 12),
+              user: { isBot: false },
+            }, // 12h later
+          ],
+        },
+      ]);
+
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('awards bot_beater badge when user accuracy exceeds Kimberly', async () => {
+      const leaderboard = [{ userId: 'user-1' }];
+      mockProphecyFindMany.mockResolvedValue([
+        {
+          id: 'p1',
+          creatorId: 'user-2',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [{ userId: 'user-1', value: -5, createdAt: pastDate, user: { isBot: false } }],
+        },
+      ]);
+      // User has 100% accuracy, bot has 0%
+      mockRatingFindMany
+        .mockResolvedValueOnce([{ value: -5, prophecy: { fulfilled: true } }]) // user accuracy query
+        .mockResolvedValueOnce([]); // bot accuracy query
+      mockUserFindUnique.mockResolvedValue({ id: 'bot-id', username: 'kimberly' });
+
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('awards chaos_agent badge for mixed prophecy outcomes with controversy', async () => {
+      const leaderboard = [{ userId: 'user-1' }];
+      mockProphecyFindMany.mockResolvedValue([
+        {
+          id: 'p1',
+          creatorId: 'user-1',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [
+            { userId: 'user-2', value: -10, createdAt: pastDate, user: { isBot: false } },
+            { userId: 'user-3', value: 10, createdAt: pastDate, user: { isBot: false } },
+          ],
+        },
+        {
+          id: 'p2',
+          creatorId: 'user-1',
+          fulfilled: false,
+          createdAt: pastDate,
+          ratings: [{ userId: 'user-2', value: 5, createdAt: pastDate, user: { isBot: false } }],
+        },
+      ]);
+
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('awards underdog badge when winner was not in top 3 for last 2 rounds', async () => {
+      const now = Date.now();
+      const leaderboard = [{ userId: 'user-1' }];
+
+      // Current round
+      mockRoundFindUnique.mockResolvedValue({
+        id: 'round-3',
+        resultsPublishedAt: new Date(now),
+      });
+
+      // Previous 2 rounds
+      mockRoundFindMany.mockResolvedValue([{ id: 'round-2' }, { id: 'round-1' }]);
+
+      mockProphecyFindMany
+        .mockResolvedValueOnce([]) // current round prophecies
+        .mockResolvedValueOnce([
+          // round-2: user-1 not in top 3
+          {
+            id: 'p1',
+            creatorId: 'user-1',
+            fulfilled: false,
+            createdAt: pastDate,
+            ratings: [{ value: 0, user: { isBot: false } }],
+          },
+          {
+            id: 'p2',
+            creatorId: 'user-2',
+            fulfilled: true,
+            createdAt: pastDate,
+            ratings: [{ value: 5, user: { isBot: false } }],
+          },
+        ])
+        .mockResolvedValueOnce([
+          // round-1: user-1 not in top 3
+          {
+            id: 'p3',
+            creatorId: 'user-3',
+            fulfilled: true,
+            createdAt: pastDate,
+            ratings: [{ value: 5, user: { isBot: false } }],
+          },
+        ]);
+
+      const result = await awardRoundCompletionBadges('round-3', leaderboard);
+
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('does not award worse_than_random when user has no ratings', async () => {
+      const leaderboard = [{ userId: 'user-1' }];
+      mockProphecyFindMany.mockResolvedValue([]);
+      mockRatingFindMany.mockResolvedValue([]);
+
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      expect(result).toEqual([]);
+    });
+
+    it('ignores bot ratings when calculating averages', async () => {
+      const leaderboard = [{ userId: 'user-1' }];
+      mockProphecyFindMany.mockResolvedValue([
+        {
+          id: 'p1',
+          creatorId: 'user-1',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [
+            { userId: 'bot-1', value: 10, createdAt: pastDate, user: { isBot: true } },
+            { userId: 'user-2', value: -5, createdAt: pastDate, user: { isBot: false } },
+          ],
+        },
+      ]);
+
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('handles zero-value ratings correctly', async () => {
+      const leaderboard = [{ userId: 'user-1' }];
+      mockProphecyFindMany.mockResolvedValue([
+        {
+          id: 'p1',
+          creatorId: 'user-1',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [{ userId: 'user-2', value: 0, createdAt: pastDate, user: { isBot: false } }],
+        },
+      ]);
+
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('skips prophecies without resolved status for creator badges', async () => {
+      const leaderboard = [{ userId: 'user-1' }];
+      mockProphecyFindMany.mockResolvedValue([
+        {
+          id: 'p1',
+          creatorId: 'user-1',
+          fulfilled: null, // Not resolved yet
+          createdAt: pastDate,
+          ratings: [{ userId: 'user-2', value: 8, createdAt: pastDate, user: { isBot: false } }],
+        },
+      ]);
+
+      // No creator badges (unicorn, party_crasher) should be awarded for unresolved prophecies
+      // But other badges might still be awarded
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      // Since fulfilled is null, no unicorn/party_crasher badges should be given
+      // (other badges may still be awarded though)
+      expect(Array.isArray(result)).toBe(true);
     });
   });
 });

@@ -45,7 +45,7 @@ async function main() {
     if (newBadges.length > 0) {
       console.log(`   ${displayName}: ${newBadges.length} neue Badges`);
       for (const badge of newBadges) {
-        console.log(`      ${badge.badge.icon} ${badge.badge.name}`);
+        console.log(`      ✓ ${badge.badge.name}`);
       }
       totalNewBadges += newBadges.length;
     }

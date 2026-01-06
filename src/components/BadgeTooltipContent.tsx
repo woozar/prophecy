@@ -4,8 +4,10 @@ import { memo, useMemo } from 'react';
 
 import type { BadgeRarity } from '@prisma/client';
 
+import { BadgeIcon } from '@/components/BadgeIcon';
+
 interface BadgeTooltipContentProps {
-  icon: string;
+  badgeKey: string;
   name: string;
   description: string;
   requirement: string;
@@ -33,7 +35,7 @@ const RARITY_CONFIG: Record<BadgeRarity, { icon: string; title: string }> = {
 };
 
 export const BadgeTooltipContent = memo(function BadgeTooltipContent({
-  icon,
+  badgeKey,
   name,
   description,
   requirement,
@@ -55,7 +57,7 @@ export const BadgeTooltipContent = memo(function BadgeTooltipContent({
     <div className="min-w-[220px] max-w-[280px]">
       {/* Header with icon and name */}
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-2xl">{icon}</span>
+        <BadgeIcon badgeKey={badgeKey} size="md" />
         <p className="font-semibold text-white truncate flex-1">{name}</p>
         <span className="text-lg" title={rarityConfig.title}>
           {rarityConfig.icon}

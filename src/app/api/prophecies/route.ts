@@ -4,10 +4,72 @@ import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 import { validateBody } from '@/lib/api/validation';
 import { createAuditLog } from '@/lib/audit/audit-service';
 import { getSession } from '@/lib/auth/session';
-import { awardBadge, checkAndAwardBadges } from '@/lib/badges/badge-service';
+import {
+  type AwardedUserBadge,
+  awardBadge,
+  checkAndAwardBadges,
+  isFirstProphecyOfRound,
+} from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
 import { createProphecySchema } from '@/lib/schemas/prophecy';
 import { sseEmitter } from '@/lib/sse/event-emitter';
+
+/**
+ * Check and award time/content-based badges for prophecy creation
+ */
+async function checkProphecyCreationBadges(
+  userId: string,
+  roundId: string,
+  prophecyId: string,
+  description: string,
+  submissionDeadline: Date,
+  now: Date,
+  newBadges: AwardedUserBadge[]
+): Promise<void> {
+  // Last-minute: prophecy created within 24h of deadline
+  const hoursUntilDeadline = (submissionDeadline.getTime() - now.getTime()) / (1000 * 60 * 60);
+  if (hoursUntilDeadline < 24) {
+    const result = await awardBadge(userId, 'time_last_minute');
+    if (result?.isNew) newBadges.push(result.userBadge);
+  }
+
+  // Novelist: long description (≥500 chars)
+  if (description.length >= 500) {
+    const result = await awardBadge(userId, 'special_novelist');
+    if (result?.isNew) newBadges.push(result.userBadge);
+  }
+
+  // Early bird: first prophecy of round
+  if (await isFirstProphecyOfRound(roundId, prophecyId)) {
+    const result = await awardBadge(userId, 'time_early_bird');
+    if (result?.isNew) newBadges.push(result.userBadge);
+  }
+
+  // Night owl: prophecy between 00:00-05:00
+  const hour = now.getHours();
+  if (hour >= 0 && hour < 5) {
+    const result = await awardBadge(userId, 'hidden_night_owl');
+    if (result?.isNew) newBadges.push(result.userBadge);
+  }
+}
+
+/**
+ * Broadcast newly awarded badges via SSE
+ */
+function broadcastNewBadges(newBadges: AwardedUserBadge[]): void {
+  for (const userBadge of newBadges) {
+    sseEmitter.broadcast({
+      type: 'badge:awarded',
+      data: {
+        id: userBadge.id,
+        earnedAt: userBadge.earnedAt.toISOString(),
+        userId: userBadge.userId,
+        badgeId: userBadge.badgeId,
+        badge: userBadge.badge,
+      },
+    });
+  }
+}
 
 // GET /api/prophecies - Get prophecies for a round
 export async function GET(request: NextRequest) {
@@ -104,34 +166,25 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Validate request body with Zod
     const validation = await validateBody(request, createProphecySchema);
     if (!validation.success) return validation.response;
     const { roundId, title, description } = validation.data;
 
-    // Check if round exists and submission is still open
-    const round = await prisma.round.findUnique({
-      where: { id: roundId },
-    });
+    const round = await prisma.round.findUnique({ where: { id: roundId } });
 
     if (!round) {
       return NextResponse.json({ error: 'Runde nicht gefunden' }, { status: 404 });
     }
 
-    if (new Date() > round.submissionDeadline) {
+    const now = new Date();
+    if (now > round.submissionDeadline) {
       return NextResponse.json({ error: 'Einreichungsfrist ist abgelaufen' }, { status: 400 });
     }
 
     const prophecy = await prisma.prophecy.create({
-      data: {
-        title,
-        description,
-        roundId,
-        creatorId: session.userId,
-      },
+      data: { title, description, roundId, creatorId: session.userId },
     });
 
-    // Create audit log for prophecy creation
     await createAuditLog({
       entityType: 'PROPHECY',
       entityId: prophecy.id,
@@ -141,49 +194,20 @@ export async function POST(request: NextRequest) {
       newValue: { title, description },
     });
 
-    // Check and award badges for the user
     const newBadges = await checkAndAwardBadges(session.userId);
-
-    // Check for last-minute badge (prophecy created within 24h of deadline)
-    const now = new Date();
-    const hoursUntilDeadline =
-      (round.submissionDeadline.getTime() - now.getTime()) / (1000 * 60 * 60);
-    if (hoursUntilDeadline < 24) {
-      const lastMinuteResult = await awardBadge(session.userId, 'time_last_minute');
-      if (lastMinuteResult?.isNew) {
-        newBadges.push(lastMinuteResult.userBadge);
-      }
-    }
-
-    // Check for novelist badge (long description)
-    if (description.length >= 500) {
-      const novelistResult = await awardBadge(session.userId, 'special_novelist');
-      if (novelistResult?.isNew) {
-        newBadges.push(novelistResult.userBadge);
-      }
-    }
-
-    // Broadcast new badges via SSE
-    for (const userBadge of newBadges) {
-      sseEmitter.broadcast({
-        type: 'badge:awarded',
-        data: {
-          id: userBadge.id,
-          earnedAt: userBadge.earnedAt.toISOString(),
-          userId: userBadge.userId,
-          badgeId: userBadge.badgeId,
-          badge: userBadge.badge,
-        },
-      });
-    }
+    await checkProphecyCreationBadges(
+      session.userId,
+      roundId,
+      prophecy.id,
+      description,
+      round.submissionDeadline,
+      now,
+      newBadges
+    );
+    broadcastNewBadges(newBadges);
 
     const prophecyData = transformProphecyToResponse(prophecy);
-
-    // Broadcast to all connected clients
-    sseEmitter.broadcast({
-      type: 'prophecy:created',
-      data: prophecyData,
-    });
+    sseEmitter.broadcast({ type: 'prophecy:created', data: prophecyData });
 
     return NextResponse.json({ prophecy: prophecyData });
   } catch (error) {

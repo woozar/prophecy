@@ -24,7 +24,7 @@ import { useUserProfileModal } from '@/contexts/UserProfileModalContext';
 import { apiClient } from '@/lib/api-client/client';
 import { formatDate } from '@/lib/formatting/date';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
-import { type Badge, type UserBadgeSimple, useBadgeStore } from '@/store/useBadgeStore';
+import { type Badge, useBadgeStore } from '@/store/useBadgeStore';
 import { type User, useUserStore } from '@/store/useUserStore';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -61,7 +61,6 @@ export const UsersManager = memo(function UsersManager() {
 
   // Get badges from badge store
   const badges = useBadgeStore((state) => state.badges);
-  const allUserBadges = useBadgeStore((state) => state.allUserBadges);
 
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -251,7 +250,6 @@ export const UsersManager = memo(function UsersManager() {
               key={user.id}
               user={user}
               badges={badges}
-              userBadgeMap={allUserBadges[user.id]}
               onClick={() => openUserProfile(user)}
               onApprove={() => handleStatusChange(user.id, 'APPROVED')}
               onReject={() => handleStatusChange(user.id, 'REJECTED')}
@@ -281,7 +279,6 @@ export const UsersManager = memo(function UsersManager() {
               key={user.id}
               user={user}
               badges={badges}
-              userBadgeMap={allUserBadges[user.id]}
               onClick={() => openUserProfile(user)}
               onSuspend={() =>
                 setConfirmAction({
@@ -328,7 +325,6 @@ export const UsersManager = memo(function UsersManager() {
               key={user.id}
               user={user}
               badges={badges}
-              userBadgeMap={allUserBadges[user.id]}
               onClick={() => openUserProfile(user)}
               onReactivate={() => handleStatusChange(user.id, 'APPROVED')}
               onDelete={() =>
@@ -394,7 +390,6 @@ export const UsersManager = memo(function UsersManager() {
 interface UserCardProps {
   user: User;
   badges: Record<string, Badge>;
-  userBadgeMap: Record<string, UserBadgeSimple> | undefined;
   onClick: () => void;
   onApprove?: () => void;
   onReject?: () => void;
@@ -409,7 +404,6 @@ interface UserCardProps {
 const UserCard = memo(function UserCard({
   user,
   badges,
-  userBadgeMap,
   onClick,
   onApprove,
   onReject,
@@ -420,23 +414,19 @@ const UserCard = memo(function UserCard({
   onDelete,
   isSubmitting,
 }: Readonly<UserCardProps>) {
-  // Get user's newest badges (up to 5 displayed, sorted by earnedAt descending)
-  const userBadges = useMemo(() => {
-    if (!user.badgeIds || user.badgeIds.length === 0 || !userBadgeMap) return [];
+  // Count badges by rarity
+  const badgeRarityCounts = useMemo(() => {
+    if (!user.badgeIds || user.badgeIds.length === 0) return null;
 
-    // Get badge data with earnedAt info and sort by newest first
-    return user.badgeIds
-      .map((id) => {
-        const badge = badges[id];
-        const userBadge = userBadgeMap[id];
-        if (!badge || !userBadge) return null;
-        return { badge, earnedAt: userBadge.earnedAt };
-      })
-      .filter((b): b is { badge: Badge; earnedAt: string } => !!b)
-      .toSorted((a, b) => new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime())
-      .slice(0, 5)
-      .map((b) => b.badge);
-  }, [user.badgeIds, badges, userBadgeMap]);
+    const counts = { LEGENDARY: 0, GOLD: 0, SILVER: 0, BRONZE: 0 };
+    for (const id of user.badgeIds) {
+      const badge = badges[id];
+      if (badge) {
+        counts[badge.rarity]++;
+      }
+    }
+    return counts;
+  }, [user.badgeIds, badges]);
 
   const handleCardClick = useCallback(
     (e: React.MouseEvent) => {
@@ -481,16 +471,26 @@ const UserCard = memo(function UserCard({
               {!user.isBot && <>{user._count?.prophecies || 0} Prophezeiungen · </>}
               {user._count?.ratings || 0} Bewertungen
             </p>
-            {userBadges.length > 0 && (
-              <div className="flex gap-1 mt-1" title={userBadges.map((b) => b.name).join(', ')}>
-                {userBadges.map((badge) => (
-                  <span key={badge.id} className="text-base" title={badge.name}>
-                    {badge.icon}
+            {badgeRarityCounts && (
+              <div className="flex gap-2 mt-1 text-xs">
+                {badgeRarityCounts.LEGENDARY > 0 && (
+                  <span className="text-purple-400" title="Legendäre Badges">
+                    💎 {badgeRarityCounts.LEGENDARY}
                   </span>
-                ))}
-                {user.badgeIds && user.badgeIds.length > 5 && (
-                  <span className="text-xs text-(--text-muted) my-auto">
-                    +{user.badgeIds.length - 5}
+                )}
+                {badgeRarityCounts.GOLD > 0 && (
+                  <span className="text-yellow-400" title="Gold Badges">
+                    🥇 {badgeRarityCounts.GOLD}
+                  </span>
+                )}
+                {badgeRarityCounts.SILVER > 0 && (
+                  <span className="text-gray-300" title="Silber Badges">
+                    🥈 {badgeRarityCounts.SILVER}
+                  </span>
+                )}
+                {badgeRarityCounts.BRONZE > 0 && (
+                  <span className="text-amber-600" title="Bronze Badges">
+                    🥉 {badgeRarityCounts.BRONZE}
                   </span>
                 )}
               </div>

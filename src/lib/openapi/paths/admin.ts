@@ -248,3 +248,107 @@ registry.registerPath({
     },
   },
 });
+
+// ============================================================================
+// Badge Award/Revoke
+// ============================================================================
+
+const badgeActionSchema = z
+  .object({
+    userId: z.string().openapi({ description: 'User ID' }),
+    badgeKey: z.string().openapi({ description: 'Badge key' }),
+  })
+  .openapi('BadgeActionRequest');
+
+const badgeAwardResponseSchema = z
+  .object({
+    message: z.string(),
+    userBadge: z
+      .object({
+        id: z.string(),
+        userId: z.string(),
+        badgeId: z.string(),
+        earnedAt: z.string(),
+        badge: z.object({
+          id: z.string(),
+          key: z.string(),
+          name: z.string(),
+          description: z.string(),
+          category: z.string(),
+          rarity: z.string(),
+        }),
+      })
+      .optional(),
+    badge: z
+      .object({
+        id: z.string(),
+        key: z.string(),
+        name: z.string(),
+      })
+      .optional(),
+  })
+  .openapi('BadgeAwardResponse');
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/admin/badges/award',
+  tags: ['Admin'],
+  summary: 'Award a badge to a user (Admin only)',
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: badgeActionSchema },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Badge awarded or already owned',
+      content: { 'application/json': { schema: badgeAwardResponseSchema } },
+    },
+    401: {
+      description: 'Unauthorized',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    403: {
+      description: 'Forbidden (not admin)',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    404: {
+      description: 'User or badge not found',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'delete',
+  path: '/api/admin/badges/award',
+  tags: ['Admin'],
+  summary: 'Revoke a badge from a user (Admin only)',
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: badgeActionSchema },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Badge revoked',
+      content: { 'application/json': { schema: successResponseSchema } },
+    },
+    401: {
+      description: 'Unauthorized',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    403: {
+      description: 'Forbidden (not admin)',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    404: {
+      description: 'User does not have this badge',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+  },
+});

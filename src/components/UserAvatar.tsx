@@ -907,7 +907,7 @@ const AvatarImage = memo(function AvatarImage({
   }
 
   return (
-    <>
+    <div className="absolute inset-0 w-full h-full">
       <Image
         src={src}
         alt={alt}
@@ -920,8 +920,12 @@ const AvatarImage = memo(function AvatarImage({
         onLoad={handleImageLoad}
         priority={priority}
       />
-      {!imageLoaded && <span className="opacity-50">{initials}</span>}
-    </>
+      {!imageLoaded && (
+        <span className="absolute inset-0 flex items-center justify-center opacity-50">
+          {initials}
+        </span>
+      )}
+    </div>
   );
 });
 

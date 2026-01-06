@@ -7,7 +7,6 @@ export interface BadgeDefinition {
   name: string;
   description: string;
   requirement: string;
-  icon: string;
   category: BadgeCategory;
   rarity: BadgeRarity;
   threshold?: number;
@@ -20,7 +19,6 @@ type BadgeDataJson = {
     name: string;
     description: string;
     requirement: string;
-    icon: string;
     category: string;
     rarity: string;
     threshold?: number;

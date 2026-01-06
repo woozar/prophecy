@@ -36,6 +36,7 @@ vi.mock('@/lib/sse/event-emitter', () => ({
 
 vi.mock('@/lib/badges/badge-service', () => ({
   awardLeaderboardBadges: vi.fn().mockResolvedValue([]),
+  awardRoundCompletionBadges: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('@/lib/statistics/calculate', () => ({

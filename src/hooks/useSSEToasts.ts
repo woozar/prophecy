@@ -129,7 +129,7 @@ export function useSSEToasts(): SSEEventCallbacks {
       if (userBadge.userId !== currentUserId) return;
 
       showSuccessToast(
-        `${userBadge.badge.icon} Neues Badge erhalten!`,
+        `🏆 Neues Badge erhalten!`,
         `${userBadge.badge.name}: ${userBadge.badge.description}`
       );
     },

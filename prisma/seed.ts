@@ -21,7 +21,6 @@ async function main() {
         name: badge.name,
         description: badge.description,
         requirement: badge.requirement,
-        icon: badge.icon,
         category: badge.category,
         rarity: badge.rarity,
         threshold: badge.threshold,
@@ -31,13 +30,12 @@ async function main() {
         name: badge.name,
         description: badge.description,
         requirement: badge.requirement,
-        icon: badge.icon,
         category: badge.category,
         rarity: badge.rarity,
         threshold: badge.threshold,
       },
     });
-    console.log(`  ✓ ${badge.icon} ${badge.name}`);
+    console.log(`  ✓ ${badge.name}`);
   }
 
   console.log(`\nSeeded ${allBadgeDefinitions.length} badges.`);

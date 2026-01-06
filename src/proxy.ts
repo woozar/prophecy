@@ -10,7 +10,7 @@ const skipPatterns = [
   /^\/api/,
   /^\/favicon/,
   /^\/splash/,
-  /\.(png|jpg|jpeg|gif|svg|ico)$/,
+  /\.(png|jpg|jpeg|gif|svg|ico|webp)$/,
 ];
 
 export function proxy(request: NextRequest) {

@@ -6,6 +6,7 @@ import { Tooltip } from '@mantine/core';
 import type { BadgeRarity } from '@prisma/client';
 import { IconLoader2 } from '@tabler/icons-react';
 
+import { BadgeIcon } from '@/components/BadgeIcon';
 import { BadgeTooltipContent } from '@/components/BadgeTooltipContent';
 import { Card } from '@/components/Card';
 import { Link } from '@/components/Link';
@@ -17,7 +18,7 @@ import { useUserStore } from '@/store/useUserStore';
 
 interface AwardedBadgeInfo {
   badgeId: string;
-  icon: string;
+  badgeKey: string;
   name: string;
   description: string;
   requirement: string;
@@ -40,21 +41,20 @@ export default function BadgesPage() {
 
   const [selectedBadge, setSelectedBadge] = useState<AwardedBadgeInfo | null>(null);
 
-  // Calculate awarded badges from allUserBadges
+  // TEMPORARY: Show ALL badges for preview
   const awardedBadges = useMemo((): AwardedBadgeInfo[] => {
+    // Get stats for badges that have been awarded
     const badgeStats: Record<
       string,
       { firstAchieverId: string; firstAchievedAt: string; count: number }
     > = {};
 
-    // Iterate through all user badges
     for (const userId of Object.keys(allUserBadges)) {
       const userBadgeMap = allUserBadges[userId];
       for (const badgeId of Object.keys(userBadgeMap)) {
         const ub = userBadgeMap[badgeId];
         if (badgeStats[badgeId]) {
           badgeStats[badgeId].count++;
-          // Check if this is earlier
           if (new Date(ub.earnedAt) < new Date(badgeStats[badgeId].firstAchievedAt)) {
             badgeStats[badgeId].firstAchieverId = userId;
             badgeStats[badgeId].firstAchievedAt = ub.earnedAt;
@@ -69,14 +69,14 @@ export default function BadgesPage() {
       }
     }
 
-    // Convert to array with badge info
-    return Object.entries(badgeStats)
-      .map(([badgeId, stats]) => {
-        const badge = badges[badgeId];
-        if (!badge) return null;
+    // Only show badges that have been awarded to at least one user
+    return Object.values(badges)
+      .filter((badge) => badgeStats[badge.id])
+      .map((badge) => {
+        const stats = badgeStats[badge.id];
         return {
-          badgeId,
-          icon: badge.icon,
+          badgeId: badge.id,
+          badgeKey: badge.key,
           name: badge.name,
           description: badge.description,
           requirement: badge.requirement,
@@ -86,10 +86,14 @@ export default function BadgesPage() {
           totalAchievers: stats.count,
         };
       })
-      .filter((b): b is AwardedBadgeInfo => b !== null)
-      .sort(
-        (a, b) => new Date(a.firstAchievedAt).getTime() - new Date(b.firstAchievedAt).getTime()
-      );
+      .toSorted((a, b) => {
+        // Sort by rarity (descending): LEGENDARY > GOLD > SILVER > BRONZE
+        const rarityOrder = { LEGENDARY: 0, GOLD: 1, SILVER: 2, BRONZE: 3 };
+        const rarityDiff = rarityOrder[a.rarity] - rarityOrder[b.rarity];
+        if (rarityDiff !== 0) return rarityDiff;
+        // Then by name
+        return a.name.localeCompare(b.name, 'de');
+      });
   }, [badges, allUserBadges]);
 
   // Get all achievers for the selected badge
@@ -157,14 +161,13 @@ export default function BadgesPage() {
       )}
 
       {/* Badge Detail Modal */}
-      <Modal
-        opened={!!selectedBadge}
-        onClose={() => setSelectedBadge(null)}
-        title={selectedBadge ? `${selectedBadge.icon} ${selectedBadge.name}` : ''}
-        size="md"
-      >
+      <Modal opened={!!selectedBadge} onClose={() => setSelectedBadge(null)} size="md">
         {selectedBadge && (
           <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <BadgeIcon badgeKey={selectedBadge.badgeKey} size="lg" />
+              <h2 className="text-xl font-bold text-white">{selectedBadge.name}</h2>
+            </div>
             <p className="text-(--text-secondary) italic">{selectedBadge.description}</p>
             <p className="text-sm font-medium text-cyan-400">{selectedBadge.requirement}</p>
 
@@ -193,7 +196,7 @@ export default function BadgesPage() {
                           {index + 1}
                         </span>
                       )}
-                      <UserAvatar userId={userId} size="sm" clickable />
+                      <UserAvatar userId={userId} size="sm" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-white truncate">
                           {user.displayName || user.username}
@@ -234,7 +237,7 @@ const BadgeCard = memo(function BadgeCard({
     <Tooltip
       label={
         <BadgeTooltipContent
-          icon={badge.icon}
+          badgeKey={badge.badgeKey}
           name={badge.name}
           description={badge.description}
           requirement={badge.requirement}
@@ -253,15 +256,15 @@ const BadgeCard = memo(function BadgeCard({
         className="w-full text-left p-4 badge-card cursor-pointer"
       >
         <div className="flex items-start gap-4">
-          <span className="text-4xl">{badge.icon}</span>
+          <BadgeIcon badgeKey={badge.badgeKey} size="lg" />
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-white">{badge.name}</h3>
-            <p className="text-sm text-(--text-muted) line-clamp-2">{badge.requirement}</p>
+            <p className="text-sm text-(--text-muted) line-clamp-2">{badge.description}</p>
 
             <div className="mt-3 flex items-center gap-2">
               {firstAchiever && (
                 <>
-                  <UserAvatar userId={firstAchiever.id} size="sm" clickable />
+                  <UserAvatar userId={firstAchiever.id} size="sm" />
                   <span className="text-xs text-(--text-muted)">
                     Zuerst erreicht von{' '}
                     <span className="text-cyan-400">

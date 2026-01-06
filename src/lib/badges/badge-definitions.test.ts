@@ -19,7 +19,6 @@ describe('badge-definitions', () => {
         expect(badge.name).toBeDefined();
         expect(badge.description).toBeDefined();
         expect(badge.requirement).toBeDefined();
-        expect(badge.icon).toBeDefined();
         expect(badge.category).toBeDefined();
         expect(badge.rarity).toBeDefined();
       }

@@ -124,7 +124,6 @@ model Badge {
   name        String                 // "Mondleser"
   description String                 // "Die Sterne beginnen zu sprechen"
   requirement String        @default("")  // "5 Prophezeiungen erstellt"
-  icon        String                 // Emoji: "🌙"
   category    BadgeCategory
   rarity      BadgeRarity
   threshold   Int?                   // Schwellwert für automatische Vergabe

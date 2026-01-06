@@ -24,7 +24,6 @@ const createMockBadge = (overrides = {}): Badge => ({
   name: 'Anfänger-Seher',
   description: 'Erste Schritte',
   requirement: '1 Prophezeiung erstellt',
-  icon: '🔮',
   category: BadgeCategory.CREATOR,
   rarity: BadgeRarity.BRONZE,
   threshold: 1,
@@ -115,6 +114,31 @@ describe('useBadgeStore', () => {
     });
   });
 
+  describe('removeMyBadge', () => {
+    it('removes badge from myBadges', () => {
+      useBadgeStore
+        .getState()
+        .setMyBadges([
+          createMockUserBadge(),
+          createMockUserBadge({ id: 'ub-2', badgeId: 'badge-2' }),
+        ]);
+      useBadgeStore.getState().removeMyBadge('badge-1');
+
+      const state = useBadgeStore.getState();
+      expect(Object.keys(state.myBadges)).toHaveLength(1);
+      expect(state.myBadges['badge-1']).toBeUndefined();
+      expect(state.myBadges['badge-2']).toBeDefined();
+    });
+
+    it('does nothing when removing non-existent badge', () => {
+      useBadgeStore.getState().setMyBadges([createMockUserBadge()]);
+      useBadgeStore.getState().removeMyBadge('nonexistent');
+
+      const state = useBadgeStore.getState();
+      expect(Object.keys(state.myBadges)).toHaveLength(1);
+    });
+  });
+
   describe('setAllUserBadges', () => {
     it('groups user badges by userId and badgeId', () => {
       const userBadges: UserBadgeSimple[] = [
@@ -158,6 +182,45 @@ describe('useBadgeStore', () => {
       const state = useBadgeStore.getState();
       expect(state.allUserBadges['user-new']).toBeDefined();
       expect(state.allUserBadges['user-new']['badge-1']).toBeDefined();
+    });
+  });
+
+  describe('removeUserBadge', () => {
+    it('removes badge from specific user', () => {
+      useBadgeStore.getState().setAllUserBadges([
+        { userId: 'user-1', badgeId: 'badge-1', earnedAt: '2025-01-05T00:00:00.000Z' },
+        { userId: 'user-1', badgeId: 'badge-2', earnedAt: '2025-01-06T00:00:00.000Z' },
+      ]);
+      useBadgeStore.getState().removeUserBadge('user-1', 'badge-1');
+
+      const state = useBadgeStore.getState();
+      expect(Object.keys(state.allUserBadges['user-1'])).toHaveLength(1);
+      expect(state.allUserBadges['user-1']['badge-1']).toBeUndefined();
+      expect(state.allUserBadges['user-1']['badge-2']).toBeDefined();
+    });
+
+    it('does nothing when user does not exist', () => {
+      useBadgeStore
+        .getState()
+        .setAllUserBadges([
+          { userId: 'user-1', badgeId: 'badge-1', earnedAt: '2025-01-05T00:00:00.000Z' },
+        ]);
+      useBadgeStore.getState().removeUserBadge('nonexistent', 'badge-1');
+
+      const state = useBadgeStore.getState();
+      expect(Object.keys(state.allUserBadges)).toHaveLength(1);
+    });
+
+    it('does nothing when badge does not exist for user', () => {
+      useBadgeStore
+        .getState()
+        .setAllUserBadges([
+          { userId: 'user-1', badgeId: 'badge-1', earnedAt: '2025-01-05T00:00:00.000Z' },
+        ]);
+      useBadgeStore.getState().removeUserBadge('user-1', 'nonexistent');
+
+      const state = useBadgeStore.getState();
+      expect(Object.keys(state.allUserBadges['user-1'])).toHaveLength(1);
     });
   });
 

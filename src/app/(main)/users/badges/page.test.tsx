@@ -20,7 +20,9 @@ const createBadgeStoreMock = (overrides = {}) => ({
   myBadges: {},
   awardedBadges: [],
   addMyBadge: vi.fn(),
+  removeMyBadge: vi.fn(),
   addUserBadge: vi.fn(),
+  removeUserBadge: vi.fn(),
   setBadges: vi.fn(),
   setAllUserBadges: vi.fn(),
   setMyBadges: vi.fn(),
@@ -92,7 +94,6 @@ const mockBadges = {
     name: 'Anfänger-Seher',
     description: 'Erste Schritte in die Zukunft',
     requirement: '1 Prophezeiung erstellt',
-    icon: '🔮',
     category: BadgeCategory.CREATOR,
     rarity: BadgeRarity.BRONZE,
     threshold: 1,
@@ -104,7 +105,6 @@ const mockBadges = {
     name: 'Mondleser',
     description: 'Die Sterne beginnen zu sprechen',
     requirement: '5 Prophezeiungen erstellt',
-    icon: '🌙',
     category: BadgeCategory.CREATOR,
     rarity: BadgeRarity.SILVER,
     threshold: 5,
@@ -209,9 +209,9 @@ describe('BadgesPage', () => {
     expect(screen.getByText('Anfänger-Seher')).toBeInTheDocument();
     expect(screen.getByText('Mondleser')).toBeInTheDocument();
 
-    // Check badge icons are rendered
-    expect(screen.getByText('🔮')).toBeInTheDocument();
-    expect(screen.getByText('🌙')).toBeInTheDocument();
+    // Check badge cards are rendered (images load asynchronously)
+    const buttons = screen.getAllByRole('button');
+    expect(buttons.length).toBeGreaterThanOrEqual(2);
 
     // Check first achiever info (Test User appears as first achiever)
     expect(screen.getAllByText('Test User').length).toBeGreaterThanOrEqual(1);
@@ -254,15 +254,18 @@ describe('BadgesPage', () => {
 
     renderWithMantine(<BadgesPage />);
 
-    // Click on the first badge card
+    // Click on the second badge card (BRONZE: Anfänger-Seher with 2 achievers)
     const badgeButtons = screen.getAllByRole('button');
-    fireEvent.click(badgeButtons[0]);
+    fireEvent.click(badgeButtons[1]);
 
-    // Modal should be open with badge details
+    // Modal should be open - wait for gold medal (first achiever indicator)
     await waitFor(() => {
-      expect(screen.getByText('Erste Schritte in die Zukunft')).toBeInTheDocument();
+      expect(screen.getByText('🥇')).toBeInTheDocument();
     });
+
+    // Verify modal shows achiever list header and badge description (appears in card and modal)
     expect(screen.getByText('Erreicht von:')).toBeInTheDocument();
+    expect(screen.getAllByText('Erste Schritte in die Zukunft').length).toBeGreaterThanOrEqual(2);
   });
 
   it('shows all achievers in modal with ranking', async () => {
@@ -281,9 +284,9 @@ describe('BadgesPage', () => {
 
     renderWithMantine(<BadgesPage />);
 
-    // Click on badge-1 (which has 2 achievers)
+    // Click on badge-1 (which has 2 achievers) - sorted by rarity, BRONZE is second
     const badgeButtons = screen.getAllByRole('button');
-    fireEvent.click(badgeButtons[0]);
+    fireEvent.click(badgeButtons[1]); // badge-1 (BRONZE) is at index 1
 
     // Wait for modal content to render
     await waitFor(() => {
@@ -314,9 +317,9 @@ describe('BadgesPage', () => {
 
     renderWithMantine(<BadgesPage />);
 
-    // Click on badge-1
+    // Click on badge-1 (BRONZE, at index 1 due to rarity sorting)
     const badgeButtons = screen.getAllByRole('button');
-    fireEvent.click(badgeButtons[0]);
+    fireEvent.click(badgeButtons[1]);
 
     // Wait for modal to render, then check user-2 is in the achievers list
     await waitFor(() => {
@@ -436,9 +439,9 @@ describe('BadgesPage', () => {
 
     renderWithMantine(<BadgesPage />);
 
-    // Open modal for badge-1 (3 achievers)
-    const badgeButton = screen.getByRole('button');
-    fireEvent.click(badgeButton);
+    // Open modal for badge-1 (3 achievers) - only badge with achievers
+    const badgeButtons = screen.getAllByRole('button');
+    fireEvent.click(badgeButtons[0]);
 
     // Should show all three medals
     await waitFor(() => {
@@ -448,7 +451,7 @@ describe('BadgesPage', () => {
     expect(screen.getByText('🥉')).toBeInTheDocument();
   });
 
-  it('sorts badges by first achieved date', () => {
+  it('sorts badges by rarity (highest first)', () => {
     vi.mocked(useBadgeStore).mockImplementation((selector) =>
       selector(
         createBadgeStoreMock({
@@ -465,9 +468,9 @@ describe('BadgesPage', () => {
     renderWithMantine(<BadgesPage />);
 
     const badgeNames = screen.getAllByRole('heading', { level: 3 });
-    // badge-1 was first achieved on Jan 5, badge-2 on Jan 10
-    expect(badgeNames[0]).toHaveTextContent('Anfänger-Seher');
-    expect(badgeNames[1]).toHaveTextContent('Mondleser');
+    // Sorted by rarity: SILVER > BRONZE, so Mondleser first
+    expect(badgeNames[0]).toHaveTextContent('Mondleser');
+    expect(badgeNames[1]).toHaveTextContent('Anfänger-Seher');
   });
 
   it('renders page title and description', () => {

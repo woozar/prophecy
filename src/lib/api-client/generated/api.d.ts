@@ -377,6 +377,124 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/admin/badges/award': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Award a badge to a user (Admin only) */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/json': components['schemas']['BadgeActionRequest'];
+        };
+      };
+      responses: {
+        /** @description Badge awarded or already owned */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['BadgeAwardResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Forbidden (not admin) */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description User or badge not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    /** Revoke a badge from a user (Admin only) */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/json': components['schemas']['BadgeActionRequest'];
+        };
+      };
+      responses: {
+        /** @description Badge revoked */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['SuccessResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Forbidden (not admin) */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description User does not have this badge */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/auth/login/password': {
     parameters: {
       query?: never;
@@ -2278,6 +2396,34 @@ export interface components {
         totalRatingsCreated: number;
         bots: components['schemas']['BotRatingsResult'][];
       };
+    };
+    BadgeAwardResponse: {
+      message: string;
+      userBadge?: {
+        id: string;
+        userId: string;
+        badgeId: string;
+        earnedAt: string;
+        badge: {
+          id: string;
+          key: string;
+          name: string;
+          description: string;
+          category: string;
+          rarity: string;
+        };
+      };
+      badge?: {
+        id: string;
+        key: string;
+        name: string;
+      };
+    };
+    BadgeActionRequest: {
+      /** @description User ID */
+      userId: string;
+      /** @description Badge key */
+      badgeKey: string;
     };
     LoginResponse: {
       user: {

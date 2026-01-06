@@ -5,7 +5,6 @@
       "name": "Anfänger-Seher",
       "description": "Erste Schritte in die Zukunft",
       "requirement": "1 Prophezeiung erstellt",
-      "icon": "🔮",
       "category": "CREATOR",
       "rarity": "BRONZE",
       "threshold": 1
@@ -15,7 +14,6 @@
       "name": "Mondleser",
       "description": "Die Sterne beginnen zu sprechen",
       "requirement": "5 Prophezeiungen erstellt",
-      "icon": "🌙",
       "category": "CREATOR",
       "rarity": "BRONZE",
       "threshold": 5
@@ -25,7 +23,6 @@
       "name": "Sternendeuter",
       "description": "Ein aufgehender Stern am Prophetenhimmel",
       "requirement": "15 Prophezeiungen erstellt",
-      "icon": "⭐",
       "category": "CREATOR",
       "rarity": "SILVER",
       "threshold": 15
@@ -35,7 +32,6 @@
       "name": "Orakel",
       "description": "Die Zukunft offenbart sich dir",
       "requirement": "30 Prophezeiungen erstellt",
-      "icon": "🌌",
       "category": "CREATOR",
       "rarity": "SILVER",
       "threshold": 30
@@ -45,7 +41,6 @@
       "name": "Hohepriester",
       "description": "Meister der Weissagungen",
       "requirement": "50 Prophezeiungen erstellt",
-      "icon": "🏛️",
       "category": "CREATOR",
       "rarity": "GOLD",
       "threshold": 50
@@ -55,7 +50,6 @@
       "name": "Allsehendes Auge",
       "description": "Nichts entgeht deinem Blick",
       "requirement": "100 Prophezeiungen erstellt",
-      "icon": "👁️",
       "category": "CREATOR",
       "rarity": "LEGENDARY",
       "threshold": 100
@@ -67,7 +61,6 @@
       "name": "Glückstreffer",
       "description": "Auch ein blindes Huhn...",
       "requirement": "1 erfüllte Prophezeiung",
-      "icon": "🎯",
       "category": "ACCURACY",
       "rarity": "BRONZE",
       "threshold": 1
@@ -77,7 +70,6 @@
       "name": "Treffsicher",
       "description": "Deine Worte haben Gewicht",
       "requirement": "5 erfüllte Prophezeiungen",
-      "icon": "🏹",
       "category": "ACCURACY",
       "rarity": "BRONZE",
       "threshold": 5
@@ -87,7 +79,6 @@
       "name": "Flamme der Wahrheit",
       "description": "Die Zukunft brennt in dir",
       "requirement": "10 erfüllte Prophezeiungen",
-      "icon": "🔥",
       "category": "ACCURACY",
       "rarity": "SILVER",
       "threshold": 10
@@ -97,7 +88,6 @@
       "name": "Blitzseher",
       "description": "Schneller als die Zeit",
       "requirement": "20 erfüllte Prophezeiungen",
-      "icon": "⚡",
       "category": "ACCURACY",
       "rarity": "SILVER",
       "threshold": 20
@@ -107,7 +97,6 @@
       "name": "Kristallklar",
       "description": "Deine Visionen sind makellos",
       "requirement": "35 erfüllte Prophezeiungen",
-      "icon": "💎",
       "category": "ACCURACY",
       "rarity": "GOLD",
       "threshold": 35
@@ -117,7 +106,6 @@
       "name": "Nostradamus",
       "description": "Legendärer Prophet",
       "requirement": "50 erfüllte Prophezeiungen",
-      "icon": "🌟",
       "category": "ACCURACY",
       "rarity": "LEGENDARY",
       "threshold": 50
@@ -129,7 +117,6 @@
       "name": "Statistiker",
       "description": "Überdurchschnittlich gut",
       "requirement": ">60% Trefferquote (min. 10 Prophezeiungen)",
-      "icon": "📊",
       "category": "ACCURACY",
       "rarity": "BRONZE",
       "threshold": 60
@@ -139,7 +126,6 @@
       "name": "Fortunas Liebling",
       "description": "Das Glück ist mit dir",
       "requirement": ">70% Trefferquote (min. 15 Prophezeiungen)",
-      "icon": "🎰",
       "category": "ACCURACY",
       "rarity": "SILVER",
       "threshold": 70
@@ -149,7 +135,6 @@
       "name": "Weise Kassandra",
       "description": "Du siehst was andere nicht sehen",
       "requirement": ">80% Trefferquote (min. 20 Prophezeiungen)",
-      "icon": "🧙",
       "category": "ACCURACY",
       "rarity": "GOLD",
       "threshold": 80
@@ -159,7 +144,6 @@
       "name": "Unfehlbar",
       "description": "Deine Worte werden Gesetz",
       "requirement": ">90% Trefferquote (min. 25 Prophezeiungen)",
-      "icon": "👑",
       "category": "ACCURACY",
       "rarity": "LEGENDARY",
       "threshold": 90
@@ -171,7 +155,6 @@
       "name": "Kritiker",
       "description": "Du hast eine Meinung",
       "requirement": "10 Bewertungen abgegeben",
-      "icon": "⚖️",
       "category": "RATER",
       "rarity": "BRONZE",
       "threshold": 10
@@ -181,7 +164,6 @@
       "name": "Rezensent",
       "description": "Fleißiger Bewerter",
       "requirement": "30 Bewertungen abgegeben",
-      "icon": "📝",
       "category": "RATER",
       "rarity": "BRONZE",
       "threshold": 30
@@ -191,7 +173,6 @@
       "name": "Schiedsrichter",
       "description": "Dein Urteil zählt",
       "requirement": "75 Bewertungen abgegeben",
-      "icon": "🏆",
       "category": "RATER",
       "rarity": "SILVER",
       "threshold": 75
@@ -201,7 +182,6 @@
       "name": "Oberster Richter",
       "description": "Niemand bewertet mehr als du",
       "requirement": "150 Bewertungen abgegeben",
-      "icon": "👨‍⚖️",
       "category": "RATER",
       "rarity": "GOLD",
       "threshold": 150
@@ -211,7 +191,6 @@
       "name": "Weise Eule",
       "description": "Allwissender Beobachter",
       "requirement": "300 Bewertungen abgegeben",
-      "icon": "🦉",
       "category": "RATER",
       "rarity": "LEGENDARY",
       "threshold": 300
@@ -223,7 +202,6 @@
       "name": "Scharfes Auge",
       "description": "Du erkennst die Wahrheit",
       "requirement": ">60% Rating-Genauigkeit (min. 20 Ratings)",
-      "icon": "🔍",
       "category": "RATER_ACC",
       "rarity": "BRONZE",
       "threshold": 60
@@ -233,7 +211,6 @@
       "name": "Menschenkenner",
       "description": "Du durchschaust jeden",
       "requirement": ">70% Rating-Genauigkeit (min. 30 Ratings)",
-      "icon": "🎭",
       "category": "RATER_ACC",
       "rarity": "SILVER",
       "threshold": 70
@@ -243,7 +220,6 @@
       "name": "Wahrheitsfinder",
       "description": "Lügen haben kurze Beine",
       "requirement": ">80% Rating-Genauigkeit (min. 40 Ratings)",
-      "icon": "🧿",
       "category": "RATER_ACC",
       "rarity": "GOLD",
       "threshold": 80
@@ -253,7 +229,6 @@
       "name": "Gedankenleser",
       "description": "Du weißt, wer Recht hat",
       "requirement": ">90% Rating-Genauigkeit (min. 50 Ratings)",
-      "icon": "💫",
       "category": "RATER_ACC",
       "rarity": "LEGENDARY",
       "threshold": 90
@@ -265,7 +240,6 @@
       "name": "Einsteiger",
       "description": "Willkommen im Spiel",
       "requirement": "1 Runde abgeschlossen",
-      "icon": "🚪",
       "category": "ROUNDS",
       "rarity": "BRONZE",
       "threshold": 1
@@ -275,7 +249,6 @@
       "name": "Stammgast",
       "description": "Du bist dabei",
       "requirement": "5 Runden abgeschlossen",
-      "icon": "📅",
       "category": "ROUNDS",
       "rarity": "BRONZE",
       "threshold": 5
@@ -285,7 +258,6 @@
       "name": "Veteran",
       "description": "Alter Hase",
       "requirement": "15 Runden abgeschlossen",
-      "icon": "🗓️",
       "category": "ROUNDS",
       "rarity": "SILVER",
       "threshold": 15
@@ -295,7 +267,6 @@
       "name": "Zeitzeuge",
       "description": "Du hast alles miterlebt",
       "requirement": "30 Runden abgeschlossen",
-      "icon": "📆",
       "category": "ROUNDS",
       "rarity": "GOLD",
       "threshold": 30
@@ -305,7 +276,6 @@
       "name": "Unsterblich",
       "description": "Legende seit Anbeginn",
       "requirement": "50 Runden abgeschlossen",
-      "icon": "♾️",
       "category": "ROUNDS",
       "rarity": "LEGENDARY",
       "threshold": 50
@@ -317,7 +287,6 @@
       "name": "Bronze-Prophet",
       "description": "Auf dem Podium",
       "requirement": "1x Platz 3 im Creator-Leaderboard",
-      "icon": "🥉",
       "category": "LEADERBOARD",
       "rarity": "BRONZE",
       "threshold": 3
@@ -327,7 +296,6 @@
       "name": "Silber-Prophet",
       "description": "So nah dran",
       "requirement": "1x Platz 2 im Creator-Leaderboard",
-      "icon": "🥈",
       "category": "LEADERBOARD",
       "rarity": "SILVER",
       "threshold": 2
@@ -337,7 +305,6 @@
       "name": "Gold-Prophet",
       "description": "Der Beste der Runde",
       "requirement": "1x Platz 1 im Creator-Leaderboard",
-      "icon": "🥇",
       "category": "LEADERBOARD",
       "rarity": "GOLD",
       "threshold": 1
@@ -347,7 +314,6 @@
       "name": "Champion",
       "description": "Mehrfacher Sieger",
       "requirement": "3x Platz 1 im Creator-Leaderboard",
-      "icon": "👑",
       "category": "LEADERBOARD",
       "rarity": "GOLD",
       "threshold": 3
@@ -357,7 +323,6 @@
       "name": "Unbesiegbar",
       "description": "Dominanz pur",
       "requirement": "5x Platz 1 im Creator-Leaderboard",
-      "icon": "🏅",
       "category": "LEADERBOARD",
       "rarity": "LEGENDARY",
       "threshold": 5
@@ -369,7 +334,6 @@
       "name": "Gegen den Strom",
       "description": "Alleine Recht gehabt",
       "requirement": "Rating stark abweichend vom Durchschnitt, aber korrekt",
-      "icon": "🌈",
       "category": "SPECIAL",
       "rarity": "GOLD"
     },
@@ -378,7 +342,6 @@
       "name": "Kontrovers",
       "description": "Prophezeiung spaltet die Massen",
       "requirement": "Prophezeiung mit Ratings von -10 bis +10",
-      "icon": "🎪",
       "category": "SPECIAL",
       "rarity": "SILVER"
     },
@@ -387,7 +350,6 @@
       "name": "Einstimmig",
       "description": "Alle sind sich einig",
       "requirement": "Prophezeiung mit >5 Ratings, alle im selben Bereich (±2)",
-      "icon": "🤝",
       "category": "SPECIAL",
       "rarity": "SILVER"
     },
@@ -395,8 +357,7 @@
       "key": "special_underdog",
       "name": "Underdog",
       "description": "Vom Außenseiter zum Sieger",
-      "requirement": "Mit niedrigstem Rating am Ende erfüllt",
-      "icon": "🎭",
+      "requirement": "Letzte 2 Runden nicht in Top 3, aktuelle Runde gewonnen",
       "category": "SPECIAL",
       "rarity": "GOLD"
     },
@@ -405,7 +366,6 @@
       "name": "Einhorn",
       "description": "Das Unmögliche geschafft",
       "requirement": "Prophezeiung mit Durchschnitts-Rating >5 erfüllt",
-      "icon": "🦄",
       "category": "SPECIAL",
       "rarity": "LEGENDARY"
     },
@@ -413,8 +373,7 @@
       "key": "special_party_crasher",
       "name": "Party Crasher",
       "description": "Du hast es versaut",
-      "requirement": "Top-Rating Prophezeiung nicht erfüllt",
-      "icon": "💀",
+      "requirement": "Prophezeiung mit hohem Rating (>5) nicht erfüllt",
       "category": "SPECIAL",
       "rarity": "SILVER"
     },
@@ -423,16 +382,6 @@
       "name": "Chaos-Agent",
       "description": "Unberechenbar",
       "requirement": "3 Prophezeiungen in einer Runde: 1 erfüllt, 1 nicht, 1 kontrovers",
-      "icon": "🌪️",
-      "category": "SPECIAL",
-      "rarity": "GOLD"
-    },
-    {
-      "key": "special_comeback",
-      "name": "Comeback",
-      "description": "Zurück aus der Asche",
-      "requirement": "Nach 3 nicht-erfüllten wieder 3 erfüllte in Folge",
-      "icon": "🔄",
       "category": "SPECIAL",
       "rarity": "GOLD"
     },
@@ -441,7 +390,6 @@
       "name": "Perfektionist",
       "description": "Geht doch besser...",
       "requirement": "Eine Prophezeiung bearbeitet",
-      "icon": "✏️",
       "category": "SPECIAL",
       "rarity": "BRONZE"
     },
@@ -450,7 +398,6 @@
       "name": "Reue",
       "description": "Das hätte ich nicht sagen sollen",
       "requirement": "Eine Prophezeiung gelöscht",
-      "icon": "🗑️",
       "category": "SPECIAL",
       "rarity": "BRONZE"
     },
@@ -459,7 +406,6 @@
       "name": "Modebewusst",
       "description": "Style ist alles",
       "requirement": "Avatar hochgeladen und Effekt ausgewählt",
-      "icon": "✨",
       "category": "SPECIAL",
       "rarity": "SILVER"
     },
@@ -468,7 +414,6 @@
       "name": "Romanschreiber",
       "description": "Worte fließen wie ein Strom",
       "requirement": "Prophezeiung mit über 500 Zeichen Beschreibung",
-      "icon": "📜",
       "category": "SPECIAL",
       "rarity": "SILVER",
       "threshold": 500
@@ -480,7 +425,6 @@
       "name": "Freundlich",
       "description": "Du glaubst an die Propheten",
       "requirement": "Durchschnittliches Rating <-5 (min. 20 Ratings)",
-      "icon": "🤗",
       "category": "SOCIAL",
       "rarity": "BRONZE"
     },
@@ -489,7 +433,6 @@
       "name": "Skeptiker",
       "description": "Traust niemandem",
       "requirement": "Durchschnittliches Rating >2 (min. 20 Ratings)",
-      "icon": "😈",
       "category": "SOCIAL",
       "rarity": "BRONZE"
     },
@@ -498,26 +441,23 @@
       "name": "Neutraler Beobachter",
       "description": "Perfekt ausbalanciert",
       "requirement": "Durchschnittliches Rating zwischen -1 und +1 (min. 30 Ratings)",
-      "icon": "⚖️",
       "category": "SOCIAL",
       "rarity": "SILVER"
     },
     {
       "key": "social_generous",
       "name": "Großzügig",
-      "description": "Du glaubst an andere",
-      "requirement": "10x Rating von -10 vergeben",
-      "icon": "🎁",
+      "description": "Gibt anderen die Chance auf große Gewinne",
+      "requirement": "10x Rating von +10 vergeben",
       "category": "SOCIAL",
       "rarity": "BRONZE",
       "threshold": 10
     },
     {
       "key": "social_ruthless",
-      "name": "Gnadenlos",
-      "description": "Kein Erbarmen",
-      "requirement": "10x Rating von +10 vergeben",
-      "icon": "💔",
+      "name": "Skrupellos",
+      "description": "Spricht anderen die Sehergabe ab",
+      "requirement": "10x Rating von -10 vergeben",
       "category": "SOCIAL",
       "rarity": "BRONZE",
       "threshold": 10
@@ -528,8 +468,7 @@
       "key": "hidden_bot_beater",
       "name": "Bot-Besieger",
       "description": "Besser als die KI",
-      "requirement": "Bessere Trefferquote als Kimberly über 5 Runden",
-      "icon": "🤖",
+      "requirement": "Bessere Trefferquote als Kimberly in einer Runde",
       "category": "HIDDEN",
       "rarity": "LEGENDARY"
     },
@@ -537,8 +476,7 @@
       "key": "hidden_worse_than_random",
       "name": "Schlechter als Zufall",
       "description": "Das ist auch eine Leistung",
-      "requirement": "Schlechtere Trefferquote als Randolf über 3 Runden",
-      "icon": "🎲",
+      "requirement": "Schlechtere Trefferquote als Randolf in einer Runde",
       "category": "HIDDEN",
       "rarity": "GOLD"
     },
@@ -546,18 +484,15 @@
       "key": "hidden_night_owl",
       "name": "Nachtaktiv",
       "description": "Die Nacht ist jung",
-      "requirement": "10 Prophezeiungen zwischen 00:00 und 05:00 erstellt",
-      "icon": "🌙",
+      "requirement": "Prophezeiung zwischen 00:00 und 05:00 erstellt",
       "category": "HIDDEN",
-      "rarity": "SILVER",
-      "threshold": 10
+      "rarity": "SILVER"
     },
     {
       "key": "hidden_beta_tester",
       "name": "Beta-Tester",
       "description": "Von Anfang an dabei",
-      "requirement": "Account in den ersten 30 Tagen erstellt",
-      "icon": "📱",
+      "requirement": "Manuell vom Admin vergeben",
       "category": "HIDDEN",
       "rarity": "LEGENDARY"
     },
@@ -566,7 +501,6 @@
       "name": "Bug-Hunter",
       "description": "Du hast etwas Seltsames gefunden",
       "requirement": "Manuell vom Admin vergeben",
-      "icon": "🐛",
       "category": "HIDDEN",
       "rarity": "LEGENDARY"
     }
@@ -576,28 +510,23 @@
       "key": "time_early_bird",
       "name": "Frühaufsteher",
       "description": "Immer der Erste",
-      "requirement": "5x erste Prophezeiung der Runde",
-      "icon": "⏰",
+      "requirement": "Erste Prophezeiung der Runde",
       "category": "SPECIAL",
-      "rarity": "SILVER",
-      "threshold": 5
+      "rarity": "SILVER"
     },
     {
       "key": "time_morning_glory",
       "name": "Morgenstund",
       "description": "Die ersten Ratings",
-      "requirement": "10x in den ersten 24h alle Ratings abgegeben",
-      "icon": "🌅",
+      "requirement": "Rating innerhalb von 24h nach Prophezeiungserstellung abgegeben",
       "category": "SPECIAL",
-      "rarity": "SILVER",
-      "threshold": 10
+      "rarity": "SILVER"
     },
     {
       "key": "time_last_minute",
       "name": "Last Minute",
       "description": "Knapp vor Deadline",
       "requirement": "Prophezeiung weniger als 24h vor Deadline eingereicht",
-      "icon": "⏳",
       "category": "SPECIAL",
       "rarity": "BRONZE"
     },
@@ -606,7 +535,6 @@
       "name": "Speedrunner",
       "description": "Blitzschnell",
       "requirement": "Alle Ratings einer Runde in unter 10 Minuten",
-      "icon": "🏃",
       "category": "SPECIAL",
       "rarity": "GOLD"
     },
@@ -615,7 +543,6 @@
       "name": "Clutch-Bewerter",
       "description": "Gerade noch geschafft",
       "requirement": "Bewertung weniger als 1h vor Deadline abgegeben",
-      "icon": "😰",
       "category": "SPECIAL",
       "rarity": "BRONZE"
     }

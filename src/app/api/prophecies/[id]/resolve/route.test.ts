@@ -18,7 +18,18 @@ vi.mock('@/lib/db/prisma', () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
     },
+    rating: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
   },
+}));
+
+const mockAwardBadge = vi.fn();
+const mockCheckAndAwardBadges = vi.fn().mockResolvedValue([]);
+
+vi.mock('@/lib/badges/badge-service', () => ({
+  awardBadge: (...args: unknown[]) => mockAwardBadge(...args),
+  checkAndAwardBadges: (...args: unknown[]) => mockCheckAndAwardBadges(...args),
 }));
 
 vi.mock('@/lib/sse/event-emitter', () => ({
@@ -59,6 +70,8 @@ const createParams = (id: string) => ({ params: Promise.resolve({ id }) });
 describe('POST /api/prophecies/[id]/resolve', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAwardBadge.mockReset();
+    mockCheckAndAwardBadges.mockResolvedValue([]);
   });
 
   it('returns admin validation error when not authorized', async () => {
@@ -188,5 +201,205 @@ describe('POST /api/prophecies/[id]/resolve', () => {
     expect(response.status).toBe(500);
     expect(data.error).toBe('Fehler beim Auflösen der Prophezeiung');
     consoleSpy.mockRestore();
+  });
+
+  describe('checkRatingPatternBadges', () => {
+    it('awards special_controversial badge when ratings range from -10 to +10', async () => {
+      vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
+      vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy() as never);
+      vi.mocked(prisma.prophecy.update).mockResolvedValue({
+        ...createMockProphecy(),
+        fulfilled: true,
+        resolvedAt: new Date(),
+      } as never);
+
+      // Ratings from -10 to +10 (controversial)
+      vi.mocked(prisma.rating.findMany).mockResolvedValue([
+        { id: 'r1', value: -10, prophecyId: 'prophecy-1', userId: 'u1', user: { isBot: false } },
+        { id: 'r2', value: 0, prophecyId: 'prophecy-1', userId: 'u2', user: { isBot: false } },
+        { id: 'r3', value: 10, prophecyId: 'prophecy-1', userId: 'u3', user: { isBot: false } },
+      ] as never);
+
+      const request = new NextRequest('http://localhost/api/prophecies/1/resolve', {
+        method: 'POST',
+        body: JSON.stringify({ fulfilled: true }),
+      });
+      await POST(request, createParams('prophecy-1'));
+
+      expect(mockAwardBadge).toHaveBeenCalledWith('user-1', 'special_controversial');
+    });
+
+    it('does not award special_controversial badge when ratings dont span full range', async () => {
+      vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
+      vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy() as never);
+      vi.mocked(prisma.prophecy.update).mockResolvedValue({
+        ...createMockProphecy(),
+        fulfilled: true,
+        resolvedAt: new Date(),
+      } as never);
+
+      // Ratings only from -5 to +5 (not controversial enough)
+      vi.mocked(prisma.rating.findMany).mockResolvedValue([
+        { id: 'r1', value: -5, prophecyId: 'prophecy-1', userId: 'u1', user: { isBot: false } },
+        { id: 'r2', value: 0, prophecyId: 'prophecy-1', userId: 'u2', user: { isBot: false } },
+        { id: 'r3', value: 5, prophecyId: 'prophecy-1', userId: 'u3', user: { isBot: false } },
+      ] as never);
+
+      const request = new NextRequest('http://localhost/api/prophecies/1/resolve', {
+        method: 'POST',
+        body: JSON.stringify({ fulfilled: true }),
+      });
+      await POST(request, createParams('prophecy-1'));
+
+      expect(mockAwardBadge).not.toHaveBeenCalledWith('user-1', 'special_controversial');
+    });
+
+    it('awards special_unanimous badge when >5 ratings with spread ≤ 4', async () => {
+      vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
+      vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy() as never);
+      vi.mocked(prisma.prophecy.update).mockResolvedValue({
+        ...createMockProphecy(),
+        fulfilled: true,
+        resolvedAt: new Date(),
+      } as never);
+
+      // 6 ratings all between 6 and 8 (spread = 2, which is ≤ 4)
+      vi.mocked(prisma.rating.findMany).mockResolvedValue([
+        { id: 'r1', value: 6, prophecyId: 'prophecy-1', userId: 'u1', user: { isBot: false } },
+        { id: 'r2', value: 7, prophecyId: 'prophecy-1', userId: 'u2', user: { isBot: false } },
+        { id: 'r3', value: 8, prophecyId: 'prophecy-1', userId: 'u3', user: { isBot: false } },
+        { id: 'r4', value: 7, prophecyId: 'prophecy-1', userId: 'u4', user: { isBot: false } },
+        { id: 'r5', value: 6, prophecyId: 'prophecy-1', userId: 'u5', user: { isBot: false } },
+        { id: 'r6', value: 7, prophecyId: 'prophecy-1', userId: 'u6', user: { isBot: false } },
+      ] as never);
+
+      const request = new NextRequest('http://localhost/api/prophecies/1/resolve', {
+        method: 'POST',
+        body: JSON.stringify({ fulfilled: true }),
+      });
+      await POST(request, createParams('prophecy-1'));
+
+      expect(mockAwardBadge).toHaveBeenCalledWith('user-1', 'special_unanimous');
+    });
+
+    it('does not award special_unanimous badge when spread > 4', async () => {
+      vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
+      vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy() as never);
+      vi.mocked(prisma.prophecy.update).mockResolvedValue({
+        ...createMockProphecy(),
+        fulfilled: true,
+        resolvedAt: new Date(),
+      } as never);
+
+      // 6 ratings but spread = 6 (too wide)
+      vi.mocked(prisma.rating.findMany).mockResolvedValue([
+        { id: 'r1', value: 2, prophecyId: 'prophecy-1', userId: 'u1', user: { isBot: false } },
+        { id: 'r2', value: 4, prophecyId: 'prophecy-1', userId: 'u2', user: { isBot: false } },
+        { id: 'r3', value: 8, prophecyId: 'prophecy-1', userId: 'u3', user: { isBot: false } },
+        { id: 'r4', value: 5, prophecyId: 'prophecy-1', userId: 'u4', user: { isBot: false } },
+        { id: 'r5', value: 3, prophecyId: 'prophecy-1', userId: 'u5', user: { isBot: false } },
+        { id: 'r6', value: 6, prophecyId: 'prophecy-1', userId: 'u6', user: { isBot: false } },
+      ] as never);
+
+      const request = new NextRequest('http://localhost/api/prophecies/1/resolve', {
+        method: 'POST',
+        body: JSON.stringify({ fulfilled: true }),
+      });
+      await POST(request, createParams('prophecy-1'));
+
+      expect(mockAwardBadge).not.toHaveBeenCalledWith('user-1', 'special_unanimous');
+    });
+
+    it('does not award special_unanimous badge when ≤5 ratings', async () => {
+      vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
+      vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy() as never);
+      vi.mocked(prisma.prophecy.update).mockResolvedValue({
+        ...createMockProphecy(),
+        fulfilled: true,
+        resolvedAt: new Date(),
+      } as never);
+
+      // Only 5 ratings (need more than 5)
+      vi.mocked(prisma.rating.findMany).mockResolvedValue([
+        { id: 'r1', value: 7, prophecyId: 'prophecy-1', userId: 'u1', user: { isBot: false } },
+        { id: 'r2', value: 7, prophecyId: 'prophecy-1', userId: 'u2', user: { isBot: false } },
+        { id: 'r3', value: 8, prophecyId: 'prophecy-1', userId: 'u3', user: { isBot: false } },
+        { id: 'r4', value: 7, prophecyId: 'prophecy-1', userId: 'u4', user: { isBot: false } },
+        { id: 'r5', value: 8, prophecyId: 'prophecy-1', userId: 'u5', user: { isBot: false } },
+      ] as never);
+
+      const request = new NextRequest('http://localhost/api/prophecies/1/resolve', {
+        method: 'POST',
+        body: JSON.stringify({ fulfilled: true }),
+      });
+      await POST(request, createParams('prophecy-1'));
+
+      expect(mockAwardBadge).not.toHaveBeenCalledWith('user-1', 'special_unanimous');
+    });
+
+    it('ignores bot ratings when checking patterns', async () => {
+      vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
+      vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy() as never);
+      vi.mocked(prisma.prophecy.update).mockResolvedValue({
+        ...createMockProphecy(),
+        fulfilled: true,
+        resolvedAt: new Date(),
+      } as never);
+
+      // Bot ratings should be ignored - only 2 human ratings
+      vi.mocked(prisma.rating.findMany).mockResolvedValue([
+        { id: 'r1', value: -10, prophecyId: 'prophecy-1', userId: 'u1', user: { isBot: true } },
+        { id: 'r2', value: 5, prophecyId: 'prophecy-1', userId: 'u2', user: { isBot: false } },
+        { id: 'r3', value: 10, prophecyId: 'prophecy-1', userId: 'u3', user: { isBot: true } },
+        { id: 'r4', value: 6, prophecyId: 'prophecy-1', userId: 'u4', user: { isBot: false } },
+      ] as never);
+
+      const request = new NextRequest('http://localhost/api/prophecies/1/resolve', {
+        method: 'POST',
+        body: JSON.stringify({ fulfilled: true }),
+      });
+      await POST(request, createParams('prophecy-1'));
+
+      // Should not award controversial because human ratings only span 5-6
+      expect(mockAwardBadge).not.toHaveBeenCalledWith('user-1', 'special_controversial');
+    });
+
+    it('broadcasts newly awarded badges via SSE', async () => {
+      const mockBadge = {
+        id: 'ub-1',
+        earnedAt: new Date(),
+        userId: 'user-1',
+        badgeId: 'badge-1',
+        badge: { id: 'badge-1', key: 'special_controversial', name: 'Kontrovers' },
+      };
+      mockAwardBadge.mockResolvedValue({ isNew: true, userBadge: mockBadge });
+
+      vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
+      vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(createMockProphecy() as never);
+      vi.mocked(prisma.prophecy.update).mockResolvedValue({
+        ...createMockProphecy(),
+        fulfilled: true,
+        resolvedAt: new Date(),
+      } as never);
+
+      vi.mocked(prisma.rating.findMany).mockResolvedValue([
+        { id: 'r1', value: -10, prophecyId: 'prophecy-1', userId: 'u1', user: { isBot: false } },
+        { id: 'r2', value: 10, prophecyId: 'prophecy-1', userId: 'u2', user: { isBot: false } },
+      ] as never);
+
+      const request = new NextRequest('http://localhost/api/prophecies/1/resolve', {
+        method: 'POST',
+        body: JSON.stringify({ fulfilled: true }),
+      });
+      await POST(request, createParams('prophecy-1'));
+
+      expect(sseEmitter.broadcast).toHaveBeenCalledWith({
+        type: 'badge:awarded',
+        data: expect.objectContaining({
+          userId: 'user-1',
+          badgeId: 'badge-1',
+        }),
+      });
+    });
   });
 });

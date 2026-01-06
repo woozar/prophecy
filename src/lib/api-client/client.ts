@@ -284,5 +284,13 @@ export const apiClient = {
       triggerBotRatings: (id: string) =>
         api.POST('/api/admin/rounds/{id}/bot-ratings', { params: { path: { id } } }),
     },
+
+    badges: {
+      award: (userId: string, badgeKey: string) =>
+        api.POST('/api/admin/badges/award', { body: { userId, badgeKey } }),
+
+      revoke: (userId: string, badgeKey: string) =>
+        api.DELETE('/api/admin/badges/award', { body: { userId, badgeKey } }),
+    },
   },
 };

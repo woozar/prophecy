@@ -50,3 +50,5 @@ next-env.d.ts
 
 # User uploads (avatars, etc.)
 /uploads
+
+public/badges/*.png

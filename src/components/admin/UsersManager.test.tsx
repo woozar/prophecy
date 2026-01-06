@@ -1,5 +1,5 @@
 import { MantineProvider } from '@mantine/core';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { apiClient } from '@/lib/api-client/client';
@@ -182,6 +182,7 @@ describe('UsersManager', () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
   });
 
@@ -708,7 +709,6 @@ describe('UsersManager', () => {
             id: 'badge-1',
             key: 'test-1',
             name: 'Test Badge 1',
-            icon: '🏆',
             description: 'Test',
             requirement: 'Test',
             category: 'CREATOR',
@@ -720,7 +720,6 @@ describe('UsersManager', () => {
             id: 'badge-2',
             key: 'test-2',
             name: 'Test Badge 2',
-            icon: '⭐',
             description: 'Test',
             requirement: 'Test',
             category: 'CREATOR',
@@ -732,13 +731,11 @@ describe('UsersManager', () => {
         allUserBadges: {
           '2': {
             'badge-1': {
-              id: 'ub-1',
               badgeId: 'badge-1',
               userId: '2',
               earnedAt: '2025-01-10T00:00:00Z',
             },
             'badge-2': {
-              id: 'ub-2',
               badgeId: 'badge-2',
               userId: '2',
               earnedAt: '2025-01-11T00:00:00Z',
@@ -754,13 +751,20 @@ describe('UsersManager', () => {
         expect(screen.getByText('Active User')).toBeInTheDocument();
       });
 
-      // Badge icons should be visible
-      expect(screen.getByText('🏆')).toBeInTheDocument();
-      expect(screen.getByText('⭐')).toBeInTheDocument();
+      // Badge rarity icons should be visible (BRONZE and SILVER)
+      expect(screen.getByText(/🥉/)).toBeInTheDocument(); // Bronze
+      expect(screen.getByText(/🥈/)).toBeInTheDocument(); // Silver
     });
 
     it('does not open profile modal when clicking action buttons', async () => {
       setupStore();
+      // Mock the API response to prevent unhandled promise
+      mockUpdate.mockResolvedValue({
+        data: { user: { ...mockUsersData[1], role: 'ADMIN' } },
+        error: undefined,
+        response: {} as Response,
+      });
+
       renderWithMantine(<UsersManager />);
 
       await waitFor(() => {
@@ -775,6 +779,11 @@ describe('UsersManager', () => {
       // Click on an action button (promote to admin)
       const promoteButtons = screen.getAllByTitle('Zum Admin machen');
       fireEvent.click(promoteButtons[0]);
+
+      // Wait for the API call to complete to avoid act() warnings
+      await waitFor(() => {
+        expect(mockUpdate).toHaveBeenCalled();
+      });
 
       // The openUserProfile should NOT have been called
       expect(mockOpenUserProfile).not.toHaveBeenCalled();

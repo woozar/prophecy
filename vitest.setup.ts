@@ -5,18 +5,31 @@ import { vi } from 'vitest';
 
 // Suppress jsdom "Not implemented: navigation" errors
 // This is a known limitation of jsdom - it doesn't support full navigation
+// Also suppress Next.js Image warnings about fill and position in jsdom
+// jsdom doesn't compute CSS classes, so position checks always fail
 const originalConsoleError = console.error;
 console.error = (...args: unknown[]) => {
-  const message = args[0];
+  const message = String(args[0]);
   if (
-    (typeof message === 'object' &&
-      message instanceof Error &&
-      message.message.includes('Not implemented: navigation')) ||
-    (typeof message === 'string' && message.includes('Not implemented: navigation'))
+    message.includes('Not implemented: navigation') ||
+    message.includes('"fill" and parent element') ||
+    message.includes('"fill" and a height value of 0')
   ) {
-    return; // Suppress this specific error
+    return;
   }
   originalConsoleError(...args);
+};
+
+const originalConsoleWarn = console.warn;
+console.warn = (...args: unknown[]) => {
+  const message = String(args[0]);
+  if (
+    message.includes('"fill" and parent element') ||
+    message.includes('"fill" and a height value of 0')
+  ) {
+    return;
+  }
+  originalConsoleWarn(...args);
 };
 
 // Also suppress via window error handler (jsdom sometimes throws these as unhandled)
@@ -228,6 +241,9 @@ vi.mock('@/lib/sse/event-emitter', () => ({
 vi.mock('@/lib/badges/badge-service', () => ({
   checkAndAwardBadges: vi.fn().mockResolvedValue([]), // Returns AwardedUserBadge[]
   awardBadge: vi.fn().mockResolvedValue(null),
+  awardLeaderboardBadges: vi.fn().mockResolvedValue([]),
+  awardRoundCompletionBadges: vi.fn().mockResolvedValue([]),
+  isFirstProphecyOfRound: vi.fn().mockResolvedValue(false),
   getBadgeHolders: vi.fn().mockResolvedValue([]),
   getUserBadges: vi.fn().mockResolvedValue([]),
   getUserStats: vi.fn().mockResolvedValue({

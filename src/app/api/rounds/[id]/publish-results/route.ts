@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { validateAdminSession } from '@/lib/auth/admin-validation';
-import { awardLeaderboardBadges } from '@/lib/badges/badge-service';
+import { awardLeaderboardBadges, awardRoundCompletionBadges } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 import { calculateRoundStatistics } from '@/lib/statistics/calculate';
@@ -77,7 +77,9 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
       firstPlaceWinCount = winCount;
     }
 
-    const awardedBadges = await awardLeaderboardBadges(creatorLeaderboard, firstPlaceWinCount);
+    const leaderboardBadges = await awardLeaderboardBadges(creatorLeaderboard, firstPlaceWinCount);
+    const completionBadges = await awardRoundCompletionBadges(id, creatorLeaderboard);
+    const awardedBadges = [...leaderboardBadges, ...completionBadges];
 
     // Broadcast badge awards via SSE
     for (const badge of awardedBadges) {

@@ -7,7 +7,6 @@ export interface Badge {
   name: string;
   description: string;
   requirement: string;
-  icon: string;
   category: BadgeCategory;
   rarity: BadgeRarity;
   threshold?: number | null;
@@ -63,8 +62,10 @@ interface BadgeState {
   setBadges: (badges: Badge[]) => void;
   setMyBadges: (userBadges: UserBadge[]) => void;
   addMyBadge: (userBadge: UserBadge) => void;
+  removeMyBadge: (badgeId: string) => void;
   setAllUserBadges: (userBadges: UserBadgeSimple[]) => void;
   addUserBadge: (userBadge: UserBadgeSimple) => void;
+  removeUserBadge: (userId: string, badgeId: string) => void;
   setAwardedBadges: (badges: AwardedBadge[]) => void;
   setInitialized: (initialized: boolean) => void;
   setLoading: (loading: boolean) => void;
@@ -107,6 +108,12 @@ export const useBadgeStore = create<BadgeState>((set) => ({
       myBadges: { ...state.myBadges, [userBadge.badgeId]: userBadge },
     })),
 
+  removeMyBadge: (badgeId) =>
+    set((state) => {
+      const { [badgeId]: _, ...rest } = state.myBadges;
+      return { myBadges: rest };
+    }),
+
   setAllUserBadges: (userBadges) =>
     set({
       allUserBadges: userBadges.reduce(
@@ -131,6 +138,19 @@ export const useBadgeStore = create<BadgeState>((set) => ({
             ...existingUserBadges,
             [userBadge.badgeId]: userBadge,
           },
+        },
+      };
+    }),
+
+  removeUserBadge: (userId, badgeId) =>
+    set((state) => {
+      const existingUserBadges = state.allUserBadges[userId];
+      if (!existingUserBadges) return state;
+      const { [badgeId]: _, ...rest } = existingUserBadges;
+      return {
+        allUserBadges: {
+          ...state.allUserBadges,
+          [userId]: rest,
         },
       };
     }),

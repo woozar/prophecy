@@ -29,6 +29,10 @@ const mockRemoveProphecy = vi.fn();
 const mockSetRatings = vi.fn();
 const mockSetRating = vi.fn();
 const mockRemoveRating = vi.fn();
+const mockAddMyBadge = vi.fn();
+const mockRemoveMyBadge = vi.fn();
+const mockAddUserBadge = vi.fn();
+const mockRemoveUserBadge = vi.fn();
 
 // Shared getState return values
 let mockIsInitialized = false;
@@ -63,6 +67,13 @@ vi.mock('@/store/useRatingStore', () => ({
   })),
 }));
 
+vi.mock('@/store/useBadgeStore', () => ({
+  useBadgeStore: vi.fn(() => ({
+    addMyBadge: mockAddMyBadge,
+    removeMyBadge: mockRemoveMyBadge,
+  })),
+}));
+
 describe('useSSE', () => {
   let createdInstances: Array<{
     onopen: (() => void) | null;
@@ -87,6 +98,7 @@ describe('useSSE', () => {
     const { useRoundStore } = await import('@/store/useRoundStore');
     const { useProphecyStore } = await import('@/store/useProphecyStore');
     const { useRatingStore } = await import('@/store/useRatingStore');
+    const { useBadgeStore } = await import('@/store/useBadgeStore');
 
     // Mock getState for useUserStore
     useUserStore.getState = () => ({
@@ -95,11 +107,11 @@ describe('useSSE', () => {
       setCurrentUserId: mockSetCurrentUserId,
       setInitialized: mockSetInitialized,
       users: {},
-      currentUserId: null,
+      currentUserId: 'user-1',
       isLoading: false,
       error: null,
       connectionStatus: 'disconnected' as const,
-      setUser: vi.fn(),
+      setUser: mockSetUser,
       removeUser: vi.fn(),
       setLoading: vi.fn(),
       setError: vi.fn(),
@@ -137,6 +149,27 @@ describe('useSSE', () => {
       error: null,
       setRating: vi.fn(),
       removeRating: vi.fn(),
+      setLoading: vi.fn(),
+      setError: vi.fn(),
+    });
+
+    useBadgeStore.getState = () => ({
+      badges: {},
+      myBadges: {},
+      allUserBadges: {},
+      awardedBadges: [],
+      isInitialized: true,
+      isLoading: false,
+      error: null,
+      setBadges: vi.fn(),
+      setMyBadges: vi.fn(),
+      addMyBadge: mockAddMyBadge,
+      removeMyBadge: mockRemoveMyBadge,
+      setAllUserBadges: vi.fn(),
+      addUserBadge: mockAddUserBadge,
+      removeUserBadge: mockRemoveUserBadge,
+      setAwardedBadges: vi.fn(),
+      setInitialized: vi.fn(),
       setLoading: vi.fn(),
       setError: vi.fn(),
     });
@@ -250,6 +283,8 @@ describe('useSSE', () => {
       'rating:created',
       'rating:updated',
       'rating:deleted',
+      'badge:awarded',
+      'badge:revoked',
     ];
 
     expectedEventTypes.forEach((type) => {
@@ -917,6 +952,130 @@ describe('useSSE', () => {
 
       // Heartbeat timeout should trigger data reload
       expect(mockInitialDataGet).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('badge events', () => {
+    it('handles badge:awarded event for current user', async () => {
+      renderHook(() => useSSE());
+
+      await waitFor(() => {
+        expect(createdInstances.length).toBeGreaterThan(0);
+      });
+
+      const instance = createdInstances[0];
+      const addEventListenerCalls = instance.addEventListener.mock.calls;
+      const badgeAwardedListener = addEventListenerCalls.find(
+        (call) => (call as [string, unknown])[0] === 'badge:awarded'
+      )?.[1] as (event: { data: string }) => void;
+
+      expect(badgeAwardedListener).toBeDefined();
+
+      const badgeData = {
+        id: 'ub-1',
+        userId: 'user-1',
+        badgeId: 'badge-1',
+        earnedAt: '2025-01-15T00:00:00.000Z',
+        badge: { id: 'badge-1', key: 'creator_1', name: 'Test Badge' },
+      };
+      act(() => {
+        badgeAwardedListener({ data: JSON.stringify(badgeData) });
+      });
+
+      expect(mockAddMyBadge).toHaveBeenCalledWith(badgeData);
+      expect(mockAddUserBadge).toHaveBeenCalledWith({
+        userId: 'user-1',
+        badgeId: 'badge-1',
+        earnedAt: '2025-01-15T00:00:00.000Z',
+      });
+    });
+
+    it('handles badge:awarded event for other user (not current user)', async () => {
+      renderHook(() => useSSE());
+
+      await waitFor(() => {
+        expect(createdInstances.length).toBeGreaterThan(0);
+      });
+
+      const instance = createdInstances[0];
+      const addEventListenerCalls = instance.addEventListener.mock.calls;
+      const badgeAwardedListener = addEventListenerCalls.find(
+        (call) => (call as [string, unknown])[0] === 'badge:awarded'
+      )?.[1] as (event: { data: string }) => void;
+
+      const badgeData = {
+        id: 'ub-1',
+        userId: 'other-user',
+        badgeId: 'badge-1',
+        earnedAt: '2025-01-15T00:00:00.000Z',
+        badge: { id: 'badge-1', key: 'creator_1', name: 'Test Badge' },
+      };
+      act(() => {
+        badgeAwardedListener({ data: JSON.stringify(badgeData) });
+      });
+
+      // Should not add to my badges (different user)
+      expect(mockAddMyBadge).not.toHaveBeenCalled();
+      // But should still add to allUserBadges
+      expect(mockAddUserBadge).toHaveBeenCalledWith({
+        userId: 'other-user',
+        badgeId: 'badge-1',
+        earnedAt: '2025-01-15T00:00:00.000Z',
+      });
+    });
+
+    it('handles badge:revoked event for current user', async () => {
+      renderHook(() => useSSE());
+
+      await waitFor(() => {
+        expect(createdInstances.length).toBeGreaterThan(0);
+      });
+
+      const instance = createdInstances[0];
+      const addEventListenerCalls = instance.addEventListener.mock.calls;
+      const badgeRevokedListener = addEventListenerCalls.find(
+        (call) => (call as [string, unknown])[0] === 'badge:revoked'
+      )?.[1] as (event: { data: string }) => void;
+
+      expect(badgeRevokedListener).toBeDefined();
+
+      const revokeData = {
+        userId: 'user-1',
+        badgeId: 'badge-1',
+      };
+      act(() => {
+        badgeRevokedListener({ data: JSON.stringify(revokeData) });
+      });
+
+      expect(mockRemoveMyBadge).toHaveBeenCalledWith('badge-1');
+      expect(mockRemoveUserBadge).toHaveBeenCalledWith('user-1', 'badge-1');
+    });
+
+    it('handles badge:revoked event for other user (not current user)', async () => {
+      renderHook(() => useSSE());
+
+      await waitFor(() => {
+        expect(createdInstances.length).toBeGreaterThan(0);
+      });
+
+      const instance = createdInstances[0];
+      const addEventListenerCalls = instance.addEventListener.mock.calls;
+      const badgeRevokedListener = addEventListenerCalls.find(
+        (call) => (call as [string, unknown])[0] === 'badge:revoked'
+      )?.[1] as (event: { data: string }) => void;
+
+      const revokeData = {
+        userId: 'other-user',
+        badgeId: 'badge-1',
+      };
+      act(() => {
+        badgeRevokedListener({ data: JSON.stringify(revokeData) });
+      });
+
+      // Should not remove from my badges (different user)
+      expect(mockRemoveMyBadge).not.toHaveBeenCalled();
+      // But should still remove from allUserBadges
+      expect(mockRemoveUserBadge).toHaveBeenCalledWith('other-user', 'badge-1');
     });
   });
 });

@@ -29,7 +29,8 @@ type SSEEventType =
   | 'rating:created'
   | 'rating:updated'
   | 'rating:deleted'
-  | 'badge:awarded';
+  | 'badge:awarded'
+  | 'badge:revoked';
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
 
@@ -57,7 +58,7 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
   const { setUser, removeUser } = useUserStore();
   const { setProphecy, removeProphecy } = useProphecyStore();
   const { setRating, removeRating } = useRatingStore();
-  const { addMyBadge } = useBadgeStore();
+  const { addMyBadge, removeMyBadge } = useBadgeStore();
 
   // Load/reload data from server
   const loadInitialData = useCallback(async () => {
@@ -125,6 +126,22 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
     [addMyBadge, setUser]
   );
 
+  const handleBadgeRevoked = useCallback(
+    (data: unknown) => {
+      const { userId, badgeId } = data as { userId: string; badgeId: string };
+      const currentUserId = useUserStore.getState().currentUserId;
+      if (userId === currentUserId) {
+        removeMyBadge(badgeId);
+      }
+      useBadgeStore.getState().removeUserBadge(userId, badgeId);
+      const user = useUserStore.getState().users[userId];
+      if (user?.badgeIds) {
+        setUser({ ...user, badgeIds: user.badgeIds.filter((id) => id !== badgeId) });
+      }
+    },
+    [removeMyBadge, setUser]
+  );
+
   const handleEvent = useCallback(
     (type: SSEEventType, data: unknown) => {
       const shouldTriggerCallbacks = !isReconnectingRef.current;
@@ -165,6 +182,7 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
         'rating:updated': () => setRating(data as Rating),
         'rating:deleted': () => removeRating((data as { id: string }).id),
         'badge:awarded': () => handleBadgeAwarded(data, shouldTriggerCallbacks),
+        'badge:revoked': () => handleBadgeRevoked(data),
       };
 
       const handler = handlers[type];
@@ -184,6 +202,7 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
       setRating,
       removeRating,
       handleBadgeAwarded,
+      handleBadgeRevoked,
     ]
   );
 
@@ -276,6 +295,7 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
       'rating:updated',
       'rating:deleted',
       'badge:awarded',
+      'badge:revoked',
     ];
 
     eventTypes.forEach((type) => {

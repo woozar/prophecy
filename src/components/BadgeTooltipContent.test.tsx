@@ -6,7 +6,7 @@ import { BadgeTooltipContent } from './BadgeTooltipContent';
 
 describe('BadgeTooltipContent', () => {
   const defaultProps = {
-    icon: '🔮',
+    badgeKey: 'test_badge',
     name: 'Test Badge',
     description: 'A test badge description',
     requirement: 'Complete a test',
@@ -14,9 +14,10 @@ describe('BadgeTooltipContent', () => {
   };
 
   it('renders badge icon and name', () => {
-    render(<BadgeTooltipContent {...defaultProps} />);
+    const { container } = render(<BadgeTooltipContent {...defaultProps} />);
 
-    expect(screen.getByText('🔮')).toBeInTheDocument();
+    // BadgeIcon renders an img element
+    expect(container.querySelector('img')).toBeInTheDocument();
     expect(screen.getByText('Test Badge')).toBeInTheDocument();
   });
 

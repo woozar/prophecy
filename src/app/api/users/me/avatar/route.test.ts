@@ -350,7 +350,6 @@ describe('POST /api/users/me/avatar', () => {
           key: 'special_stylist',
           name: 'Stylist',
           description: 'Custom avatar with effect',
-          icon: '🎨',
           category: BadgeCategory.SPECIAL,
           rarity: BadgeRarity.GOLD,
           threshold: null,

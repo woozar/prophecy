@@ -264,6 +264,7 @@ export const UserProfileModal = memo(function UserProfileModal({
                     }
                     multiline
                     position="top"
+                    events={{ hover: true, focus: true, touch: true }}
                     classNames={{
                       tooltip: 'achievement-tooltip',
                     }}
@@ -300,6 +301,7 @@ export const UserProfileModal = memo(function UserProfileModal({
                   }
                   multiline
                   position="top"
+                  events={{ hover: true, focus: true, touch: true }}
                   classNames={{
                     tooltip: 'achievement-tooltip',
                   }}

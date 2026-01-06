@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db/prisma';
+import type { AuditAction, AuditEntityType } from '@/lib/schemas/audit';
 
-export type AuditEntityType = 'RATING' | 'PROPHECY';
-export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'BULK_DELETE';
+export type { AuditAction, AuditEntityType } from '@/lib/schemas/audit';
 
 export interface CreateAuditLogParams {
   entityType: AuditEntityType;

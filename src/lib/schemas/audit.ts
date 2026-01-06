@@ -10,8 +10,11 @@ import './common';
 export const auditEntityTypeSchema = z.enum(['RATING', 'PROPHECY']).openapi('AuditEntityType');
 
 export const auditActionSchema = z
-  .enum(['CREATE', 'UPDATE', 'DELETE', 'BULK_DELETE'])
+  .enum(['CREATE', 'UPDATE', 'DELETE', 'BULK_DELETE', 'ANALYZE'])
   .openapi('AuditAction');
+
+// Enum-like access: AuditActions.ANALYZE
+export const AuditActions = auditActionSchema.enum;
 
 // ============================================================================
 // Audit Log User (embedded in response)

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { prisma } from '@/lib/db/prisma';
 
+import { AuditActions, auditEntityTypeSchema } from '../schemas/audit';
 import { createAuditLog } from './audit-service';
 
 describe('createAuditLog', () => {
@@ -12,9 +13,9 @@ describe('createAuditLog', () => {
   it('creates audit log with all parameters', async () => {
     vi.mocked(prisma.auditLog.create).mockResolvedValue({
       id: 'audit-1',
-      entityType: 'PROPHECY',
+      entityType: auditEntityTypeSchema.enum.PROPHECY,
       entityId: 'prophecy-1',
-      action: 'CREATE',
+      action: AuditActions.CREATE,
       prophecyId: 'prophecy-1',
       userId: 'user-1',
       oldValue: null,
@@ -24,7 +25,7 @@ describe('createAuditLog', () => {
     });
 
     await createAuditLog({
-      entityType: 'PROPHECY',
+      entityType: auditEntityTypeSchema.enum.PROPHECY,
       entityId: 'prophecy-1',
       action: 'CREATE',
       prophecyId: 'prophecy-1',
@@ -35,9 +36,9 @@ describe('createAuditLog', () => {
 
     expect(prisma.auditLog.create).toHaveBeenCalledWith({
       data: {
-        entityType: 'PROPHECY',
+        entityType: auditEntityTypeSchema.enum.PROPHECY,
         entityId: 'prophecy-1',
-        action: 'CREATE',
+        action: AuditActions.CREATE,
         prophecyId: 'prophecy-1',
         userId: 'user-1',
         oldValue: null,
@@ -50,9 +51,9 @@ describe('createAuditLog', () => {
   it('serializes oldValue and newValue as JSON', async () => {
     vi.mocked(prisma.auditLog.create).mockResolvedValue({
       id: 'audit-1',
-      entityType: 'RATING',
+      entityType: auditEntityTypeSchema.enum.RATING,
       entityId: 'rating-1',
-      action: 'UPDATE',
+      action: AuditActions.UPDATE,
       prophecyId: 'prophecy-1',
       userId: 'user-1',
       oldValue: '{"value":-1}',
@@ -62,9 +63,9 @@ describe('createAuditLog', () => {
     });
 
     await createAuditLog({
-      entityType: 'RATING',
+      entityType: auditEntityTypeSchema.enum.RATING,
       entityId: 'rating-1',
-      action: 'UPDATE',
+      action: AuditActions.UPDATE,
       prophecyId: 'prophecy-1',
       userId: 'user-1',
       oldValue: { value: -1 },
@@ -82,9 +83,9 @@ describe('createAuditLog', () => {
   it('handles undefined oldValue and newValue as null', async () => {
     vi.mocked(prisma.auditLog.create).mockResolvedValue({
       id: 'audit-1',
-      entityType: 'PROPHECY',
+      entityType: auditEntityTypeSchema.enum.PROPHECY,
       entityId: 'prophecy-1',
-      action: 'DELETE',
+      action: AuditActions.DELETE,
       prophecyId: null,
       userId: 'user-1',
       oldValue: null,
@@ -94,9 +95,9 @@ describe('createAuditLog', () => {
     });
 
     await createAuditLog({
-      entityType: 'PROPHECY',
+      entityType: auditEntityTypeSchema.enum.PROPHECY,
       entityId: 'prophecy-1',
-      action: 'DELETE',
+      action: AuditActions.DELETE,
       userId: 'user-1',
     });
 
@@ -113,9 +114,9 @@ describe('createAuditLog', () => {
   it('logs BULK_DELETE action for rating resets', async () => {
     vi.mocked(prisma.auditLog.create).mockResolvedValue({
       id: 'audit-1',
-      entityType: 'RATING',
+      entityType: auditEntityTypeSchema.enum.RATING,
       entityId: 'prophecy-1',
-      action: 'BULK_DELETE',
+      action: AuditActions.BULK_DELETE,
       prophecyId: 'prophecy-1',
       userId: 'user-1',
       oldValue: '{"count":5}',
@@ -125,9 +126,9 @@ describe('createAuditLog', () => {
     });
 
     await createAuditLog({
-      entityType: 'RATING',
+      entityType: auditEntityTypeSchema.enum.RATING,
       entityId: 'prophecy-1',
-      action: 'BULK_DELETE',
+      action: AuditActions.BULK_DELETE,
       prophecyId: 'prophecy-1',
       userId: 'user-1',
       oldValue: { count: 5 },
@@ -136,7 +137,7 @@ describe('createAuditLog', () => {
 
     expect(prisma.auditLog.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
-        action: 'BULK_DELETE',
+        action: AuditActions.BULK_DELETE,
         oldValue: '{"count":5}',
         context: 'Prophezeiung bearbeitet',
       }),
@@ -149,9 +150,9 @@ describe('createAuditLog', () => {
 
     await expect(
       createAuditLog({
-        entityType: 'PROPHECY',
+        entityType: auditEntityTypeSchema.enum.PROPHECY,
         entityId: 'prophecy-1',
-        action: 'CREATE',
+        action: AuditActions.CREATE,
         userId: 'user-1',
       })
     ).resolves.not.toThrow();

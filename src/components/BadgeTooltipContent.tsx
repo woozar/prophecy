@@ -37,9 +37,9 @@ export const BadgeTooltipContent = memo(function BadgeTooltipContent({
   return (
     <div className="min-w-[220px] max-w-[280px]">
       {/* Header with icon and name */}
-      <div className="flex items-center gap-2 mb-2">
-        <BadgeIcon badgeKey={badgeKey} size="md" />
-        <p className="font-semibold text-white truncate flex-1">{name}</p>
+      <div className="flex flex-col items-center gap-2 mb-2">
+        <BadgeIcon badgeKey={badgeKey} size="2xl" />
+        <p className="font-semibold text-white text-center text-lg">{name}</p>
       </div>
 
       {/* Divider */}

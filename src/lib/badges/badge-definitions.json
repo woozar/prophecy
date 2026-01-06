@@ -417,6 +417,54 @@
       "category": "SPECIAL",
       "rarity": "SILVER",
       "threshold": 500
+    },
+    {
+      "key": "content_sexy",
+      "name": "Heiße Quelle",
+      "description": "Manche Visionen wärmen von innen",
+      "requirement": "Prophezeiung mit anzüglichem/erotischem Inhalt erstellt",
+      "category": "SPECIAL",
+      "rarity": "SILVER"
+    },
+    {
+      "key": "content_morbid",
+      "name": "Sensenmann",
+      "description": "Du siehst in die dunkelsten Schatten",
+      "requirement": "Prophezeiung mit morbidem Inhalt erstellt",
+      "category": "SPECIAL",
+      "rarity": "SILVER"
+    },
+    {
+      "key": "content_sport",
+      "name": "Stadion-Seher",
+      "description": "Das Orakel der Sportarena",
+      "requirement": "Prophezeiung über Sport erstellt",
+      "category": "SPECIAL",
+      "rarity": "BRONZE"
+    },
+    {
+      "key": "content_environment",
+      "name": "Grüner Prophet",
+      "description": "Die Natur spricht zu dir",
+      "requirement": "Prophezeiung über Umwelt/Klima erstellt",
+      "category": "SPECIAL",
+      "rarity": "BRONZE"
+    },
+    {
+      "key": "content_science",
+      "name": "Laborvisionär",
+      "description": "Wissenschaft und Zukunft vereint",
+      "requirement": "Prophezeiung über Wissenschaft/Forschung erstellt",
+      "category": "SPECIAL",
+      "rarity": "BRONZE"
+    },
+    {
+      "key": "content_finance",
+      "name": "Börsenflüsterer",
+      "description": "Die Märkte haben keine Geheimnisse vor dir",
+      "requirement": "Prophezeiung über Finanzen erstellt",
+      "category": "SPECIAL",
+      "rarity": "BRONZE"
     }
   ],
   "social": [

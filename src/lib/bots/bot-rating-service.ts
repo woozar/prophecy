@@ -5,6 +5,7 @@ import { createAuditLog } from '@/lib/audit/audit-service';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
+import { AuditActions, auditEntityTypeSchema } from '../schemas/audit';
 import { generateKimberlyRating } from './kimberly-ai';
 
 export interface BotRatingResult {
@@ -143,9 +144,9 @@ async function createRatingAndBroadcast(
     : `Bot-Bewertung durch ${botName}`;
 
   await createAuditLog({
-    entityType: 'RATING',
+    entityType: auditEntityTypeSchema.enum.RATING,
     entityId: rating.id,
-    action: 'CREATE',
+    action: AuditActions.CREATE,
     prophecyId: prophecy.id,
     userId: bot.id,
     newValue: { value: rating.value },

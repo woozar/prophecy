@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
+import { AuditActions, auditEntityTypeSchema } from '@/lib/schemas/audit';
 
 import { GET } from './route';
 
@@ -35,9 +36,9 @@ const createMockProphecy = (id: string) =>
 
 const createMockAuditLog = (overrides = {}) => ({
   id: 'audit-1',
-  entityType: 'PROPHECY',
+  entityType: auditEntityTypeSchema.enum.PROPHECY,
   entityId: 'prophecy-1',
-  action: 'CREATE',
+  action: AuditActions.CREATE,
   prophecyId: 'prophecy-1',
   userId: 'user-1',
   oldValue: null,
@@ -87,7 +88,7 @@ describe('GET /api/prophecies/[id]/audit', () => {
       createMockAuditLog(),
       createMockAuditLog({
         id: 'audit-2',
-        action: 'UPDATE',
+        action: AuditActions.UPDATE,
         oldValue: '{"title":"Test"}',
         newValue: '{"title":"Updated"}',
         createdAt: new Date('2025-01-15T11:00:00Z'),
@@ -102,8 +103,8 @@ describe('GET /api/prophecies/[id]/audit', () => {
     expect(data.auditLogs).toHaveLength(2);
     expect(data.auditLogs[0]).toMatchObject({
       id: 'audit-1',
-      entityType: 'PROPHECY',
-      action: 'CREATE',
+      entityType: auditEntityTypeSchema.enum.PROPHECY,
+      action: AuditActions.CREATE,
       user: {
         id: 'user-1',
         username: 'testuser',
@@ -154,9 +155,9 @@ describe('GET /api/prophecies/[id]/audit', () => {
     vi.mocked(prisma.auditLog.findMany).mockResolvedValue([
       createMockAuditLog({
         id: 'audit-rating',
-        entityType: 'RATING',
+        entityType: auditEntityTypeSchema.enum.RATING,
         entityId: 'rating-1',
-        action: 'CREATE',
+        action: AuditActions.CREATE,
         newValue: '{"value":1}',
       }),
     ]);
@@ -166,7 +167,7 @@ describe('GET /api/prophecies/[id]/audit', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.auditLogs[0].entityType).toBe('RATING');
+    expect(data.auditLogs[0].entityType).toBe(auditEntityTypeSchema.enum.RATING);
     expect(data.auditLogs[0].newValue).toBe('{"value":1}');
   });
 

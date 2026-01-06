@@ -20,7 +20,8 @@ export type SSEEventType =
   | 'rating:created'
   | 'rating:updated'
   | 'badge:awarded'
-  | 'badge:revoked';
+  | 'badge:revoked'
+  | 'auditLog:created';
 
 export interface SSEEvent {
   type: SSEEventType;

@@ -30,7 +30,8 @@ type SSEEventType =
   | 'rating:updated'
   | 'rating:deleted'
   | 'badge:awarded'
-  | 'badge:revoked';
+  | 'badge:revoked'
+  | 'auditLog:created';
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
 
@@ -183,6 +184,9 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
         'rating:deleted': () => removeRating((data as { id: string }).id),
         'badge:awarded': () => handleBadgeAwarded(data, shouldTriggerCallbacks),
         'badge:revoked': () => handleBadgeRevoked(data),
+        'auditLog:created': () => {
+          // Handled directly by ProphecyAuditModal via EventSource
+        },
       };
 
       const handler = handlers[type];
@@ -296,6 +300,7 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
       'rating:deleted',
       'badge:awarded',
       'badge:revoked',
+      'auditLog:created',
     ];
 
     eventTypes.forEach((type) => {

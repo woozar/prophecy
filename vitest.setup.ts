@@ -241,6 +241,7 @@ vi.mock('@/lib/sse/event-emitter', () => ({
 vi.mock('@/lib/badges/badge-service', () => ({
   checkAndAwardBadges: vi.fn().mockResolvedValue([]), // Returns AwardedUserBadge[]
   awardBadge: vi.fn().mockResolvedValue(null),
+  awardContentCategoryBadges: vi.fn().mockResolvedValue({ badges: [], analysis: null }),
   awardLeaderboardBadges: vi.fn().mockResolvedValue([]),
   awardRoundCompletionBadges: vi.fn().mockResolvedValue([]),
   isFirstProphecyOfRound: vi.fn().mockResolvedValue(false),

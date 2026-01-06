@@ -1,5 +1,10 @@
 import { BadgeCategory, BadgeRarity } from '@prisma/client';
 
+import {
+  CATEGORY_TO_BADGE,
+  type ContentAnalysisResult,
+  analyzeContentCategories,
+} from '@/lib/ai/prophecy-content-analyzer';
 import { prisma } from '@/lib/db/prisma';
 
 import { accuracyRateBadges, allBadgeDefinitions, raterAccuracyBadges } from './badge-definitions';
@@ -923,4 +928,52 @@ async function checkUnderdogStatus(currentRoundId: string, userId: string): Prom
   }
 
   return true;
+}
+
+// ============================================================================
+// Content Category Badges (AI-based)
+// ============================================================================
+
+export interface ContentBadgeResult {
+  badges: AwardedUserBadge[];
+  analysis: ContentAnalysisResult | null;
+}
+
+/**
+ * Analyze prophecy content and award category-based badges.
+ * This runs asynchronously and should be called fire-and-forget style.
+ * Errors are caught and logged - never thrown.
+ * Returns both awarded badges and the analysis result (including reasoning).
+ */
+export async function awardContentCategoryBadges(
+  userId: string,
+  title: string,
+  description: string | null
+): Promise<ContentBadgeResult> {
+  const newBadges: AwardedUserBadge[] = [];
+
+  try {
+    const analysis = await analyzeContentCategories(title, description);
+
+    // Only process if confidence is reasonable
+    if (analysis.confidence < 0.5) {
+      console.log('[ContentBadges] Konfidenz zu niedrig, keine Badges vergeben');
+      return { badges: newBadges, analysis };
+    }
+
+    for (const category of analysis.categories) {
+      const badgeKey = CATEGORY_TO_BADGE[category];
+      const result = await awardBadge(userId, badgeKey);
+      if (result?.isNew) {
+        newBadges.push(result.userBadge);
+        console.log(`[ContentBadges] Badge vergeben: ${badgeKey}`);
+      }
+    }
+
+    return { badges: newBadges, analysis };
+  } catch (error) {
+    // Log but don't throw - content badge awarding is non-critical
+    console.error('[ContentBadges] Fehler:', error);
+    return { badges: newBadges, analysis: null };
+  }
 }

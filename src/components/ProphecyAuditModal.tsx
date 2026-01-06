@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { IconLoader2 } from '@tabler/icons-react';
 
@@ -23,6 +23,7 @@ export const ProphecyAuditModal = memo(function ProphecyAuditModal({
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   const fetchLogs = useCallback(async () => {
     if (!prophecyId) return;
@@ -50,6 +51,34 @@ export const ProphecyAuditModal = memo(function ProphecyAuditModal({
       setLogs([]);
       setError(null);
     }
+  }, [prophecyId, fetchLogs]);
+
+  // Listen for SSE events to auto-refresh when audit log is updated
+  useEffect(() => {
+    if (!prophecyId) return;
+
+    const eventSource = new EventSource('/api/sse');
+    eventSourceRef.current = eventSource;
+
+    const handleAuditLogCreated = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data) as { prophecyId: string };
+        if (data.prophecyId === prophecyId) {
+          // Refetch logs when this prophecy's audit log is updated
+          fetchLogs();
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    };
+
+    eventSource.addEventListener('auditLog:created', handleAuditLogCreated);
+
+    return () => {
+      eventSource.removeEventListener('auditLog:created', handleAuditLogCreated);
+      eventSource.close();
+      eventSourceRef.current = null;
+    };
   }, [prophecyId, fetchLogs]);
 
   const title = prophecyTitle ? `Verlauf: ${prophecyTitle}` : 'Änderungsverlauf';

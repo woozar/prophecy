@@ -1,11 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import { AuditActions, auditEntityTypeSchema } from '@/lib/schemas/audit';
+
 import { AuditLogEntry, AuditLogTimeline } from './AuditLogTimeline';
 
 const createMockLog = (overrides: Partial<AuditLogEntry> = {}): AuditLogEntry => ({
   id: 'audit-1',
-  entityType: 'PROPHECY',
+  entityType: auditEntityTypeSchema.enum.PROPHECY,
   entityId: 'prophecy-1',
   action: 'CREATE',
   prophecyId: 'prophecy-1',
@@ -32,17 +34,17 @@ describe('AuditLogTimeline', () => {
 
   describe('prophecy actions', () => {
     it('displays prophecy creation', () => {
-      render(<AuditLogTimeline logs={[createMockLog({ action: 'CREATE' })]} />);
+      render(<AuditLogTimeline logs={[createMockLog({ action: AuditActions.CREATE })]} />);
       expect(screen.getByText('Test User hat die Prophezeiung erstellt')).toBeInTheDocument();
     });
 
     it('displays prophecy update', () => {
-      render(<AuditLogTimeline logs={[createMockLog({ action: 'UPDATE' })]} />);
+      render(<AuditLogTimeline logs={[createMockLog({ action: AuditActions.UPDATE })]} />);
       expect(screen.getByText('Test User hat die Prophezeiung bearbeitet')).toBeInTheDocument();
     });
 
     it('displays prophecy deletion', () => {
-      render(<AuditLogTimeline logs={[createMockLog({ action: 'DELETE' })]} />);
+      render(<AuditLogTimeline logs={[createMockLog({ action: AuditActions.DELETE })]} />);
       expect(screen.getByText('Test User hat die Prophezeiung gelöscht')).toBeInTheDocument();
     });
 
@@ -51,7 +53,7 @@ describe('AuditLogTimeline', () => {
         <AuditLogTimeline
           logs={[
             createMockLog({
-              action: 'UPDATE',
+              action: AuditActions.UPDATE,
               oldValue: '{"title":"Old Title","description":"Desc"}',
               newValue: '{"title":"New Title","description":"Desc"}',
             }),
@@ -68,7 +70,7 @@ describe('AuditLogTimeline', () => {
         <AuditLogTimeline
           logs={[
             createMockLog({
-              action: 'UPDATE',
+              action: AuditActions.UPDATE,
               oldValue: '{"title":"Title","description":"Old Desc"}',
               newValue: '{"title":"Title","description":"New Desc"}',
             }),
@@ -85,7 +87,7 @@ describe('AuditLogTimeline', () => {
         <AuditLogTimeline
           logs={[
             createMockLog({
-              action: 'UPDATE',
+              action: AuditActions.UPDATE,
               oldValue: '{"title":"Old Title","description":"Old Desc"}',
               newValue: '{"title":"New Title","description":"New Desc"}',
             }),
@@ -101,7 +103,7 @@ describe('AuditLogTimeline', () => {
         <AuditLogTimeline
           logs={[
             createMockLog({
-              action: 'UPDATE',
+              action: AuditActions.UPDATE,
               oldValue: '{"title":"","description":"Desc"}',
               newValue: '{"title":"New Title","description":"Desc"}',
             }),
@@ -118,8 +120,8 @@ describe('AuditLogTimeline', () => {
         <AuditLogTimeline
           logs={[
             createMockLog({
-              entityType: 'RATING',
-              action: 'CREATE',
+              entityType: auditEntityTypeSchema.enum.RATING,
+              action: AuditActions.CREATE,
               newValue: '{"value":1}',
             }),
           ]}
@@ -133,8 +135,8 @@ describe('AuditLogTimeline', () => {
         <AuditLogTimeline
           logs={[
             createMockLog({
-              entityType: 'RATING',
-              action: 'CREATE',
+              entityType: auditEntityTypeSchema.enum.RATING,
+              action: AuditActions.CREATE,
               newValue: '{"value":-1}',
             }),
           ]}
@@ -148,8 +150,8 @@ describe('AuditLogTimeline', () => {
         <AuditLogTimeline
           logs={[
             createMockLog({
-              entityType: 'RATING',
-              action: 'UPDATE',
+              entityType: auditEntityTypeSchema.enum.RATING,
+              action: AuditActions.UPDATE,
               oldValue: '{"value":-1}',
               newValue: '{"value":1}',
             }),
@@ -166,8 +168,8 @@ describe('AuditLogTimeline', () => {
         <AuditLogTimeline
           logs={[
             createMockLog({
-              entityType: 'RATING',
-              action: 'DELETE',
+              entityType: auditEntityTypeSchema.enum.RATING,
+              action: AuditActions.DELETE,
             }),
           ]}
         />
@@ -180,8 +182,8 @@ describe('AuditLogTimeline', () => {
         <AuditLogTimeline
           logs={[
             createMockLog({
-              entityType: 'RATING',
-              action: 'BULK_DELETE',
+              entityType: auditEntityTypeSchema.enum.RATING,
+              action: AuditActions.BULK_DELETE,
               oldValue: '{"count":5}',
             }),
           ]}
@@ -195,8 +197,8 @@ describe('AuditLogTimeline', () => {
         <AuditLogTimeline
           logs={[
             createMockLog({
-              entityType: 'RATING',
-              action: 'BULK_DELETE',
+              entityType: auditEntityTypeSchema.enum.RATING,
+              action: AuditActions.BULK_DELETE,
               oldValue: '{"count":1}',
             }),
           ]}
@@ -261,12 +263,12 @@ describe('AuditLogTimeline', () => {
       render(
         <AuditLogTimeline
           logs={[
-            createMockLog({ id: 'audit-1', action: 'CREATE' }),
-            createMockLog({ id: 'audit-2', action: 'UPDATE' }),
+            createMockLog({ id: 'audit-1', action: AuditActions.CREATE }),
+            createMockLog({ id: 'audit-2', action: AuditActions.UPDATE }),
             createMockLog({
               id: 'audit-3',
-              entityType: 'RATING',
-              action: 'CREATE',
+              entityType: auditEntityTypeSchema.enum.RATING,
+              action: AuditActions.CREATE,
               newValue: '{"value":1}',
             }),
           ]}

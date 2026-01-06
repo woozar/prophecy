@@ -6,6 +6,7 @@ import { createAuditLog } from '@/lib/audit/audit-service';
 import { getSession } from '@/lib/auth/session';
 import { awardBadge, checkAndAwardBadges } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
+import { AuditActions, auditEntityTypeSchema } from '@/lib/schemas/audit';
 import { rateSchema } from '@/lib/schemas/rating';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
@@ -122,9 +123,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Create audit log for rating change
     await createAuditLog({
-      entityType: 'RATING',
+      entityType: auditEntityTypeSchema.enum.RATING,
       entityId: rating.id,
-      action: isUpdate ? 'UPDATE' : 'CREATE',
+      action: isUpdate ? AuditActions.UPDATE : AuditActions.CREATE,
       prophecyId: id,
       userId: session.userId,
       oldValue: existingRating ? { value: existingRating.value } : null,

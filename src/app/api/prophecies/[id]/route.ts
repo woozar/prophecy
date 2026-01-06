@@ -4,8 +4,9 @@ import { Errors, getProphecyWithAccessCheck, handleApiError } from '@/lib/api';
 import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 import { createAuditLog } from '@/lib/audit/audit-service';
 import { getSession } from '@/lib/auth/session';
-import { awardBadge } from '@/lib/badges/badge-service';
+import { awardBadge, awardContentCategoryBadges } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
+import { AuditActions, auditEntityTypeSchema } from '@/lib/schemas/audit';
 import { updateProphecySchema } from '@/lib/schemas/prophecy';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
@@ -37,6 +38,16 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const { title, description } = parsed.data;
 
+    // Check if anything actually changed
+    const titleChanged = title !== oldProphecy.title;
+    const descriptionChanged = description !== oldProphecy.description;
+
+    if (!titleChanged && !descriptionChanged) {
+      // Nothing changed - return current state without any side effects
+      const prophecyData = transformProphecyToResponse(oldProphecy);
+      return NextResponse.json({ prophecy: prophecyData });
+    }
+
     // Capture ratings before deletion for audit log
     const ratingsToDelete = await prisma.rating.findMany({
       where: { prophecyId: id },
@@ -59,9 +70,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     // Create audit log for bulk rating deletion if any ratings were deleted
     if (ratingsToDelete.length > 0) {
       await createAuditLog({
-        entityType: 'RATING',
+        entityType: auditEntityTypeSchema.enum.RATING,
         entityId: id,
-        action: 'BULK_DELETE',
+        action: AuditActions.BULK_DELETE,
         prophecyId: id,
         userId: session.userId,
         oldValue: { count: ratingsToDelete.length, ratings: ratingsToDelete },
@@ -78,9 +89,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         : undefined;
 
     await createAuditLog({
-      entityType: 'PROPHECY',
+      entityType: auditEntityTypeSchema.enum.PROPHECY,
       entityId: id,
-      action: 'UPDATE',
+      action: AuditActions.UPDATE,
       prophecyId: id,
       userId: session.userId,
       oldValue: { title: oldProphecy.title, description: oldProphecy.description },
@@ -128,6 +139,54 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }
     }
 
+    // Fire-and-forget content analysis - don't await
+    awardContentCategoryBadges(session.userId, title, description).then(async (result) => {
+      for (const userBadge of result.badges) {
+        sseEmitter.broadcast({
+          type: 'badge:awarded',
+          data: {
+            id: userBadge.id,
+            earnedAt: userBadge.earnedAt.toISOString(),
+            userId: userBadge.userId,
+            badgeId: userBadge.badgeId,
+            badge: userBadge.badge,
+          },
+        });
+      }
+
+      // Log content analysis result to audit log (as Kimberly)
+      if (result.analysis) {
+        const kimberly = await prisma.user.findUnique({ where: { username: 'kimberly' } });
+        const categories = result.analysis.categories;
+        const categoryText =
+          categories.length > 0
+            ? `Kategorien: ${categories.join(', ')}`
+            : 'Keine Kategorie erkannt';
+
+        await createAuditLog({
+          entityType: auditEntityTypeSchema.enum.PROPHECY,
+          entityId: id,
+          action: AuditActions.ANALYZE,
+          prophecyId: id,
+          userId: kimberly?.id ?? session.userId,
+          newValue: {
+            contentAnalysis: {
+              categories: result.analysis.categories,
+              confidence: Math.round(result.analysis.confidence * 100),
+              reasoning: result.analysis.reasoning,
+            },
+          },
+          context: `${categoryText} (${Math.round(result.analysis.confidence * 100)}% Konfidenz). ${result.analysis.reasoning}`,
+        });
+
+        // Notify clients that audit log was updated
+        sseEmitter.broadcast({
+          type: 'auditLog:created',
+          data: { prophecyId: id },
+        });
+      }
+    });
+
     return NextResponse.json({ prophecy: prophecyData });
   }, 'Error updating prophecy:');
 }
@@ -148,9 +207,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // Create audit log before deletion (prophecyId will be set to null after delete due to onDelete: SetNull)
     await createAuditLog({
-      entityType: 'PROPHECY',
+      entityType: auditEntityTypeSchema.enum.PROPHECY,
       entityId: id,
-      action: 'DELETE',
+      action: AuditActions.DELETE,
       prophecyId: id,
       userId: session.userId,
       oldValue: { title: prophecy.title, description: prophecy.description },

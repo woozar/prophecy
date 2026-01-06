@@ -2,12 +2,22 @@
 
 import { memo, useMemo } from 'react';
 
-import { IconEdit, IconHistory, IconRefresh, IconStar, IconTrash } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconHistory,
+  IconRefresh,
+  IconRobot,
+  IconStar,
+  IconTrash,
+} from '@tabler/icons-react';
 
 import { formatDate } from '@/lib/formatting/date';
-
-type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'BULK_DELETE';
-type AuditEntityType = 'RATING' | 'PROPHECY';
+import {
+  type AuditAction,
+  AuditActions,
+  type AuditEntityType,
+  auditEntityTypeSchema,
+} from '@/lib/schemas/audit';
 
 export interface AuditLogEntry {
   id: string;
@@ -36,6 +46,7 @@ const actionIconMap: Record<AuditAction, typeof IconStar> = {
   UPDATE: IconEdit,
   DELETE: IconTrash,
   BULK_DELETE: IconRefresh,
+  ANALYZE: IconRobot,
 };
 
 const actionColorMap: Record<AuditAction, string> = {
@@ -43,6 +54,7 @@ const actionColorMap: Record<AuditAction, string> = {
   UPDATE: '#eab308', // yellow
   DELETE: '#ef4444', // red
   BULK_DELETE: '#f97316', // orange
+  ANALYZE: '#a855f7', // purple (AI)
 };
 
 interface ActionIconProps {
@@ -126,7 +138,7 @@ function formatRatingValue(value: number): string {
 }
 
 function getRatingDescription(log: AuditLogEntry, userName: string): string | null {
-  if (log.action === 'BULK_DELETE') {
+  if (log.action === AuditActions.BULK_DELETE) {
     const oldData = log.oldValue ? JSON.parse(log.oldValue) : {};
     const count = oldData.count || 'Alle';
     const plural = oldData.count === 1 ? '' : 'en';
@@ -137,11 +149,11 @@ function getRatingDescription(log: AuditLogEntry, userName: string): string | nu
   const oldData = log.oldValue ? JSON.parse(log.oldValue) : {};
 
   switch (log.action) {
-    case 'CREATE':
+    case AuditActions.CREATE:
       return `${userName} hat mit ${formatRatingValue(newData.value)} bewertet`;
-    case 'UPDATE':
+    case AuditActions.UPDATE:
       return `${userName} hat Bewertung von ${formatRatingValue(oldData.value)} auf ${formatRatingValue(newData.value)} geändert`;
-    case 'DELETE':
+    case AuditActions.DELETE:
       return `${userName} hat Bewertung entfernt`;
     default:
       return null;
@@ -150,12 +162,14 @@ function getRatingDescription(log: AuditLogEntry, userName: string): string | nu
 
 function getProphecyDescription(log: AuditLogEntry, userName: string): string | null {
   switch (log.action) {
-    case 'CREATE':
+    case AuditActions.CREATE:
       return `${userName} hat die Prophezeiung erstellt`;
-    case 'UPDATE':
+    case AuditActions.UPDATE:
       return `${userName} hat die Prophezeiung bearbeitet`;
-    case 'DELETE':
+    case AuditActions.DELETE:
       return `${userName} hat die Prophezeiung gelöscht`;
+    case AuditActions.ANALYZE:
+      return `${userName} hat eine Inhaltsanalyse durchgeführt`;
     default:
       return null;
   }
@@ -164,12 +178,12 @@ function getProphecyDescription(log: AuditLogEntry, userName: string): string | 
 function getLogDescription(log: AuditLogEntry): string {
   const userName = log.user?.displayName || log.user?.username || 'Unbekannt';
 
-  if (log.entityType === 'RATING') {
+  if (log.entityType === auditEntityTypeSchema.enum.RATING) {
     const description = getRatingDescription(log, userName);
     if (description) return description;
   }
 
-  if (log.entityType === 'PROPHECY') {
+  if (log.entityType === auditEntityTypeSchema.enum.PROPHECY) {
     const description = getProphecyDescription(log, userName);
     if (description) return description;
   }
@@ -185,7 +199,7 @@ const AuditLogEntryItem = memo(function AuditLogEntryItem({ log }: AuditLogEntry
   const description = useMemo(() => getLogDescription(log), [log]);
 
   const prophecyChanges = useMemo(() => {
-    if (log.entityType === 'PROPHECY' && log.action === 'UPDATE') {
+    if (log.entityType === auditEntityTypeSchema.enum.PROPHECY && log.action === 'UPDATE') {
       return getProphecyChanges(log.oldValue, log.newValue);
     }
     return null;

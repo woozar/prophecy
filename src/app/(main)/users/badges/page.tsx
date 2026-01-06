@@ -2,12 +2,10 @@
 
 import { memo, useMemo, useState } from 'react';
 
-import { Tooltip } from '@mantine/core';
 import type { BadgeRarity } from '@prisma/client';
 import { IconLoader2 } from '@tabler/icons-react';
 
 import { BadgeIcon } from '@/components/BadgeIcon';
-import { BadgeTooltipContent } from '@/components/BadgeTooltipContent';
 import { Card } from '@/components/Card';
 import { Link } from '@/components/Link';
 import { Modal } from '@/components/Modal';
@@ -163,50 +161,57 @@ export default function BadgesPage() {
       {/* Badge Detail Modal */}
       <Modal opened={!!selectedBadge} onClose={() => setSelectedBadge(null)} size="md">
         {selectedBadge && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <BadgeIcon badgeKey={selectedBadge.badgeKey} size="lg" />
-              <h2 className="text-xl font-bold text-white">{selectedBadge.name}</h2>
-            </div>
-            <p className="text-(--text-secondary) italic">{selectedBadge.description}</p>
-            <p className="text-sm font-medium text-cyan-400">{selectedBadge.requirement}</p>
-
-            <div className="text-sm text-(--text-muted)">
-              {selectedBadge.totalAchievers}{' '}
-              {selectedBadge.totalAchievers === 1 ? 'Benutzer hat' : 'Benutzer haben'} dieses
-              Achievement
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold text-(--text-muted)">Erreicht von:</h3>
-              <div className="max-h-64 overflow-y-auto space-y-2">
-                {selectedBadgeAchievers.map(({ userId, earnedAt }, index) => {
-                  const user = users[userId];
-                  if (!user) return null;
-                  return (
-                    <div
-                      key={userId}
-                      className="flex items-center gap-3 p-2 rounded-lg bg-[rgba(10,25,41,0.4)]"
-                    >
-                      {index === 0 && <span className="text-yellow-400">🥇</span>}
-                      {index === 1 && <span className="text-gray-300">🥈</span>}
-                      {index === 2 && <span className="text-amber-600">🥉</span>}
-                      {index > 2 && (
-                        <span className="w-5 text-center text-xs text-(--text-muted)">
-                          {index + 1}
-                        </span>
-                      )}
-                      <UserAvatar userId={userId} size="sm" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">
-                          {user.displayName || user.username}
-                        </p>
-                      </div>
-                      <span className="text-xs text-(--text-muted)">{formatDate(earnedAt)}</span>
-                    </div>
-                  );
-                })}
+          <div className="flex flex-col max-h-[80vh]">
+            {/* Fixed header */}
+            <div className="space-y-4 shrink-0">
+              <div className="flex flex-col items-center gap-2">
+                <BadgeIcon badgeKey={selectedBadge.badgeKey} size="2xl" />
+                <h2 className="text-xl font-bold text-white text-center">{selectedBadge.name}</h2>
               </div>
+              <p className="text-(--text-secondary) italic text-center">
+                {selectedBadge.description}
+              </p>
+              <p className="text-sm font-medium text-cyan-400 text-center">
+                {selectedBadge.requirement}
+              </p>
+
+              <div className="text-sm text-(--text-muted)">
+                {selectedBadgeAchievers.length}{' '}
+                {selectedBadgeAchievers.length === 1 ? 'Benutzer hat' : 'Benutzer haben'} dieses
+                Achievement
+              </div>
+
+              <h3 className="text-sm font-semibold text-(--text-muted)">Erreicht von:</h3>
+            </div>
+
+            {/* Scrollable achievers list */}
+            <div className="space-y-2 overflow-y-auto min-h-0 mt-2">
+              {selectedBadgeAchievers.map(({ userId, earnedAt }, index) => {
+                const user = users[userId];
+                if (!user) return null;
+                return (
+                  <div
+                    key={`${userId}-${index}`}
+                    className="flex items-center gap-3 p-2 rounded-lg bg-[rgba(10,25,41,0.4)]"
+                  >
+                    {index === 0 && <span className="text-yellow-400">🥇</span>}
+                    {index === 1 && <span className="text-gray-300">🥈</span>}
+                    {index === 2 && <span className="text-amber-600">🥉</span>}
+                    {index > 2 && (
+                      <span className="w-5 text-center text-xs text-(--text-muted)">
+                        {index + 1}
+                      </span>
+                    )}
+                    <UserAvatar userId={userId} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">
+                        {user.displayName || user.username}
+                      </p>
+                    </div>
+                    <span className="text-xs text-(--text-muted)">{formatDate(earnedAt)}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -234,50 +239,34 @@ const BadgeCard = memo(function BadgeCard({
   onClick,
 }: Readonly<BadgeCardProps>) {
   return (
-    <Tooltip
-      label={
-        <BadgeTooltipContent
-          badgeKey={badge.badgeKey}
-          name={badge.name}
-          description={badge.description}
-          requirement={badge.requirement}
-        />
-      }
-      multiline
-      position="top"
-      classNames={{
-        tooltip: 'achievement-tooltip',
-      }}
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full text-left p-4 badge-card cursor-pointer"
     >
-      <button
-        type="button"
-        onClick={onClick}
-        className="w-full text-left p-4 badge-card cursor-pointer"
-      >
-        <div className="flex items-start gap-4">
-          <BadgeIcon badgeKey={badge.badgeKey} size="lg" />
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-white">{badge.name}</h3>
-            <p className="text-sm text-(--text-muted) line-clamp-2">{badge.description}</p>
+      <div className="flex items-start gap-4">
+        <BadgeIcon badgeKey={badge.badgeKey} size="lg" />
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-white">{badge.name}</h3>
+          <p className="text-sm text-(--text-muted) line-clamp-2">{badge.description}</p>
 
-            <div className="mt-3 flex items-center gap-2">
-              {firstAchiever && (
-                <>
-                  <UserAvatar userId={firstAchiever.id} size="sm" />
-                  <span className="text-xs text-(--text-muted)">
-                    Zuerst erreicht von{' '}
-                    <span className="text-cyan-400">
-                      {firstAchiever.displayName || firstAchiever.username}
-                    </span>
+          <div className="mt-3 flex items-center gap-2">
+            {firstAchiever && (
+              <>
+                <UserAvatar userId={firstAchiever.id} size="sm" />
+                <span className="text-xs text-(--text-muted)">
+                  Zuerst erreicht von{' '}
+                  <span className="text-cyan-400">
+                    {firstAchiever.displayName || firstAchiever.username}
                   </span>
-                </>
-              )}
-            </div>
-
-            <div className="mt-1 text-xs text-(--text-muted)">{badge.totalAchievers} Besitzer</div>
+                </span>
+              </>
+            )}
           </div>
+
+          <div className="mt-1 text-xs text-(--text-muted)">{badge.totalAchievers} Besitzer</div>
         </div>
-      </button>
-    </Tooltip>
+      </div>
+    </button>
   );
 });

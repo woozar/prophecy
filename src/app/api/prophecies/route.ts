@@ -7,10 +7,12 @@ import { getSession } from '@/lib/auth/session';
 import {
   type AwardedUserBadge,
   awardBadge,
+  awardContentCategoryBadges,
   checkAndAwardBadges,
   isFirstProphecyOfRound,
 } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
+import { AuditActions, auditEntityTypeSchema } from '@/lib/schemas/audit';
 import { createProphecySchema } from '@/lib/schemas/prophecy';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
@@ -186,9 +188,9 @@ export async function POST(request: NextRequest) {
     });
 
     await createAuditLog({
-      entityType: 'PROPHECY',
+      entityType: auditEntityTypeSchema.enum.PROPHECY,
       entityId: prophecy.id,
-      action: 'CREATE',
+      action: AuditActions.CREATE,
       prophecyId: prophecy.id,
       userId: session.userId,
       newValue: { title, description },
@@ -205,6 +207,45 @@ export async function POST(request: NextRequest) {
       newBadges
     );
     broadcastNewBadges(newBadges);
+
+    // Fire-and-forget content analysis - don't await
+    awardContentCategoryBadges(session.userId, title, description).then(async (result) => {
+      broadcastNewBadges(result.badges);
+
+      // Log content analysis result to audit log (as Kimberly)
+      if (result.analysis) {
+        const kimberly = await prisma.user.findUnique({
+          where: { username: 'kimberly', isBot: true },
+        });
+        const categories = result.analysis.categories;
+        const categoryText =
+          categories.length > 0
+            ? `Kategorien: ${categories.join(', ')}`
+            : 'Keine Kategorie erkannt';
+
+        await createAuditLog({
+          entityType: auditEntityTypeSchema.enum.PROPHECY,
+          entityId: prophecy.id,
+          action: AuditActions.ANALYZE,
+          prophecyId: prophecy.id,
+          userId: kimberly?.id ?? session.userId,
+          newValue: {
+            contentAnalysis: {
+              categories: result.analysis.categories,
+              confidence: Math.round(result.analysis.confidence * 100),
+              reasoning: result.analysis.reasoning,
+            },
+          },
+          context: `${categoryText} (${Math.round(result.analysis.confidence * 100)}% Konfidenz). ${result.analysis.reasoning}`,
+        });
+
+        // Notify clients that audit log was updated
+        sseEmitter.broadcast({
+          type: 'auditLog:created',
+          data: { prophecyId: prophecy.id },
+        });
+      }
+    });
 
     const prophecyData = transformProphecyToResponse(prophecy);
     sseEmitter.broadcast({ type: 'prophecy:created', data: prophecyData });

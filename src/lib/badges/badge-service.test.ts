@@ -236,7 +236,6 @@ describe('badge-service', () => {
 
       expect(stats.propheciesCreated).toBe(3);
       expect(stats.propheciesFulfilled).toBe(1);
-      expect(stats.accuracyRate).toBe(50); // 1/2 resolved
       expect(stats.ratingsGiven).toBe(4);
       expect(stats.roundsParticipated).toBe(2);
       expect(stats.maxRatingsGiven).toBe(1); // one +10
@@ -251,7 +250,6 @@ describe('badge-service', () => {
       const stats = await getUserStats('user-1');
 
       expect(stats.propheciesCreated).toBe(0);
-      expect(stats.accuracyRate).toBe(0);
       expect(stats.ratingsGiven).toBe(0);
       expect(stats.raterAccuracy).toBe(0);
     });
@@ -281,7 +279,7 @@ describe('badge-service', () => {
     });
 
     it('awards creator badge when threshold met', async () => {
-      mockProphecyFindMany.mockResolvedValue([{ id: 'p1', fulfilled: null }]);
+      mockProphecyFindMany.mockResolvedValue([{ id: 'p1', fulfilled: null, ratings: [] }]);
       mockBadgeFindUnique.mockResolvedValue(mockBadge);
       mockUserBadgeFindUnique.mockResolvedValue(null);
       mockUserBadgeCreate.mockResolvedValue(mockUserBadge);
@@ -304,11 +302,11 @@ describe('badge-service', () => {
 
     it('awards multiple badges when multiple thresholds met', async () => {
       mockProphecyFindMany.mockResolvedValue([
-        { id: 'p1', fulfilled: true },
-        { id: 'p2', fulfilled: true },
-        { id: 'p3', fulfilled: true },
-        { id: 'p4', fulfilled: true },
-        { id: 'p5', fulfilled: true },
+        { id: 'p1', fulfilled: true, ratings: [] },
+        { id: 'p2', fulfilled: true, ratings: [] },
+        { id: 'p3', fulfilled: true, ratings: [] },
+        { id: 'p4', fulfilled: true, ratings: [] },
+        { id: 'p5', fulfilled: true, ratings: [] },
       ]);
       mockRatingFindMany.mockResolvedValue(
         Array(10).fill({ value: 5, prophecy: { fulfilled: null } })
@@ -327,6 +325,7 @@ describe('badge-service', () => {
     it('awards social badges for extreme ratings', async () => {
       // Rating scale: -10 = "will happen" (ruthless/skeptical), +10 = "won't happen" (generous)
       // 10x +10 ratings awards social_generous (gives others chance for big wins)
+      mockProphecyFindMany.mockResolvedValue([]);
       mockRatingFindMany.mockResolvedValue([
         ...Array(10).fill({ value: 10, prophecy: { fulfilled: null } }),
         ...Array(10).fill({ value: 5, prophecy: { fulfilled: null } }),
@@ -533,6 +532,7 @@ describe('badge-service', () => {
 
     it('awards social_neutral badge for neutral average rating', async () => {
       // 30+ ratings with average between -1 and 1
+      mockProphecyFindMany.mockResolvedValue([]);
       mockRatingFindMany.mockResolvedValue([
         ...Array(15).fill({ value: 1, prophecy: { fulfilled: null } }),
         ...Array(15).fill({ value: -1, prophecy: { fulfilled: null } }),
@@ -543,21 +543,26 @@ describe('badge-service', () => {
       expect(result.length).toBeGreaterThanOrEqual(0);
     });
 
-    it('awards accuracy_rate badges when prophecies >= 10', async () => {
-      // 10+ prophecies with high accuracy
-      mockProphecyFindMany.mockResolvedValue([
-        ...Array(8).fill({ id: 'p', fulfilled: true }),
-        ...Array(2).fill({ id: 'p', fulfilled: false }),
-      ]);
+    it('does not award accuracy_rate badges in checkAndAwardBadges (only at round completion)', async () => {
+      // accuracy_rate badges are only awarded when round results are published
+      // This test verifies they are NOT awarded during normal checkAndAwardBadges
+      const acceptedProphecy = {
+        id: 'p',
+        fulfilled: true,
+        ratings: [{ value: 5, user: { isBot: false } }], // avg > 0 = accepted
+      };
+      mockProphecyFindMany.mockResolvedValue(Array(10).fill(acceptedProphecy));
 
       const result = await checkAndAwardBadges('user-1');
 
-      // Should check for accuracy_rate badges
-      expect(mockBadgeFindUnique).toHaveBeenCalled();
+      // Should NOT include accuracy_rate badges (they're awarded at round completion)
+      const accuracyRateBadges = result.filter((b) => b.badge.key.startsWith('accuracy_rate_'));
+      expect(accuracyRateBadges).toHaveLength(0);
     });
 
     it('awards rater_accuracy badges when ratings >= 20', async () => {
       // 20+ ratings with some correct predictions
+      mockProphecyFindMany.mockResolvedValue([]);
       mockRatingFindMany.mockResolvedValue([
         ...Array(15).fill({ value: -5, prophecy: { fulfilled: true } }), // correct
         ...Array(5).fill({ value: 5, prophecy: { fulfilled: false } }), // correct
@@ -919,6 +924,174 @@ describe('badge-service', () => {
       // Since fulfilled is null, no unicorn/party_crasher badges should be given
       // (other badges may still be awarded though)
       expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('awards accuracy_rate badges when creator has 5+ accepted prophecies in round', async () => {
+      const leaderboard = [{ userId: 'creator-1' }];
+
+      // Mock getRoundProphecyRatings: 5 accepted prophecies (avg > 0), 3 fulfilled
+      mockProphecyFindMany.mockResolvedValue([
+        // Prophecies for getRoundProphecyRatings
+        {
+          id: 'p1',
+          creatorId: 'creator-1',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [{ userId: 'rater-1', value: 5, createdAt: pastDate, user: { isBot: false } }],
+        },
+        {
+          id: 'p2',
+          creatorId: 'creator-1',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [{ userId: 'rater-1', value: 3, createdAt: pastDate, user: { isBot: false } }],
+        },
+        {
+          id: 'p3',
+          creatorId: 'creator-1',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [{ userId: 'rater-1', value: 2, createdAt: pastDate, user: { isBot: false } }],
+        },
+        {
+          id: 'p4',
+          creatorId: 'creator-1',
+          fulfilled: false,
+          createdAt: pastDate,
+          ratings: [{ userId: 'rater-1', value: 4, createdAt: pastDate, user: { isBot: false } }],
+        },
+        {
+          id: 'p5',
+          creatorId: 'creator-1',
+          fulfilled: false,
+          createdAt: pastDate,
+          ratings: [{ userId: 'rater-1', value: 6, createdAt: pastDate, user: { isBot: false } }],
+        },
+      ]);
+
+      // Mock for accuracy_rate badge
+      mockBadgeFindUnique.mockImplementation(async ({ where }: { where: { key: string } }) => {
+        if (where.key.startsWith('accuracy_rate_')) {
+          return { ...mockBadge, key: where.key, name: 'Statistiker' };
+        }
+        return mockBadge;
+      });
+      mockUserBadgeCreate.mockImplementation(
+        async ({
+          data,
+          include,
+        }: {
+          data: { userId: string; badgeId: string };
+          include: { badge: boolean };
+        }) => ({
+          id: 'ub-new',
+          oderId: data.oderId,
+          badgeId: data.badgeId,
+          earnedAt: new Date(),
+          badge: { ...mockBadge, key: 'accuracy_rate_60' },
+        })
+      );
+
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      // 3/5 = 60% accuracy, should award accuracy_rate_60 (threshold 20%) and accuracy_rate_70 (threshold 40%)
+      // Check that accuracy_rate badges were attempted
+      expect(mockBadgeFindUnique).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { key: 'accuracy_rate_60' } })
+      );
+    });
+
+    it('does not award accuracy_rate badges when less than 5 accepted prophecies', async () => {
+      const leaderboard = [{ userId: 'creator-1' }];
+
+      // Only 3 accepted prophecies (not enough)
+      mockProphecyFindMany.mockResolvedValue([
+        {
+          id: 'p1',
+          creatorId: 'creator-1',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [{ userId: 'rater-1', value: 5, createdAt: pastDate, user: { isBot: false } }],
+        },
+        {
+          id: 'p2',
+          creatorId: 'creator-1',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [{ userId: 'rater-1', value: 3, createdAt: pastDate, user: { isBot: false } }],
+        },
+        {
+          id: 'p3',
+          creatorId: 'creator-1',
+          fulfilled: false,
+          createdAt: pastDate,
+          ratings: [{ userId: 'rater-1', value: 2, createdAt: pastDate, user: { isBot: false } }],
+        },
+      ]);
+
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      // With only 3 accepted prophecies, no accuracy_rate badges should be awarded
+      const accuracyBadges = result.filter((b) => b.badge.key.startsWith('accuracy_rate_'));
+      expect(accuracyBadges).toHaveLength(0);
+    });
+
+    it('only counts accepted prophecies (avg rating > 0) for accuracy_rate', async () => {
+      const leaderboard = [{ userId: 'creator-1' }];
+
+      // 6 prophecies but only 4 are "accepted" (avg > 0)
+      mockProphecyFindMany.mockResolvedValue([
+        // Accepted (avg > 0)
+        {
+          id: 'p1',
+          creatorId: 'creator-1',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [{ userId: 'rater-1', value: 5, createdAt: pastDate, user: { isBot: false } }],
+        },
+        {
+          id: 'p2',
+          creatorId: 'creator-1',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [{ userId: 'rater-1', value: 3, createdAt: pastDate, user: { isBot: false } }],
+        },
+        {
+          id: 'p3',
+          creatorId: 'creator-1',
+          fulfilled: false,
+          createdAt: pastDate,
+          ratings: [{ userId: 'rater-1', value: 2, createdAt: pastDate, user: { isBot: false } }],
+        },
+        {
+          id: 'p4',
+          creatorId: 'creator-1',
+          fulfilled: false,
+          createdAt: pastDate,
+          ratings: [{ userId: 'rater-1', value: 1, createdAt: pastDate, user: { isBot: false } }],
+        },
+        // NOT accepted (avg <= 0) - these should not count
+        {
+          id: 'p5',
+          creatorId: 'creator-1',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [{ userId: 'rater-1', value: -5, createdAt: pastDate, user: { isBot: false } }],
+        },
+        {
+          id: 'p6',
+          creatorId: 'creator-1',
+          fulfilled: true,
+          createdAt: pastDate,
+          ratings: [{ userId: 'rater-1', value: 0, createdAt: pastDate, user: { isBot: false } }],
+        },
+      ]);
+
+      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+
+      // Only 4 accepted prophecies, below minimum of 5
+      const accuracyBadges = result.filter((b) => b.badge.key.startsWith('accuracy_rate_'));
+      expect(accuracyBadges).toHaveLength(0);
     });
   });
 });

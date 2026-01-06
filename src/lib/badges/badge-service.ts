@@ -2,13 +2,13 @@ import { BadgeCategory, BadgeRarity } from '@prisma/client';
 
 import { prisma } from '@/lib/db/prisma';
 
-import { allBadgeDefinitions } from './badge-definitions';
+import { accuracyRateBadges, allBadgeDefinitions, raterAccuracyBadges } from './badge-definitions';
 
 export interface UserStats {
   propheciesCreated: number;
   propheciesFulfilled: number;
-  accuracyRate: number; // 0-100
   ratingsGiven: number;
+  ratingsOnResolved: number; // Ratings on prophecies that have been resolved
   raterAccuracy: number; // 0-100
   roundsParticipated: number;
   leaderboardWins: number; // 1st place count
@@ -131,6 +131,50 @@ export async function getUserBadges(userId: string) {
 }
 
 /**
+ * Calculate average human rating for a prophecy (excluding bots and 0 ratings)
+ */
+function calculateAvgRating(ratings: Array<{ value: number; user: { isBot: boolean } }>): number {
+  const humanRatings = ratings.filter((r) => !r.user.isBot && r.value !== 0);
+  if (humanRatings.length === 0) return 0;
+  return humanRatings.reduce((sum, r) => sum + r.value, 0) / humanRatings.length;
+}
+
+/**
+ * Get accuracy stats for a specific user in a specific round.
+ * Only counts "accepted" prophecies (avg rating > 0 = community deemed unlikely).
+ */
+async function getRoundAccuracyStats(
+  userId: string,
+  roundId: string
+): Promise<{ acceptedCount: number; accuracyRate: number }> {
+  const prophecies = await prisma.prophecy.findMany({
+    where: { creatorId: userId, roundId },
+    select: {
+      fulfilled: true,
+      ratings: {
+        select: {
+          value: true,
+          user: { select: { isBot: true } },
+        },
+      },
+    },
+  });
+
+  // Filter for "accepted" prophecies: resolved AND avg rating > 0
+  const acceptedProphecies = prophecies.filter((p) => {
+    if (p.fulfilled === null) return false;
+    const avgRating = calculateAvgRating(p.ratings);
+    return avgRating > 0;
+  });
+
+  const acceptedCount = acceptedProphecies.length;
+  const acceptedFulfilled = acceptedProphecies.filter((p) => p.fulfilled === true).length;
+  const accuracyRate = acceptedCount > 0 ? (acceptedFulfilled / acceptedCount) * 100 : 0;
+
+  return { acceptedCount, accuracyRate };
+}
+
+/**
  * Get user statistics for badge calculation
  */
 export async function getUserStats(userId: string): Promise<UserStats> {
@@ -170,10 +214,6 @@ export async function getUserStats(userId: string): Promise<UserStats> {
 
   const propheciesCreated = prophecies.length;
   const propheciesFulfilled = prophecies.filter((p) => p.fulfilled === true).length;
-  const propheciesResolved = prophecies.filter((p) => p.fulfilled !== null).length;
-  const accuracyRate =
-    propheciesResolved > 0 ? (propheciesFulfilled / propheciesResolved) * 100 : 0;
-
   const ratingsGiven = ratings.length;
 
   // Rater accuracy: how well did the user predict fulfilled prophecies?
@@ -204,8 +244,8 @@ export async function getUserStats(userId: string): Promise<UserStats> {
   return {
     propheciesCreated,
     propheciesFulfilled,
-    accuracyRate,
     ratingsGiven,
+    ratingsOnResolved: ratingsOnResolved.length,
     raterAccuracy,
     roundsParticipated,
     leaderboardWins: 0, // Leaderboard tracking not yet implemented
@@ -242,6 +282,51 @@ async function awardThresholdBadges(
 async function tryAwardBadge(userId: string, badgeKey: string): Promise<AwardedUserBadge | null> {
   const result = await awardBadge(userId, badgeKey);
   return result?.isNew ? result.userBadge : null;
+}
+
+/**
+ * Award accuracy rate badges based on definitions from badge-definitions.json.
+ * Requires minimum 5 "accepted" prophecies in the round (avg rating > 0).
+ * Only called when round results are published.
+ */
+async function awardAccuracyRateBadges(
+  userId: string,
+  accuracyRate: number,
+  acceptedCount: number
+): Promise<AwardedUserBadge[]> {
+  const MIN_ACCEPTED = 5;
+  if (acceptedCount < MIN_ACCEPTED) return [];
+
+  const newBadges: AwardedUserBadge[] = [];
+  for (const badge of accuracyRateBadges) {
+    if (badge.threshold && accuracyRate >= badge.threshold) {
+      const result = await awardBadge(userId, badge.key);
+      if (result?.isNew) newBadges.push(result.userBadge);
+    }
+  }
+  return newBadges;
+}
+
+/**
+ * Award rater accuracy badges based on definitions from badge-definitions.json.
+ * Requires minimum 20 ratings on resolved prophecies before any rater_accuracy badge can be earned.
+ */
+async function awardRaterAccuracyBadges(
+  userId: string,
+  raterAccuracy: number,
+  ratingsOnResolved: number
+): Promise<AwardedUserBadge[]> {
+  const MIN_RATINGS = 20;
+  if (ratingsOnResolved < MIN_RATINGS) return [];
+
+  const newBadges: AwardedUserBadge[] = [];
+  for (const badge of raterAccuracyBadges) {
+    if (badge.threshold && raterAccuracy >= badge.threshold) {
+      const result = await awardBadge(userId, badge.key);
+      if (result?.isNew) newBadges.push(result.userBadge);
+    }
+  }
+  return newBadges;
 }
 
 /**
@@ -284,25 +369,16 @@ export async function checkAndAwardBadges(userId: string): Promise<AwardedUserBa
   const stats = await getUserStats(userId);
 
   // Collect all badge awards in parallel where possible
+  // Note: accuracy_rate badges are only awarded when round results are published
   const badgePromises: Promise<AwardedUserBadge[]>[] = [
     awardThresholdBadges(userId, stats.propheciesCreated, [1, 5, 15, 30, 50, 100], 'creator_'),
     awardThresholdBadges(userId, stats.propheciesFulfilled, [1, 5, 10, 20, 35, 50], 'fulfilled_'),
     awardThresholdBadges(userId, stats.ratingsGiven, [10, 30, 75, 150, 300], 'rater_'),
     awardThresholdBadges(userId, stats.roundsParticipated, [1, 5, 15, 30, 50], 'rounds_'),
     awardSocialBadges(userId, stats),
+    // Rater accuracy badges use resolved counts
+    awardRaterAccuracyBadges(userId, stats.raterAccuracy, stats.ratingsOnResolved),
   ];
-
-  // Conditional badges
-  if (stats.propheciesCreated >= 10) {
-    badgePromises.push(
-      awardThresholdBadges(userId, stats.accuracyRate, [60, 70, 80, 90], 'accuracy_rate_')
-    );
-  }
-  if (stats.ratingsGiven >= 20) {
-    badgePromises.push(
-      awardThresholdBadges(userId, stats.raterAccuracy, [60, 70, 80, 90], 'rater_accuracy_')
-    );
-  }
 
   const results = await Promise.all(badgePromises);
   return results.flat();
@@ -730,6 +806,18 @@ export async function awardRoundCompletionBadges(
 
   // Award creator badges
   await awardCreatorBadges(prophecyRatings, newBadges);
+
+  // Award accuracy_rate badges for all creators based on THIS round only
+  const creatorIds = new Set(prophecyRatings.map((p) => p.prophecyCreatorId));
+  for (const creatorId of creatorIds) {
+    const roundStats = await getRoundAccuracyStats(creatorId, roundId);
+    const accuracyBadges = await awardAccuracyRateBadges(
+      creatorId,
+      roundStats.accuracyRate,
+      roundStats.acceptedCount
+    );
+    newBadges.push(...accuracyBadges);
+  }
 
   // Underdog badge
   const firstPlace = creatorLeaderboard[0];

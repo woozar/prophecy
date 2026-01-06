@@ -116,37 +116,37 @@
       "key": "accuracy_rate_60",
       "name": "Statistiker",
       "description": "Überdurchschnittlich gut",
-      "requirement": ">60% Trefferquote (min. 10 Prophezeiungen)",
+      "requirement": ">20% Trefferquote bei angenommenen Prophezeiungen (min. 5)",
       "category": "ACCURACY",
       "rarity": "BRONZE",
-      "threshold": 60
+      "threshold": 20
     },
     {
       "key": "accuracy_rate_70",
       "name": "Fortunas Liebling",
       "description": "Das Glück ist mit dir",
-      "requirement": ">70% Trefferquote (min. 15 Prophezeiungen)",
+      "requirement": ">40% Trefferquote bei angenommenen Prophezeiungen (min. 5)",
       "category": "ACCURACY",
       "rarity": "SILVER",
-      "threshold": 70
+      "threshold": 40
     },
     {
       "key": "accuracy_rate_80",
       "name": "Weise Kassandra",
       "description": "Du siehst was andere nicht sehen",
-      "requirement": ">80% Trefferquote (min. 20 Prophezeiungen)",
+      "requirement": ">60% Trefferquote bei angenommenen Prophezeiungen (min. 5)",
       "category": "ACCURACY",
       "rarity": "GOLD",
-      "threshold": 80
+      "threshold": 60
     },
     {
       "key": "accuracy_rate_90",
       "name": "Unfehlbar",
       "description": "Deine Worte werden Gesetz",
-      "requirement": ">90% Trefferquote (min. 25 Prophezeiungen)",
+      "requirement": ">80% Trefferquote bei angenommenen Prophezeiungen (min. 5)",
       "category": "ACCURACY",
       "rarity": "LEGENDARY",
-      "threshold": 90
+      "threshold": 80
     }
   ],
   "rater": [

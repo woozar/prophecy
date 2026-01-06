@@ -11,6 +11,8 @@ interface BadgeIconProps {
   fallbackIcon?: string;
   size?: BadgeIconSize;
   className?: string;
+  /** Renders the icon greyed out (grayscale + reduced opacity) */
+  disabled?: boolean;
 }
 
 const SIZE_CONFIG: Record<BadgeIconSize, { pixels: number; fontSize: string }> = {
@@ -26,14 +28,21 @@ export const BadgeIcon = memo(function BadgeIcon({
   fallbackIcon,
   size = 'md',
   className = '',
+  disabled = false,
 }: Readonly<BadgeIconProps>) {
   const [imageError, setImageError] = useState(false);
 
   const sizeConfig = useMemo(() => SIZE_CONFIG[size], [size]);
   const imageSrc = useMemo(() => `/badges/${badgeKey}.webp`, [badgeKey]);
 
+  const disabledStyles = useMemo(() => (disabled ? 'grayscale opacity-40' : ''), [disabled]);
+
   if (imageError && fallbackIcon) {
-    return <span className={`${sizeConfig.fontSize} ${className}`}>{fallbackIcon}</span>;
+    return (
+      <span className={`${sizeConfig.fontSize} ${disabledStyles} ${className}`}>
+        {fallbackIcon}
+      </span>
+    );
   }
 
   return (
@@ -42,7 +51,7 @@ export const BadgeIcon = memo(function BadgeIcon({
       alt=""
       width={sizeConfig.pixels}
       height={sizeConfig.pixels}
-      className={className}
+      className={`${disabledStyles} ${className}`}
       onError={() => setImageError(true)}
       unoptimized
     />

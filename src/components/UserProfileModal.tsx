@@ -12,6 +12,7 @@ import { Modal } from '@/components/Modal';
 import { UserAvatar } from '@/components/UserAvatar';
 import { UserStatsGrid } from '@/components/UserStatsGrid';
 import { apiClient } from '@/lib/api-client/client';
+import { type TierGroup, groupBadgesByTier, isTierGroupAscending } from '@/lib/badges/badge-tiers';
 import { formatDate } from '@/lib/formatting/date';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 import { type Badge, useBadgeStore } from '@/store/useBadgeStore';
@@ -53,18 +54,84 @@ export const UserProfileModal = memo(function UserProfileModal({
     return currentUser?.role === 'ADMIN';
   }, [currentUserId, users]);
 
+  // Get set of known badge keys (badges that have been awarded to at least one user)
+  // Calculate from allUserBadges since awardedBadges store is not populated
+  const knownBadgeKeys = useMemo(() => {
+    const knownIds = new Set<string>();
+    for (const userBadgeMap of Object.values(allUserBadges)) {
+      for (const badgeId of Object.keys(userBadgeMap)) {
+        knownIds.add(badgeId);
+      }
+    }
+    // Convert badge IDs to badge keys
+    const knownKeys = new Set<string>();
+    for (const badgeId of knownIds) {
+      const badge = badges[badgeId];
+      if (badge) {
+        knownKeys.add(badge.key);
+      }
+    }
+    return knownKeys;
+  }, [allUserBadges, badges]);
+
   // Get user's badges with earnedAt dates
-  const userBadges = useMemo((): BadgeWithEarnedAt[] => {
+  const userBadgesWithDates = useMemo((): Map<string, string> => {
+    if (!user) return new Map();
+    const userBadgeMap = allUserBadges[user.id] || {};
+    const result = new Map<string, string>();
+    for (const ub of Object.values(userBadgeMap)) {
+      const badge = badges[ub.badgeId];
+      if (badge) {
+        result.set(badge.key, ub.earnedAt);
+      }
+    }
+    return result;
+  }, [user, badges, allUserBadges]);
+
+  // Get user's badges as Badge array
+  const userBadgesList = useMemo((): Badge[] => {
     if (!user) return [];
     const userBadgeMap = allUserBadges[user.id] || {};
     return Object.values(userBadgeMap)
-      .map((ub) => ({
-        badge: badges[ub.badgeId],
-        earnedAt: ub.earnedAt,
-      }))
-      .filter((b): b is BadgeWithEarnedAt => !!b.badge)
-      .sort((a, b) => new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime());
+      .map((ub) => badges[ub.badgeId])
+      .filter((b): b is Badge => !!b);
   }, [user, badges, allUserBadges]);
+
+  // Group badges by tier
+  const groupedBadges = useMemo(() => {
+    const allBadgesList = Object.values(badges);
+    return groupBadgesByTier(userBadgesList, allBadgesList, knownBadgeKeys);
+  }, [userBadgesList, badges, knownBadgeKeys]);
+
+  // Create display items: tier groups show highest badge, standalone badges show as-is
+  const displayItems = useMemo(() => {
+    const items: Array<{ type: 'tier'; group: TierGroup } | { type: 'standalone'; badge: Badge }> =
+      [];
+
+    // Add tier groups
+    for (const group of groupedBadges.tierGroups) {
+      items.push({ type: 'tier', group });
+    }
+
+    // Add standalone badges
+    for (const badge of groupedBadges.standaloneBadges) {
+      items.push({ type: 'standalone', badge });
+    }
+
+    // Sort by most recently earned
+    items.sort((a, b) => {
+      const badgeA = a.type === 'tier' ? a.group.highestEarned : a.badge;
+      const badgeB = b.type === 'tier' ? b.group.highestEarned : b.badge;
+      const dateA = userBadgesWithDates.get(badgeA.key) ?? '';
+      const dateB = userBadgesWithDates.get(badgeB.key) ?? '';
+      return new Date(dateB).getTime() - new Date(dateA).getTime();
+    });
+
+    return items;
+  }, [groupedBadges, userBadgesWithDates]);
+
+  // Total unique badge count (tier groups count as 1)
+  const badgeCount = displayItems.length;
 
   // Get manually awardable badges with their current status for this user
   const manualBadges = useMemo(() => {
@@ -141,47 +208,76 @@ export const UserProfileModal = memo(function UserProfileModal({
           <UserStatsGrid
             prophecyCount={prophecyCount}
             ratingCount={ratingCount}
-            badgeCount={userBadges.length}
+            badgeCount={badgeCount}
           />
         </div>
 
         {/* Achievements */}
         <div className="flex flex-col min-h-0 flex-1">
           <h3 className="text-sm font-semibold text-(--text-muted) mb-3 shrink-0">
-            Achievements ({userBadges.length})
+            Achievements ({badgeCount})
           </h3>
-          {userBadges.length === 0 ? (
+          {displayItems.length === 0 ? (
             <p className="text-sm text-(--text-muted)">Noch keine Achievements freigeschaltet.</p>
           ) : (
             <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 overflow-y-auto pr-2">
-              {userBadges.map(({ badge, earnedAt }) => (
-                <Tooltip
-                  key={badge.id}
-                  label={
-                    <BadgeTooltipContent
-                      badgeKey={badge.key}
-                      name={badge.name}
-                      description={badge.description}
-                      requirement={badge.requirement}
-                      rarity={badge.rarity}
-                      earnedAt={earnedAt}
-                    />
-                  }
-                  multiline
-                  position="top"
-                  classNames={{
-                    tooltip: 'achievement-tooltip',
-                  }}
-                >
-                  <div className="flex items-center gap-3 p-3 badge-card cursor-default">
-                    <BadgeIcon badgeKey={badge.key} size="md" />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-white truncate">{badge.name}</p>
-                      <p className="text-xs text-(--text-muted)">{formatDate(earnedAt)}</p>
+              {displayItems.map((item) => {
+                const badge = item.type === 'tier' ? item.group.highestEarned : item.badge;
+                const earnedAt = userBadgesWithDates.get(badge.key) ?? '';
+
+                // Build tier badges info for tooltip
+                const tierBadges =
+                  item.type === 'tier'
+                    ? [
+                        // Earned badges
+                        ...item.group.earnedBadges.map((b) => ({
+                          badge: b,
+                          isEarned: true,
+                          earnedAt: userBadgesWithDates.get(b.key),
+                        })),
+                        // Known unearned badges
+                        ...item.group.knownUnearnedBadges.map((b) => ({
+                          badge: b,
+                          isEarned: false,
+                        })),
+                      ].sort((a, b) => {
+                        // Sort best first: account for ascending groups (leaderboard position)
+                        const thresholdA = a.badge.threshold ?? 0;
+                        const thresholdB = b.badge.threshold ?? 0;
+                        const sortAsc = isTierGroupAscending(item.group.prefix);
+                        return sortAsc ? thresholdA - thresholdB : thresholdB - thresholdA;
+                      })
+                    : undefined;
+
+                return (
+                  <Tooltip
+                    key={badge.id}
+                    label={
+                      <BadgeTooltipContent
+                        badgeKey={badge.key}
+                        name={badge.name}
+                        description={badge.description}
+                        requirement={badge.requirement}
+                        earnedAt={earnedAt}
+                        tierBadges={tierBadges}
+                      />
+                    }
+                    multiline
+                    position="top"
+                    classNames={{
+                      tooltip: 'achievement-tooltip',
+                    }}
+                  >
+                    <div className="flex items-center gap-3 p-3 badge-card cursor-default">
+                      <BadgeIcon badgeKey={badge.key} size="md" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-white truncate">{badge.name}</p>
+                        <p className="text-xs text-(--text-muted)">{formatDate(earnedAt)}</p>
+                      </div>
                     </div>
-                  </div>
-                </Tooltip>
-              ))}
+                  </Tooltip>
+                );
+              })}
             </div>
           )}
         </div>
@@ -200,7 +296,6 @@ export const UserProfileModal = memo(function UserProfileModal({
                       name={badge.name}
                       description={badge.description}
                       requirement={badge.requirement}
-                      rarity={badge.rarity}
                     />
                   }
                   multiline

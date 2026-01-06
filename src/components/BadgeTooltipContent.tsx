@@ -2,56 +2,37 @@
 
 import { memo, useMemo } from 'react';
 
-import type { BadgeRarity } from '@prisma/client';
-
 import { BadgeIcon } from '@/components/BadgeIcon';
+import { formatDate } from '@/lib/formatting/date';
+import type { Badge } from '@/store/useBadgeStore';
+
+interface TierBadgeInfo {
+  badge: Badge;
+  isEarned: boolean;
+  earnedAt?: string;
+}
 
 interface BadgeTooltipContentProps {
   badgeKey: string;
   name: string;
   description: string;
   requirement: string;
-  rarity: BadgeRarity;
   earnedAt?: string;
+  /** Tier badges to show (sorted best first). If provided, shows tier progression. */
+  tierBadges?: TierBadgeInfo[];
 }
-
-const RARITY_CONFIG: Record<BadgeRarity, { icon: string; title: string }> = {
-  BRONZE: {
-    icon: '🥉',
-    title: 'Bronze',
-  },
-  SILVER: {
-    icon: '🥈',
-    title: 'Silber',
-  },
-  GOLD: {
-    icon: '🥇',
-    title: 'Gold',
-  },
-  LEGENDARY: {
-    icon: '💎',
-    title: 'Legendär',
-  },
-};
 
 export const BadgeTooltipContent = memo(function BadgeTooltipContent({
   badgeKey,
   name,
   description,
   requirement,
-  rarity,
   earnedAt,
+  tierBadges,
 }: Readonly<BadgeTooltipContentProps>) {
-  const rarityConfig = useMemo(() => RARITY_CONFIG[rarity], [rarity]);
+  const formattedDate = useMemo(() => (earnedAt ? formatDate(earnedAt) : null), [earnedAt]);
 
-  const formattedDate = useMemo(() => {
-    if (!earnedAt) return null;
-    return new Date(earnedAt).toLocaleDateString('de-DE', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  }, [earnedAt]);
+  const hasTiers = tierBadges && tierBadges.length > 1;
 
   return (
     <div className="min-w-[220px] max-w-[280px]">
@@ -59,9 +40,6 @@ export const BadgeTooltipContent = memo(function BadgeTooltipContent({
       <div className="flex items-center gap-2 mb-2">
         <BadgeIcon badgeKey={badgeKey} size="md" />
         <p className="font-semibold text-white truncate flex-1">{name}</p>
-        <span className="text-lg" title={rarityConfig.title}>
-          {rarityConfig.icon}
-        </span>
       </div>
 
       {/* Divider */}
@@ -79,6 +57,48 @@ export const BadgeTooltipContent = memo(function BadgeTooltipContent({
           Erreicht am {formattedDate}
         </p>
       )}
+
+      {/* Tier progression */}
+      {hasTiers && (
+        <div className="mt-3 pt-3 border-t border-[rgba(98,125,152,0.3)]">
+          <p className="text-xs text-(--text-muted) mb-2">Alle Stufen:</p>
+          <div className="flex flex-col gap-1.5">
+            {tierBadges.map((tier) => (
+              <TierBadgeRow
+                key={tier.badge.key}
+                badge={tier.badge}
+                isEarned={tier.isEarned}
+                earnedAt={tier.earnedAt}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+interface TierBadgeRowProps {
+  badge: Badge;
+  isEarned: boolean;
+  earnedAt?: string;
+}
+
+const TierBadgeRow = memo(function TierBadgeRow({
+  badge,
+  isEarned,
+  earnedAt,
+}: Readonly<TierBadgeRowProps>) {
+  const formattedDate = useMemo(() => (earnedAt ? formatDate(earnedAt) : null), [earnedAt]);
+
+  return (
+    <div className={`flex items-center gap-2 ${isEarned ? 'text-white' : 'text-(--text-muted)'}`}>
+      <BadgeIcon badgeKey={badge.key} size="sm" disabled={!isEarned} className="w-6 h-6" />
+      <span className="text-xs flex-1 truncate">{badge.name}</span>
+      {isEarned && formattedDate && (
+        <span className="text-xs text-(--text-muted)">{formattedDate}</span>
+      )}
+      {isEarned && !formattedDate && <span className="text-xs text-green-400">✓</span>}
     </div>
   );
 });

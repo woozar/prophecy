@@ -241,7 +241,6 @@ const BadgeCard = memo(function BadgeCard({
           name={badge.name}
           description={badge.description}
           requirement={badge.requirement}
-          rarity={badge.rarity}
         />
       }
       multiline

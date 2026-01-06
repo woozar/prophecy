@@ -5,6 +5,7 @@ import { BadgeCategory, BadgeRarity } from '@prisma/client';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { Badge } from '@/store/useBadgeStore';
 import { useBadgeStore } from '@/store/useBadgeStore';
 import { useUserStore } from '@/store/useUserStore';
 import type { User } from '@/store/useUserStore';
@@ -115,7 +116,7 @@ describe('UserProfileModal', () => {
       })
     );
 
-    const badges: Record<string, typeof mockBadge> = { 'badge-1': mockBadge };
+    const badges: Record<string, Badge> = { 'badge-1': mockBadge };
     if (hasManualBadges) {
       badges['badge-bug'] = mockBugHunterBadge;
       badges['badge-beta'] = mockBetaTesterBadge;

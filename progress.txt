@@ -14,3 +14,14 @@
 - Removed unused 'include' parameter in badge-service.test.ts (line 967)
 - npm run lint shows 0 warnings
 - All 1751 tests passing
+
+### 3. Clean up debug console.log statements (code-quality)
+- Created debug logger utility (src/lib/logger.ts) that only outputs when DEBUG=true
+- Replaced console.log/error calls with debug.log/error in:
+  - auth/login/verify/route.ts (passkey lookup debug logs)
+  - useSSE.ts (client-side SSE connection logs)
+  - event-emitter.ts (server-side SSE client tracking)
+  - bot-rating-service.ts (bot rating debug logs)
+- Removed placeholder console.log from forgot-password/page.tsx
+- Updated tests in useSSE.test.ts to test actual behavior rather than logging implementation
+- All 1751 tests passing

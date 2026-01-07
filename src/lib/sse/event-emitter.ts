@@ -1,6 +1,7 @@
 // Server-side SSE event emitter for real-time updates
 // This is a singleton that manages all SSE connections
 // Uses globalThis to persist across Hot Module Replacement in development
+import { debug } from '@/lib/logger';
 
 declare global {
   var sseEmitterInstance: SSEEventEmitter | undefined;
@@ -58,7 +59,7 @@ class SSEEventEmitter {
       for (const [id, client] of this.clients) {
         // Remove stale clients (no activity for 60s)
         if (now - client.lastActivity > STALE_CLIENT_TIMEOUT) {
-          console.log(`[SSE] Removing stale client: ${id}`);
+          debug.log(`[SSE] Removing stale client: ${id}`);
           this.removeClient(id);
           continue;
         }
@@ -76,12 +77,12 @@ class SSEEventEmitter {
 
   addClient(id: string, controller: ReadableStreamDefaultController<Uint8Array>): void {
     this.clients.set(id, { id, controller, lastActivity: Date.now() });
-    console.log(`[SSE] Client connected: ${id}. Total clients: ${this.clients.size}`);
+    debug.log(`[SSE] Client connected: ${id}. Total clients: ${this.clients.size}`);
   }
 
   removeClient(id: string): void {
     this.clients.delete(id);
-    console.log(`[SSE] Client disconnected: ${id}. Total clients: ${this.clients.size}`);
+    debug.log(`[SSE] Client disconnected: ${id}. Total clients: ${this.clients.size}`);
   }
 
   broadcast(event: SSEEvent): void {
@@ -94,7 +95,7 @@ class SSEEventEmitter {
         // Update last activity on successful send
         client.lastActivity = Date.now();
       } catch (error) {
-        console.error(`[SSE] Error sending to client ${id}:`, error);
+        debug.error(`[SSE] Error sending to client ${id}:`, error);
         this.removeClient(id);
       }
     }
@@ -112,7 +113,7 @@ class SSEEventEmitter {
       // Update last activity on successful send
       client.lastActivity = Date.now();
     } catch (error) {
-      console.error(`[SSE] Error sending to client ${clientId}:`, error);
+      debug.error(`[SSE] Error sending to client ${clientId}:`, error);
       this.removeClient(clientId);
     }
   }

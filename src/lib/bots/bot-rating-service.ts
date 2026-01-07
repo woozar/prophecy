@@ -3,6 +3,7 @@ import { User } from '@prisma/client';
 import { transformProphecyToResponse } from '@/lib/api/prophecy-transform';
 import { createAuditLog } from '@/lib/audit/audit-service';
 import { prisma } from '@/lib/db/prisma';
+import { debug } from '@/lib/logger';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
 import { AuditActions, auditEntityTypeSchema } from '../schemas/audit';
@@ -71,7 +72,7 @@ async function generateBotRating(
 ): Promise<RatingGenerationResult> {
   if (bot.username === 'randolf') {
     const value = generateRandolfRating();
-    console.log(`[Randolf] Zufällige Bewertung für "${prophecy.title}": ${value}`);
+    debug.log(`[Randolf] Zufällige Bewertung für "${prophecy.title}": ${value}`);
     return { value, reasoning: null };
   }
 
@@ -86,7 +87,7 @@ async function generateBotRating(
 
   if (bot.username === 'meanfred') {
     const value = await calculateHumanMeanRating(prophecy.id);
-    console.log(`[Meanfred] Durchschnittsbewertung für "${prophecy.title}": ${value}`);
+    debug.log(`[Meanfred] Durchschnittsbewertung für "${prophecy.title}": ${value}`);
     return { value, reasoning: 'Durchschnitt der menschlichen Bewertungen' };
   }
 
@@ -101,7 +102,7 @@ async function shouldSkipRating(
   prophecy: ProphecyInfo
 ): Promise<{ skip: boolean; reason?: string }> {
   if (prophecy.creatorId === bot.id) {
-    console.log(`[Bot-Ratings] Überspringe eigene Prophezeiung: "${prophecy.title}"`);
+    debug.log(`[Bot-Ratings] Überspringe eigene Prophezeiung: "${prophecy.title}"`);
     return { skip: true, reason: 'own' };
   }
 
@@ -115,7 +116,7 @@ async function shouldSkipRating(
   });
 
   if (existingRating) {
-    console.log(`[Bot-Ratings] Bereits bewertet: "${prophecy.title}"`);
+    debug.log(`[Bot-Ratings] Bereits bewertet: "${prophecy.title}"`);
     return { skip: true, reason: 'existing' };
   }
 
@@ -185,7 +186,7 @@ async function processBotRatings(
   prophecies: ProphecyInfo[],
   fulfillmentDate: Date
 ): Promise<BotRatingResult> {
-  console.log(`[Bot-Ratings] Starte Bewertungen für ${bot.displayName || bot.username}`);
+  debug.log(`[Bot-Ratings] Starte Bewertungen für ${bot.displayName || bot.username}`);
 
   const result: BotRatingResult = {
     botId: bot.id,
@@ -219,7 +220,7 @@ async function processBotRatings(
  * Führt Bot-Bewertungen für eine Runde aus
  */
 export async function runBotRatingsForRound(roundId: string): Promise<RunBotRatingsResult> {
-  console.log(`[Bot-Ratings] Starte für Runde: ${roundId}`);
+  debug.log(`[Bot-Ratings] Starte für Runde: ${roundId}`);
 
   const round = await prisma.round.findUnique({
     where: { id: roundId },
@@ -239,7 +240,7 @@ export async function runBotRatingsForRound(roundId: string): Promise<RunBotRati
     throw new Error('Runde nicht gefunden');
   }
 
-  console.log(`[Bot-Ratings] Runde "${round.title}" mit ${round.prophecies.length} Prophezeiungen`);
+  debug.log(`[Bot-Ratings] Runde "${round.title}" mit ${round.prophecies.length} Prophezeiungen`);
 
   if (new Date() < round.submissionDeadline) {
     throw new Error('Einreichungsphase ist noch nicht beendet');
@@ -249,7 +250,7 @@ export async function runBotRatingsForRound(roundId: string): Promise<RunBotRati
     where: { isBot: true, status: 'APPROVED' },
   });
 
-  console.log(
+  debug.log(
     `[Bot-Ratings] ${bots.length} Bots gefunden: ${bots.map((b) => b.username).join(', ')}`
   );
 

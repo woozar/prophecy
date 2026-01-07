@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { apiClient } from '@/lib/api-client';
+import { debug } from '@/lib/logger';
 import {
   type Badge,
   type UserBadge,
@@ -89,7 +90,7 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
 
       setIsInitialized(true);
     } catch (error) {
-      console.error('[SSE] Error loading initial data:', error);
+      debug.error('[SSE] Error loading initial data:', error);
     }
   }, []);
 
@@ -193,7 +194,7 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
       if (handler) {
         handler();
       } else {
-        console.log(`[SSE] Unhandled event: ${type}`, data);
+        debug.log(`[SSE] Unhandled event: ${type}`, data);
       }
     },
     [
@@ -216,7 +217,7 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
       clearTimeout(heartbeatTimeoutRef.current);
     }
     heartbeatTimeoutRef.current = setTimeout(() => {
-      console.log('[SSE] Heartbeat timeout - no message received for 45s');
+      debug.log('[SSE] Heartbeat timeout - no message received for 45s');
       setConnectionStatus('disconnected');
       // Force reconnect
       if (eventSourceRef.current) {
@@ -250,13 +251,13 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
     eventSourceRef.current = eventSource;
 
     eventSource.onopen = () => {
-      console.log('[SSE] Connected');
+      debug.log('[SSE] Connected');
       setConnectionStatus('connected');
       resetHeartbeatTimeout();
 
       // Reload data if this is a reconnect (might have missed events)
       if (reconnectAttempts.current > 0) {
-        console.log('[SSE] Reconnected, reloading data...');
+        debug.log('[SSE] Reconnected, reloading data...');
         // Mark as reconnecting to prevent toast spam during data reload
         isReconnectingRef.current = true;
         loadInitialData().finally(() => {
@@ -267,7 +268,7 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
     };
 
     eventSource.onerror = () => {
-      console.log('[SSE] Connection error, attempting reconnect...');
+      debug.log('[SSE] Connection error, attempting reconnect...');
       setConnectionStatus('disconnected');
       eventSource.close();
       eventSourceRef.current = null;
@@ -310,7 +311,7 @@ export function useSSE(callbacks?: SSEEventCallbacks) {
           const data = JSON.parse(event.data);
           handleEvent(type, data);
         } catch (error) {
-          console.error(`[SSE] Error parsing ${type} event:`, error);
+          debug.error(`[SSE] Error parsing ${type} event:`, error);
         }
       });
     });

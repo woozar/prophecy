@@ -8,6 +8,7 @@ import {
 import { loginErrorResponse, loginSuccessResponse, setSessionCookie } from '@/lib/auth/session';
 import { clearChallenge, getChallenge, webauthnConfig } from '@/lib/auth/webauthn';
 import { prisma } from '@/lib/db/prisma';
+import { debug } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Authenticator anhand der Credential ID finden
-    console.log('[Login] Looking for credential ID:', credential.id);
+    debug.log('[Login] Looking for credential ID:', credential.id);
 
     // Versuche verschiedene Encodings
     let authenticator = await prisma.authenticator.findUnique({
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     // Falls nicht gefunden, versuche mit rawId (falls vorhanden)
     if (!authenticator && credential.rawId) {
-      console.log('[Login] Trying with rawId:', credential.rawId);
+      debug.log('[Login] Trying with rawId:', credential.rawId);
       authenticator = await prisma.authenticator.findUnique({
         where: { credentialID: credential.rawId },
         include: { user: true },
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
       const allAuthenticators = await prisma.authenticator.findMany({
         select: { credentialID: true },
       });
-      console.log(
+      debug.log(
         '[Login] Stored credential IDs:',
         allAuthenticators.map((a) => a.credentialID)
       );

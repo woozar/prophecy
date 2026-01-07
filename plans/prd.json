@@ -31,6 +31,6 @@
       "Keep intentional SSE debug logs but consider adding a debug flag",
       "Keep bot logging but consider adding a debug flag or proper logger"
     ],
-    "passes": false
+    "passes": true
   }
 ]

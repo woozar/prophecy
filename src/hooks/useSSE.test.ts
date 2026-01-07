@@ -608,9 +608,7 @@ describe('useSSE', () => {
     expect(mockRemoveRating).toHaveBeenCalledWith('rating-1');
   });
 
-  it('handles JSON parse errors gracefully', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
+  it('handles JSON parse errors gracefully without crashing', async () => {
     renderHook(() => useSSE());
 
     await waitFor(() => {
@@ -623,13 +621,12 @@ describe('useSSE', () => {
       (call) => (call as [string, unknown])[0] === 'round:created'
     )?.[1] as (event: { data: string }) => void;
 
-    // Simulate receiving invalid JSON
-    act(() => {
-      roundCreatedListener({ data: 'invalid json' });
-    });
-
-    expect(consoleSpy).toHaveBeenCalled();
-    consoleSpy.mockRestore();
+    // Simulate receiving invalid JSON - should not throw
+    expect(() => {
+      act(() => {
+        roundCreatedListener({ data: 'invalid json' });
+      });
+    }).not.toThrow();
   });
 
   it('closes existing connection before creating new one on reconnect', async () => {
@@ -694,41 +691,37 @@ describe('useSSE', () => {
     expect(createdInstances).toHaveLength(1);
   });
 
-  it('handles fetch error gracefully during initial data load', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
+  it('handles fetch error gracefully during initial data load without crashing', async () => {
     mockInitialDataGet.mockRejectedValue(new Error('Network error'));
 
-    renderHook(() => useSSE());
+    // Should not throw even when fetch fails
+    const { result } = renderHook(() => useSSE());
 
-    await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '[SSE] Error loading initial data:',
-        expect.any(Error)
-      );
+    // Wait a bit to let error handling complete
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
     });
 
-    consoleSpy.mockRestore();
+    // Hook should still return valid state (not initialized due to error)
+    expect(result.current.isInitialized).toBe(false);
   });
 
-  it('handles non-ok fetch response during initial data load', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
+  it('handles non-ok fetch response during initial data load without crashing', async () => {
     mockInitialDataGet.mockResolvedValue({
       data: null,
       error: { error: 'Server error' },
     });
 
-    renderHook(() => useSSE());
+    // Should not throw even when response has error
+    const { result } = renderHook(() => useSSE());
 
-    await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '[SSE] Error loading initial data:',
-        expect.any(Error)
-      );
+    // Wait a bit to let error handling complete
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
     });
 
-    consoleSpy.mockRestore();
+    // Hook should still return valid state (not initialized due to error)
+    expect(result.current.isInitialized).toBe(false);
   });
 
   it('uses exponential backoff with max delay on multiple reconnect attempts', async () => {

@@ -20,8 +20,7 @@ export default function ForgotPasswordPage() {
       if (!username) return;
 
       setIsLoading(true);
-      // Password reset: Currently shows success message, API integration pending
-      console.log('Password reset for:', username);
+      // TODO: Implement password reset API endpoint
       setTimeout(() => {
         setIsLoading(false);
         setIsSubmitted(true);

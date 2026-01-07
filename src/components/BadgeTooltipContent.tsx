@@ -39,21 +39,21 @@ export const BadgeTooltipContent = memo(function BadgeTooltipContent({
       {/* Header with icon and name */}
       <div className="flex flex-col items-center gap-2 mb-2">
         <BadgeIcon badgeKey={badgeKey} size="2xl" />
-        <p className="font-semibold text-white text-center text-lg">{name}</p>
+        <p className="font-semibold text-violet-400 text-center text-lg">{name}</p>
       </div>
 
       {/* Divider */}
       <div className="h-px bg-[rgba(98,125,152,0.3)] mb-2" />
 
       {/* Description */}
-      <p className="text-sm text-(--text-secondary) italic mb-2">{description}</p>
+      <p className="text-sm text-white italic mb-2">{description}</p>
 
       {/* Requirement */}
       <p className="text-xs text-cyan-400 font-medium">{requirement}</p>
 
       {/* Earned date if provided */}
       {formattedDate && (
-        <p className="text-xs text-(--text-secondary) mt-2 pt-2 border-t border-[rgba(139,92,246,0.3)]">
+        <p className="text-xs text-white mt-2 pt-2 border-t border-[rgba(139,92,246,0.3)]">
           Erreicht am {formattedDate}
         </p>
       )}
@@ -61,7 +61,7 @@ export const BadgeTooltipContent = memo(function BadgeTooltipContent({
       {/* Tier progression */}
       {hasTiers && (
         <div className="mt-3 pt-3 border-t border-[rgba(98,125,152,0.3)]">
-          <p className="text-xs text-(--text-muted) mb-2">Alle Stufen:</p>
+          <p className="text-xs text-white mb-2">Alle Stufen:</p>
           <div className="flex flex-col gap-1.5">
             {tierBadges.map((tier) => (
               <TierBadgeRow
@@ -92,12 +92,12 @@ const TierBadgeRow = memo(function TierBadgeRow({
   const formattedDate = useMemo(() => (earnedAt ? formatDate(earnedAt) : null), [earnedAt]);
 
   return (
-    <div className={`flex items-center gap-2 ${isEarned ? 'text-white' : 'text-(--text-muted)'}`}>
+    <div
+      className={`flex items-center gap-2 ${isEarned ? 'text-violet-400' : 'text-(--text-muted)'}`}
+    >
       <BadgeIcon badgeKey={badge.key} size="sm" disabled={!isEarned} className="w-6 h-6" />
       <span className="text-xs flex-1 truncate">{badge.name}</span>
-      {isEarned && formattedDate && (
-        <span className="text-xs text-(--text-muted)">{formattedDate}</span>
-      )}
+      {isEarned && formattedDate && <span className="text-xs text-white">{formattedDate}</span>}
       {isEarned && !formattedDate && <span className="text-xs text-green-400">✓</span>}
     </div>
   );

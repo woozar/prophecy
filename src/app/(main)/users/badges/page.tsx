@@ -166,22 +166,22 @@ export default function BadgesPage() {
             <div className="space-y-4 shrink-0">
               <div className="flex flex-col items-center gap-2">
                 <BadgeIcon badgeKey={selectedBadge.badgeKey} size="2xl" />
-                <h2 className="text-xl font-bold text-white text-center">{selectedBadge.name}</h2>
+                <h2 className="text-xl font-bold text-violet-400 text-center">
+                  {selectedBadge.name}
+                </h2>
               </div>
-              <p className="text-(--text-secondary) italic text-center">
-                {selectedBadge.description}
-              </p>
+              <p className="text-white italic text-center">{selectedBadge.description}</p>
               <p className="text-sm font-medium text-cyan-400 text-center">
                 {selectedBadge.requirement}
               </p>
 
-              <div className="text-sm text-(--text-muted)">
+              <div className="text-sm text-white">
                 {selectedBadgeAchievers.length}{' '}
                 {selectedBadgeAchievers.length === 1 ? 'Benutzer hat' : 'Benutzer haben'} dieses
                 Achievement
               </div>
 
-              <h3 className="text-sm font-semibold text-(--text-muted)">Erreicht von:</h3>
+              <h3 className="text-sm font-semibold text-white">Erreicht von:</h3>
             </div>
 
             {/* Scrollable achievers list */}
@@ -204,7 +204,7 @@ export default function BadgesPage() {
                     )}
                     <UserAvatar userId={userId} size="sm" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">
+                      <p className="text-sm font-medium text-cyan-400 truncate">
                         {user.displayName || user.username}
                       </p>
                     </div>
@@ -247,8 +247,8 @@ const BadgeCard = memo(function BadgeCard({
       <div className="flex items-start gap-4">
         <BadgeIcon badgeKey={badge.badgeKey} size="lg" />
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-white">{badge.name}</h3>
-          <p className="text-sm text-(--text-muted) line-clamp-2">{badge.description}</p>
+          <h3 className="font-semibold text-violet-400">{badge.name}</h3>
+          <p className="text-sm text-white line-clamp-2">{badge.description}</p>
 
           <div className="mt-3 flex items-center gap-2">
             {firstAchiever && (

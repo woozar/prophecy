@@ -36,7 +36,7 @@ export const ProfileAvatarSection = memo(function ProfileAvatarSection({
 
   return (
     <Card padding="p-6">
-      <h3 className="text-lg font-semibold text-white mb-6">Avatar & Effekte</h3>
+      <h3 className="text-lg font-semibold text-cyan-400 mb-6">Avatar & Effekte</h3>
 
       <div className="space-y-8">
         {/* Avatar Upload */}

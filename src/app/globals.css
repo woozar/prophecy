@@ -30,10 +30,10 @@
   --glow-violet-strong: rgba(139, 92, 246, 0.6);
   --glow-violet-subtle: rgba(139, 92, 246, 0.2);
 
-  /* Text Colors */
+  /* Text Colors - Optimized for readability on dark background */
   --text-primary: #f0f4f8;
-  --text-secondary: #9fb3c8;
-  --text-muted: #627d98;
+  --text-secondary: #d1e1ef;
+  --text-muted: #a8bfcf;
 }
 
 @theme inline {

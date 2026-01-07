@@ -138,7 +138,7 @@ export default function ProfilePage() {
 
       {/* Account Info */}
       <Card padding="p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Account</h3>
+        <h3 className="text-lg font-semibold text-cyan-400 mb-4">Account</h3>
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
             <span className="text-(--text-muted)">Mitglied seit</span>

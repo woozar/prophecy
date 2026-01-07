@@ -101,7 +101,7 @@ const RoundCard = memo(function RoundCard({ round, formatDate }: RoundCardProps)
   return (
     <Card padding="p-6">
       <div className="flex items-start justify-between mb-4">
-        <h3 className="text-lg font-semibold text-white">{round.title}</h3>
+        <h3 className="text-lg font-semibold text-cyan-400">{round.title}</h3>
         <RoundStatusBadge round={round} variant="compact" />
       </div>
 

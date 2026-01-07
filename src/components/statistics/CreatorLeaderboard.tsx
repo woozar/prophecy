@@ -21,7 +21,7 @@ export const CreatorLeaderboard = memo(function CreatorLeaderboard({
   if (stats.length === 0) {
     return (
       <Card padding="p-4">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-cyan-400 mb-4 flex items-center gap-2">
           <IconTrophy size={20} className="text-cyan-400" />
           Propheten-Ranking
         </h2>
@@ -34,7 +34,7 @@ export const CreatorLeaderboard = memo(function CreatorLeaderboard({
 
   return (
     <Card padding="p-4">
-      <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <h2 className="text-lg font-semibold text-cyan-400 mb-4 flex items-center gap-2">
         <IconTrophy size={20} className="text-cyan-400" />
         Propheten-Ranking
       </h2>

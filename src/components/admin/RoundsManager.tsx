@@ -234,9 +234,9 @@ export const RoundsManager = memo(function RoundsManager() {
           rounds.map((round) => (
             <Card key={round.id} padding="p-5">
               <div>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                  <h3 className="text-lg font-semibold text-white truncate">{round.title}</h3>
-                  <RoundStatusBadge round={round} variant="full" />
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <h3 className="text-lg font-semibold text-cyan-400 truncate">{round.title}</h3>
+                  <RoundStatusBadge round={round} variant="compact" />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">

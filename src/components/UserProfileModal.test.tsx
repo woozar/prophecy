@@ -175,12 +175,6 @@ describe('UserProfileModal', () => {
     expect(screen.getByText('Test User')).toBeInTheDocument();
   });
 
-  it('renders username', () => {
-    renderWithMantine(<UserProfileModal user={mockUser} opened={true} onClose={mockOnClose} />);
-
-    expect(screen.getByText('@testuser')).toBeInTheDocument();
-  });
-
   it('shows username as title when displayName is null', () => {
     const userWithoutDisplayName = { ...mockUser, displayName: null };
     renderWithMantine(

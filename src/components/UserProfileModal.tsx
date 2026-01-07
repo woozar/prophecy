@@ -193,12 +193,9 @@ export const UserProfileModal = memo(function UserProfileModal({
         <div className="flex items-center gap-4 shrink-0">
           <UserAvatar user={user} size="xl" />
           <div>
-            <h2 className="text-xl font-bold text-white">{user.displayName || user.username}</h2>
-            <p className="text-sm text-(--text-muted)">@{user.username}</p>
+            <h2 className="text-xl font-bold text-cyan-400">{user.displayName || user.username}</h2>
             {user.createdAt && (
-              <p className="text-xs text-(--text-muted)">
-                Mitglied seit {formatDate(user.createdAt)}
-              </p>
+              <p className="text-sm text-white">Mitglied seit {formatDate(user.createdAt)}</p>
             )}
           </div>
         </div>
@@ -214,7 +211,7 @@ export const UserProfileModal = memo(function UserProfileModal({
 
         {/* Achievements */}
         <div className="flex flex-col min-h-0 flex-1">
-          <h3 className="text-sm font-semibold text-(--text-muted) mb-3 shrink-0">
+          <h3 className="text-sm font-semibold text-white mb-3 shrink-0">
             Achievements ({badgeCount})
           </h3>
           {displayItems.length === 0 ? (
@@ -272,8 +269,8 @@ export const UserProfileModal = memo(function UserProfileModal({
                     <div className="flex items-center gap-3 p-3 badge-card cursor-default">
                       <BadgeIcon badgeKey={badge.key} size="md" />
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-white truncate">{badge.name}</p>
-                        <p className="text-xs text-(--text-muted)">{formatDate(earnedAt)}</p>
+                        <p className="font-medium text-violet-400 truncate">{badge.name}</p>
+                        <p className="text-xs text-white">{formatDate(earnedAt)}</p>
                       </div>
                     </div>
                   </Tooltip>

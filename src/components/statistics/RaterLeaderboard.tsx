@@ -23,7 +23,7 @@ export const RaterLeaderboard = memo(function RaterLeaderboard({
   if (stats.length === 0) {
     return (
       <Card padding="p-4">
-        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-cyan-400 mb-4 flex items-center gap-2">
           <IconChartBar size={20} className="text-violet-400" />
           Bewerter-Ranking
         </h2>
@@ -34,7 +34,7 @@ export const RaterLeaderboard = memo(function RaterLeaderboard({
 
   return (
     <Card padding="p-4">
-      <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <h2 className="text-lg font-semibold text-cyan-400 mb-4 flex items-center gap-2">
         <IconChartBar size={20} className="text-violet-400" />
         Bewerter-Ranking
       </h2>

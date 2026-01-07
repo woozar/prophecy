@@ -237,8 +237,8 @@ describe('RoundsManager', () => {
       '2': mockRoundsData[1],
     };
     renderWithMantine(<RoundsManager />);
-    // Both rounds have future submission deadlines, so they should show "Einreichung offen"
-    const badges = screen.getAllByText('Einreichung offen');
+    // Both rounds have future submission deadlines, so they should show "Offen" (compact variant)
+    const badges = screen.getAllByText('Offen');
     expect(badges.length).toBe(2);
   });
 
@@ -428,7 +428,7 @@ describe('RoundsManager', () => {
       '3': roundInRatingPhase,
     };
     renderWithMantine(<RoundsManager />);
-    expect(screen.getByText('Bewertung offen')).toBeInTheDocument();
+    expect(screen.getByText('Bewertung')).toBeInTheDocument();
   });
 
   it('shows waiting status when rating deadline passed', () => {

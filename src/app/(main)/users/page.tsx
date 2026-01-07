@@ -23,7 +23,7 @@ export default function UsersPage() {
           href="/users/badges"
           className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
         >
-          Badge-Galerie →
+          Achievement-Galerie →
         </Link>
       </div>
       <UsersManager />

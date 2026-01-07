@@ -100,7 +100,8 @@ export const RoundResultsClient = memo(function RoundResultsClient({
             </GlowBadge>
           ) : (
             <GlowBadge size="sm" color="yellow">
-              {statistics.resolvedProphecies} von {statistics.totalAcceptedProphecies} ausgewertet
+              {statistics.resolvedProphecies ?? 0} von {statistics.totalAcceptedProphecies ?? 0}{' '}
+              ausgewertet
             </GlowBadge>
           )}
           {publishedDate && (
@@ -113,19 +114,25 @@ export const RoundResultsClient = memo(function RoundResultsClient({
       <Card padding="p-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           <div>
-            <p className="text-2xl font-bold text-cyan-400">{statistics.totalAcceptedProphecies}</p>
+            <p className="text-2xl font-bold text-cyan-400">
+              {statistics.totalAcceptedProphecies ?? 0}
+            </p>
             <p className="text-xs text-(--text-muted)">Akzeptierte Prophezeiungen</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-cyan-400">{statistics.resolvedProphecies}</p>
+            <p className="text-2xl font-bold text-cyan-400">{statistics.resolvedProphecies ?? 0}</p>
             <p className="text-xs text-(--text-muted)">Ausgewertet</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-violet-400">{statistics.creatorStats.length}</p>
+            <p className="text-2xl font-bold text-violet-400">
+              {statistics.creatorStats?.length ?? 0}
+            </p>
             <p className="text-xs text-(--text-muted)">Propheten</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-violet-400">{statistics.raterStats.length}</p>
+            <p className="text-2xl font-bold text-violet-400">
+              {statistics.raterStats?.length ?? 0}
+            </p>
             <p className="text-xs text-(--text-muted)">Bewerter</p>
           </div>
         </div>
@@ -133,8 +140,8 @@ export const RoundResultsClient = memo(function RoundResultsClient({
 
       {/* Leaderboards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <CreatorLeaderboard stats={statistics.creatorStats} />
-        <RaterLeaderboard stats={statistics.raterStats} />
+        <CreatorLeaderboard stats={statistics.creatorStats ?? []} />
+        <RaterLeaderboard stats={statistics.raterStats ?? []} />
       </div>
     </div>
   );

@@ -22,7 +22,6 @@ import { Modal } from '@/components/Modal';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useUserProfileModal } from '@/contexts/UserProfileModalContext';
 import { apiClient } from '@/lib/api-client/client';
-import { formatDate } from '@/lib/formatting/date';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 import { type Badge, useBadgeStore } from '@/store/useBadgeStore';
 import { selectProphecyCountByUserId, useProphecyStore } from '@/store/useProphecyStore';
@@ -445,11 +444,11 @@ const UserCard = memo(function UserCard({
   return (
     <Card padding="p-4" onClick={handleCardClick} className="cursor-pointer">
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-4 min-w-0">
           <UserAvatar user={user} size="md" />
-          <div className="min-w-0">
+          <div className="min-w-0 space-y-2">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-white truncate">
+              <h3 className="font-semibold text-cyan-400 truncate">
                 {user.displayName || user.username}
               </h3>
               {user.role === 'ADMIN' && (
@@ -468,38 +467,42 @@ const UserCard = memo(function UserCard({
                 </GlowBadge>
               )}
             </div>
-            <p className="text-sm text-(--text-muted) truncate">
-              @{user.username}
-              {user.createdAt && <> · Seit {formatDate(user.createdAt)}</>}
-            </p>
-            <p className="text-xs text-(--text-muted)">
-              {!user.isBot && <>{prophecyCount} Prophezeiungen · </>}
-              {ratingCount} Bewertungen
-            </p>
-            {badgeRarityCounts && (
-              <div className="flex gap-2 mt-1 text-xs">
-                {badgeRarityCounts.LEGENDARY > 0 && (
-                  <span className="text-purple-400" title="Legendäre Badges">
-                    💎 {badgeRarityCounts.LEGENDARY}
-                  </span>
-                )}
-                {badgeRarityCounts.GOLD > 0 && (
-                  <span className="text-yellow-400" title="Gold Badges">
-                    🥇 {badgeRarityCounts.GOLD}
-                  </span>
-                )}
-                {badgeRarityCounts.SILVER > 0 && (
-                  <span className="text-gray-300" title="Silber Badges">
-                    🥈 {badgeRarityCounts.SILVER}
-                  </span>
-                )}
-                {badgeRarityCounts.BRONZE > 0 && (
-                  <span className="text-amber-600" title="Bronze Badges">
-                    🥉 {badgeRarityCounts.BRONZE}
-                  </span>
-                )}
-              </div>
-            )}
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {prophecyCount > 0 && (
+                <GlowBadge size="sm" color="violet">
+                  {prophecyCount} Prophezeiungen
+                </GlowBadge>
+              )}
+              {ratingCount > 0 && (
+                <GlowBadge size="sm" color="violet">
+                  {ratingCount} Bewertungen
+                </GlowBadge>
+              )}
+              {badgeRarityCounts && (
+                <>
+                  {badgeRarityCounts.LEGENDARY > 0 && (
+                    <GlowBadge size="sm" color="cyan" title="Legendäre Badges">
+                      💎 {badgeRarityCounts.LEGENDARY}
+                    </GlowBadge>
+                  )}
+                  {badgeRarityCounts.GOLD > 0 && (
+                    <GlowBadge size="sm" color="cyan" title="Gold Badges">
+                      🥇 {badgeRarityCounts.GOLD}
+                    </GlowBadge>
+                  )}
+                  {badgeRarityCounts.SILVER > 0 && (
+                    <GlowBadge size="sm" color="cyan" title="Silber Badges">
+                      🥈 {badgeRarityCounts.SILVER}
+                    </GlowBadge>
+                  )}
+                  {badgeRarityCounts.BRONZE > 0 && (
+                    <GlowBadge size="sm" color="cyan" title="Bronze Badges">
+                      🥉 {badgeRarityCounts.BRONZE}
+                    </GlowBadge>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
 

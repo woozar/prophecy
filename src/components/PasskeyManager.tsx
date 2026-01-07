@@ -151,7 +151,7 @@ export const PasskeyManager = memo(function PasskeyManager({
     <>
       <Card padding="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white">Passkeys</h3>
+          <h3 className="text-lg font-semibold text-cyan-400">Passkeys</h3>
           <Button
             variant="ghost"
             onClick={() => setShowAddModal(true)}

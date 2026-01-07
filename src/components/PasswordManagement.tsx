@@ -69,7 +69,7 @@ export const PasswordManagement = memo(function PasswordManagement({
   if (isLoading) {
     return (
       <Card padding="p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Passwort</h3>
+        <h3 className="text-lg font-semibold text-cyan-400 mb-4">Passwort</h3>
         <p className="text-(--text-muted)">Laden...</p>
       </Card>
     );
@@ -78,7 +78,7 @@ export const PasswordManagement = memo(function PasswordManagement({
   return (
     <>
       <Card padding="p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Passwort</h3>
+        <h3 className="text-lg font-semibold text-cyan-400 mb-4">Passwort</h3>
 
         <div className="space-y-4">
           {/* Status */}

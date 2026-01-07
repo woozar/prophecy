@@ -26,11 +26,6 @@ interface UserProfileModalProps {
   onClose: () => void;
 }
 
-interface BadgeWithEarnedAt {
-  badge: Badge;
-  earnedAt: string;
-}
-
 // Badge keys that can be manually awarded/revoked by admins
 const MANUAL_BADGE_KEYS = ['hidden_bug_hunter', 'hidden_beta_tester'];
 

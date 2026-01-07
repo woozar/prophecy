@@ -35,21 +35,6 @@ interface UserBadgeWithUser {
   user: UserMock;
 }
 
-// These types match the actual select queries in badge-service.ts
-interface ProphecySelect {
-  id: string;
-  fulfilled: boolean | null;
-}
-
-interface RatingWithProphecySelect {
-  value: number;
-  prophecy: { fulfilled: boolean | null };
-}
-
-interface RoundSelect {
-  id: string;
-}
-
 // Create mock functions using vi.hoisted() to work with vi.mock hoisting
 // We don't add type parameters here because vi.hoisted runs before interfaces are defined
 const {
@@ -568,7 +553,7 @@ describe('badge-service', () => {
         ...Array(5).fill({ value: 5, prophecy: { fulfilled: false } }), // correct
       ]);
 
-      const result = await checkAndAwardBadges('user-1');
+      await checkAndAwardBadges('user-1');
 
       expect(mockBadgeFindUnique).toHaveBeenCalled();
     });
@@ -659,7 +644,7 @@ describe('badge-service', () => {
         },
       ]);
 
-      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+      await awardRoundCompletionBadges('round-1', leaderboard);
 
       expect(mockBadgeFindUnique).toHaveBeenCalled();
     });
@@ -676,7 +661,7 @@ describe('badge-service', () => {
         },
       ]);
 
-      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+      await awardRoundCompletionBadges('round-1', leaderboard);
 
       expect(mockBadgeFindUnique).toHaveBeenCalled();
     });
@@ -977,13 +962,7 @@ describe('badge-service', () => {
         return mockBadge;
       });
       mockUserBadgeCreate.mockImplementation(
-        async ({
-          data,
-          include,
-        }: {
-          data: { userId: string; badgeId: string };
-          include: { badge: boolean };
-        }) => ({
+        async ({ data }: { data: { userId: string; badgeId: string } }) => ({
           id: 'ub-new',
           userId: data.userId,
           badgeId: data.badgeId,
@@ -992,7 +971,7 @@ describe('badge-service', () => {
         })
       );
 
-      const result = await awardRoundCompletionBadges('round-1', leaderboard);
+      await awardRoundCompletionBadges('round-1', leaderboard);
 
       // 3/5 = 60% accuracy, should award accuracy_rate_60 (threshold 20%) and accuracy_rate_70 (threshold 40%)
       // Check that accuracy_rate badges were attempted

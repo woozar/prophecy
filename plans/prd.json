@@ -20,7 +20,7 @@
       "Remove unused 'include' variable in badge-service.test.ts",
       "npm run lint shows 0 warnings"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "code-quality",

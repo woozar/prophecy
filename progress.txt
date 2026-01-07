@@ -6,3 +6,11 @@
 - Fixed typo 'oderId' -> 'userId' in badge-service.test.ts (line 988)
 - npx tsc --noEmit now passes without errors
 - All 1751 tests passing
+
+### 2. Remove unused variables (ESLint warnings) (code-quality)
+- Removed unused BadgeWithEarnedAt interface in UserProfileModal.tsx (line 29)
+- Removed unused type imports (ProphecySelect, RatingWithProphecySelect, RoundSelect) in badge-service.test.ts (lines 39-51)
+- Removed 4 unused 'result' variables in badge-service.test.ts (lines 556, 647, 664, 980)
+- Removed unused 'include' parameter in badge-service.test.ts (line 967)
+- npm run lint shows 0 warnings
+- All 1751 tests passing

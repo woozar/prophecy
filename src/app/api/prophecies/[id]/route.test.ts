@@ -277,7 +277,15 @@ describe('PUT /api/prophecies/[id]', () => {
         earnedAt: new Date(),
         userId: 'user-1',
         badgeId: 'badge-perf',
-        badge: { id: 'badge-perf', name: 'Perfektionist' },
+        badge: {
+          id: 'badge-perf',
+          key: 'perfectionist',
+          name: 'Perfektionist',
+          description: 'Test description',
+          category: 'SPECIAL' as const,
+          rarity: 'GOLD' as const,
+          threshold: null,
+        },
       },
     });
 
@@ -470,7 +478,15 @@ describe('DELETE /api/prophecies/[id]', () => {
         earnedAt: new Date(),
         userId: 'user-1',
         badgeId: 'badge-regret',
-        badge: { id: 'badge-regret', name: 'Reue' },
+        badge: {
+          id: 'badge-regret',
+          key: 'regret',
+          name: 'Reue',
+          description: 'Test description',
+          category: 'SPECIAL' as const,
+          rarity: 'BRONZE' as const,
+          threshold: null,
+        },
       },
     });
 

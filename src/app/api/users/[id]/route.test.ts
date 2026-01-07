@@ -75,6 +75,7 @@ const mockStats = {
   propheciesFulfilled: 3,
   accuracyRate: 60,
   ratingsGiven: 10,
+  ratingsOnResolved: 8,
   raterAccuracy: 70,
   roundsParticipated: 2,
   leaderboardWins: 1,

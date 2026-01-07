@@ -1,0 +1,8 @@
+## Completed Features
+
+### 1. Fix TypeScript errors in test files (code-quality)
+- Added missing Badge properties (key, description, category, rarity, threshold) in prophecies/[id]/route.test.ts (lines 280, 473)
+- Added missing ratingsOnResolved property to UserStats mock in users/[id]/route.test.ts (line 78)
+- Fixed typo 'oderId' -> 'userId' in badge-service.test.ts (line 988)
+- npx tsc --noEmit now passes without errors
+- All 1751 tests passing

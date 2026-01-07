@@ -1,0 +1,36 @@
+[
+  {
+    "category": "code-quality",
+    "description": "Fix TypeScript errors in test files",
+    "steps": [
+      "Add missing Badge properties (key, description, category, rarity, threshold) in prophecies/[id]/route.test.ts",
+      "Add missing ratingsOnResolved property to UserStats mocks in users/[id]/route.test.ts",
+      "Fix typo 'oderId' -> 'orderId' in badge-service.test.ts",
+      "npx tsc --noEmit passes without errors"
+    ],
+    "passes": true
+  },
+  {
+    "category": "code-quality",
+    "description": "Remove unused variables (ESLint warnings)",
+    "steps": [
+      "Remove unused BadgeWithEarnedAt import in UserProfileModal.tsx",
+      "Remove unused type imports (ProphecySelect, RatingWithProphecySelect, RoundSelect) in badge-service.test.ts",
+      "Remove or use unused 'result' variables in badge-service.test.ts",
+      "Remove unused 'include' variable in badge-service.test.ts",
+      "npm run lint shows 0 warnings"
+    ],
+    "passes": false
+  },
+  {
+    "category": "code-quality",
+    "description": "Clean up debug console.log statements",
+    "steps": [
+      "Review console.logs in auth/login/verify/route.ts - remove or replace with proper logger",
+      "Remove placeholder console.log in forgot-password/page.tsx",
+      "Keep intentional SSE debug logs but consider adding a debug flag",
+      "Keep bot logging but consider adding a debug flag or proper logger"
+    ],
+    "passes": false
+  }
+]

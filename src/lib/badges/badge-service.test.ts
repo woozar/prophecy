@@ -985,7 +985,7 @@ describe('badge-service', () => {
           include: { badge: boolean };
         }) => ({
           id: 'ub-new',
-          oderId: data.oderId,
+          userId: data.userId,
           badgeId: data.badgeId,
           earnedAt: new Date(),
           badge: { ...mockBadge, key: 'accuracy_rate_60' },

@@ -9,6 +9,10 @@ export const CONTENT_CATEGORIES = [
   'environment',
   'science',
   'finance',
+  'politics',
+  'nerd',
+  'weather',
+  'celebrity',
 ] as const;
 
 export type ContentCategory = (typeof CONTENT_CATEGORIES)[number];
@@ -33,6 +37,10 @@ KATEGORIEN:
 - environment: Umweltschutz, Klimawandel, Nachhaltigkeit, Natur
 - science: Wissenschaft, Forschung, Technologie, Entdeckungen, Medizin
 - finance: Börse, Aktien, Wirtschaft, Geld, Kryptowährung, Investments
+- politics: Politik, Wahlen, Parteien, Regierungen, Gesetze, internationale Beziehungen
+- nerd: Nischen-Spezialwissen, technische Details die nur Experten kennen, obskure Fakten, sehr spezifische Metriken oder Fachbegriffe die Laien nicht verstehen würden
+- weather: Wetter, Wettervorhersagen, Temperaturen, Niederschlag, Unwetter, Jahreszeiten, meteorologische Ereignisse
+- celebrity: Prominente, Stars, Klatsch und Tratsch, Boulevard, Promi-Beziehungen, Scheidungen, Skandale, rotes Tuch
 
 WICHTIG:
 - Die meisten Prophezeiungen gehören zu KEINER Kategorie - gib dann ein leeres Array zurück
@@ -44,8 +52,13 @@ WICHTIG:
 Beispiele:
 - "Deutschland wird die EM gewinnen" -> categories: ["sport"], reasoning: "Bezieht sich auf die Fußball-Europameisterschaft."
 - "Bitcoin erreicht 100.000$" -> categories: ["finance"], reasoning: "Thematisiert Kryptowährungskurse."
-- "Das Wetter wird schlecht" -> categories: [], reasoning: "Allgemeine Wettervorhersage ohne spezifischen Themenbezug."
-- "XY wird schwanger" -> categories: [], reasoning: "Persönliches Ereignis ohne eindeutige Kategoriezuordnung."`;
+- "Dieses Jahr gibt es weiße Weihnachten in München" -> categories: ["weather"], reasoning: "Prophezeiung über Schneefall zu einem bestimmten Zeitpunkt."
+- "Taylor Swift und Travis Kelce werden sich trennen" -> categories: ["celebrity"], reasoning: "Klatsch über Promi-Beziehung."
+- "Mein Nachbar wird schwanger" -> categories: [], reasoning: "Persönliches Ereignis ohne Promi-Bezug."
+- "Die CDU wird die nächste Bundestagswahl gewinnen" -> categories: ["politics"], reasoning: "Bezieht sich auf Wahlen und Parteien."
+- "Perowskit-Solarzellen werden 30% Wirkungsgrad erreichen" -> categories: ["nerd", "science"], reasoning: "Sehr technisches Detail über einen spezifischen Wirkungsgrad einer Nischen-Technologie, das nur Experten verstehen."
+- "SpaceX wird eine Rakete erfolgreich landen" -> categories: ["science"], reasoning: "Raumfahrt/Technologie, aber kein nerd-Thema da Mainstream-bekannt."
+- "Die weltweite Produktion von Palmöl wird im vergleich zum Vorjahr rückläufig sein" -> categories: ["environment"], reasoning: "Bezieht sich auf Nachhaltigkeit und Umweltauswirkungen der Palmöl-Industrie."`;
 
 export async function analyzeContentCategories(
   title: string,
@@ -84,4 +97,8 @@ export const CATEGORY_TO_BADGE: Record<ContentCategory, string> = {
   environment: 'content_environment',
   science: 'content_science',
   finance: 'content_finance',
+  politics: 'content_politics',
+  nerd: 'content_nerd',
+  weather: 'content_weather',
+  celebrity: 'content_celebrity',
 };

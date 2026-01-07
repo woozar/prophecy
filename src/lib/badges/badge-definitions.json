@@ -465,6 +465,38 @@
       "requirement": "Prophezeiung über Finanzen erstellt",
       "category": "SPECIAL",
       "rarity": "BRONZE"
+    },
+    {
+      "key": "content_politics",
+      "name": "Politischer Kompass",
+      "description": "Du durchschaust das Spiel der Mächtigen",
+      "requirement": "Prophezeiung über Politik erstellt",
+      "category": "SPECIAL",
+      "rarity": "BRONZE"
+    },
+    {
+      "key": "content_nerd",
+      "name": "Nerd",
+      "description": "Dein Spezialwissen kennt keine Grenzen",
+      "requirement": "Prophezeiung mit Nischen-Expertenwissen erstellt",
+      "category": "SPECIAL",
+      "rarity": "SILVER"
+    },
+    {
+      "key": "content_weather",
+      "name": "Hummdudel",
+      "description": "Du hummdudelst das Wetter vorher",
+      "requirement": "Prophezeiung über das Wetter erstellt",
+      "category": "SPECIAL",
+      "rarity": "BRONZE"
+    },
+    {
+      "key": "content_celebrity",
+      "name": "Paparazzo",
+      "description": "Kein Promi-Geheimnis ist vor dir sicher",
+      "requirement": "Prophezeiung über Prominente erstellt",
+      "category": "SPECIAL",
+      "rarity": "BRONZE"
     }
   ],
   "social": [

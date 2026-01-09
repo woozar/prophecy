@@ -20,6 +20,7 @@ export const PasswordInput = memo(
   ) {
     const generatedId = useId();
     const inputId = id || generatedId;
+    const errorId = `${inputId}-error`;
     const [showPassword, setShowPassword] = useState(false);
 
     const toggleVisibility = useCallback(() => {
@@ -40,6 +41,8 @@ export const PasswordInput = memo(
             ref={ref}
             id={inputId}
             type={showPassword ? 'text' : 'password'}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
             className={`
               w-full px-4 py-3 pr-12 rounded-lg
               bg-[rgba(16,42,67,0.5)]
@@ -68,7 +71,11 @@ export const PasswordInput = memo(
             {showPassword ? <IconEyeOff size={20} /> : <IconEye size={20} />}
           </Button>
         </div>
-        {error && <p className="text-xs text-red-400 mt-0.5">{error}</p>}
+        {error && (
+          <p id={errorId} role="alert" className="text-xs text-red-400 mt-0.5">
+            {error}
+          </p>
+        )}
       </div>
     );
   })

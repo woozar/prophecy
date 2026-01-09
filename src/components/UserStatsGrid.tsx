@@ -32,7 +32,7 @@ const stats = [
   {
     key: 'badges',
     icon: IconMedal,
-    label: 'Achievements',
+    label: 'Auszeichnungen',
     colorClass: 'bg-amber-500/10 border-2 border-amber-500/40',
     iconColor: 'text-amber-400',
   },
@@ -56,7 +56,7 @@ const StatContent = memo(function StatContent({
   return (
     <div className="flex flex-col items-center text-center">
       <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center mb-2`}>
-        <Icon size={20} className={iconColor} />
+        <Icon size={20} className={iconColor} aria-hidden="true" />
       </div>
       <p className="text-2xl font-bold text-white">{value}</p>
       <p className="text-xs text-(--text-muted)">{label}</p>

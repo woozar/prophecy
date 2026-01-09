@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, TextareaHTMLAttributes, memo, useMemo } from 'react';
+import { ReactNode, TextareaHTMLAttributes, memo, useId, useMemo } from 'react';
 
 import { RequiredAsterisk } from './RequiredAsterisk';
 
@@ -20,15 +20,19 @@ export const Textarea = memo(function Textarea({
   id,
   ...props
 }: Readonly<TextareaProps>) {
+  const generatedId = useId();
+  const textareaId = id || generatedId;
+  const errorId = `${textareaId}-error`;
+
   const labelElement = useMemo(() => {
     if (!label) return null;
     return (
-      <label htmlFor={id} className="block text-sm font-medium text-[#9fb3c8] mb-1.5">
+      <label htmlFor={textareaId} className="block text-sm font-medium text-[#9fb3c8] mb-1.5">
         {label}
         {required && <RequiredAsterisk />}
       </label>
     );
-  }, [label, required, id]);
+  }, [label, required, textareaId]);
 
   const textareaClassName = useMemo(() => {
     const baseClasses =
@@ -42,8 +46,18 @@ export const Textarea = memo(function Textarea({
   return (
     <div>
       {labelElement}
-      <textarea id={id} className={textareaClassName} {...props} />
-      {error && <p className="mt-1.5 text-sm text-red-400">{error}</p>}
+      <textarea
+        id={textareaId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
+        className={textareaClassName}
+        {...props}
+      />
+      {error && (
+        <p id={errorId} role="alert" className="mt-1.5 text-sm text-red-400">
+          {error}
+        </p>
+      )}
     </div>
   );
 });

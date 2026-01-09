@@ -1069,11 +1069,7 @@ export const UserAvatar = memo(function UserAvatar(props: Readonly<UserAvatarPro
 
   if (clickable || onClick) {
     return (
-      <button
-        type="button"
-        onClick={handleClick}
-        className="cursor-pointer rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50"
-      >
+      <button type="button" onClick={handleClick} className="cursor-pointer rounded-full">
         {avatar}
       </button>
     );

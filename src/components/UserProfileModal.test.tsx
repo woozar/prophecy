@@ -201,7 +201,7 @@ describe('UserProfileModal', () => {
   it('shows achievement count in header', () => {
     renderWithMantine(<UserProfileModal user={mockUser} opened={true} onClose={mockOnClose} />);
 
-    expect(screen.getByText('Achievements (1)')).toBeInTheDocument();
+    expect(screen.getByText('Auszeichnungen (1)')).toBeInTheDocument();
   });
 
   it('shows no achievements message when user has no achievements', () => {
@@ -230,7 +230,7 @@ describe('UserProfileModal', () => {
 
     renderWithMantine(<UserProfileModal user={mockUser} opened={true} onClose={mockOnClose} />);
 
-    expect(screen.getByText('Noch keine Achievements freigeschaltet.')).toBeInTheDocument();
+    expect(screen.getByText('Noch keine Auszeichnungen freigeschaltet.')).toBeInTheDocument();
   });
 
   it('calls onClose when close button is clicked', () => {

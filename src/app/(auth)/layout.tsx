@@ -24,7 +24,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         fadeDuration={1200}
       />
       <FogBackground />
-      <div className="min-h-screen flex relative z-10">
+      <main id="main-content" className="min-h-screen flex relative z-10">
         {/* Left side - Splash Image */}
         <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12">
           <div className="relative w-full max-w-lg aspect-square animate-slide-in-left">
@@ -55,7 +55,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
             {children}
           </div>
         </div>
-      </div>
+      </main>
     </>
   );
 }

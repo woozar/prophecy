@@ -195,41 +195,44 @@ function LoginForm() {
       </div>
 
       {/* Password Login Form */}
-      <form onSubmit={handlePasswordLogin} className="space-y-4 mb-6">
-        <TextInput
-          label="Benutzername"
-          placeholder="Dein Benutzername"
-          value={username}
-          onChange={(e) => setUsername(e.currentTarget.value)}
-          required
-          disabled={isLoading || isPasskeyLoading}
-        />
+      <form onSubmit={handlePasswordLogin} className="mb-6">
+        <fieldset className="border-0 p-0 m-0 space-y-4">
+          <legend className="sr-only">Anmeldedaten</legend>
+          <TextInput
+            label="Benutzername"
+            placeholder="Dein Benutzername"
+            value={username}
+            onChange={(e) => setUsername(e.currentTarget.value)}
+            required
+            disabled={isLoading || isPasskeyLoading}
+          />
 
-        <PasswordInput
-          label="Passwort"
-          placeholder="Dein Passwort"
-          value={password}
-          onChange={(e) => setPassword(e.currentTarget.value)}
-          required
-          disabled={isLoading || isPasskeyLoading}
-        />
+          <PasswordInput
+            label="Passwort"
+            placeholder="Dein Passwort"
+            value={password}
+            onChange={(e) => setPassword(e.currentTarget.value)}
+            required
+            disabled={isLoading || isPasskeyLoading}
+          />
 
-        <div className="flex justify-end">
-          <Link
-            href="/forgot-password"
-            className="text-sm text-(--text-secondary) hover:text-cyan-400 transition-colors"
+          <div className="flex justify-end">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-(--text-secondary) hover:text-cyan-400 transition-colors"
+            >
+              Passwort vergessen?
+            </Link>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={isLoading || isPasskeyLoading || !username || !password}
+            className="w-full"
           >
-            Passwort vergessen?
-          </Link>
-        </div>
-
-        <Button
-          type="submit"
-          disabled={isLoading || isPasskeyLoading || !username || !password}
-          className="w-full"
-        >
-          {isLoading ? 'Anmelden...' : 'Anmelden'}
-        </Button>
+            {isLoading ? 'Anmelden...' : 'Anmelden'}
+          </Button>
+        </fieldset>
       </form>
 
       {/* Divider */}
@@ -264,7 +267,15 @@ function LoginForm() {
             <path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z" />
             <circle cx="16.5" cy="7.5" r=".5" fill="currentColor" />
           </svg>
-          {isPasskeyLoading ? 'Warte auf Passkey...' : 'Mit Passkey anmelden'}
+          {isPasskeyLoading ? (
+            <>
+              Warte auf <span lang="en">Passkey</span>...
+            </>
+          ) : (
+            <>
+              Mit <span lang="en">Passkey</span> anmelden
+            </>
+          )}
         </span>
       </Button>
 
@@ -274,7 +285,7 @@ function LoginForm() {
           Noch kein Konto?{' '}
           <Link
             href="/register"
-            className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium"
+            className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium p-2"
           >
             Jetzt registrieren
           </Link>

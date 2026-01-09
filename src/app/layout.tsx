@@ -28,6 +28,10 @@ export default function RootLayout({
         <ColorSchemeScript />
       </head>
       <body className="antialiased">
+        {/* Skip-Link für Barrierefreiheit - nur bei Fokus sichtbar */}
+        <a href="#main-content" className="skip-link">
+          Zum Inhalt springen
+        </a>
         <MantineProvider>
           <DatesProvider settings={{ locale: 'de', firstDayOfWeek: 1 }}>
             <Notifications position="top-right" />

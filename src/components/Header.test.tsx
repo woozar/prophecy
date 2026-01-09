@@ -262,7 +262,7 @@ describe('Header', () => {
     fireEvent.click(userButton!);
 
     // Click logout
-    const logoutButton = screen.getByRole('button', { name: 'Abmelden' });
+    const logoutButton = screen.getByRole('menuitem', { name: 'Abmelden' });
     fireEvent.click(logoutButton);
 
     await waitFor(() => {
@@ -280,7 +280,7 @@ describe('Header', () => {
     fireEvent.click(userButton!);
 
     // Click logout
-    const logoutButton = screen.getByRole('button', { name: 'Abmelden' });
+    const logoutButton = screen.getByRole('menuitem', { name: 'Abmelden' });
     fireEvent.click(logoutButton);
 
     await waitFor(() => {
@@ -300,7 +300,7 @@ describe('Header', () => {
     const userButton = screen.getAllByText('Test User')[0].closest('button');
     fireEvent.click(userButton!);
 
-    const logoutButton = screen.getByRole('button', { name: 'Abmelden' });
+    const logoutButton = screen.getByRole('menuitem', { name: 'Abmelden' });
     fireEvent.click(logoutButton);
 
     await waitFor(() => {
@@ -316,7 +316,7 @@ describe('Header', () => {
     const userButton = screen.getAllByText('Test User')[0].closest('button');
     fireEvent.click(userButton!);
 
-    const logoutButton = screen.getByRole('button', { name: 'Abmelden' });
+    const logoutButton = screen.getByRole('menuitem', { name: 'Abmelden' });
     fireEvent.click(logoutButton);
 
     await waitFor(() => {
@@ -373,7 +373,7 @@ describe('Header', () => {
     const userButton = screen.getAllByText('Test User')[0].closest('button');
     fireEvent.click(userButton!);
 
-    const logoutButton = screen.getByRole('button', { name: 'Abmelden' });
+    const logoutButton = screen.getByRole('menuitem', { name: 'Abmelden' });
     fireEvent.click(logoutButton);
 
     // Should show loading state
@@ -426,7 +426,7 @@ describe('Header', () => {
     fireEvent.click(userButton!);
 
     // Verify dropdown is open
-    expect(screen.getByRole('button', { name: 'Abmelden' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Abmelden' })).toBeInTheDocument();
 
     // Click profile link
     const profileLink = screen.getByText('Profil');

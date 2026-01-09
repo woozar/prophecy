@@ -166,7 +166,7 @@ export const Modal = memo(function Modal({
                 className="p-1.5 rounded-lg text-(--text-muted) hover:text-white hover:bg-[rgba(98,125,152,0.2)] transition-colors"
                 aria-label="Schließen"
               >
-                <IconX size={18} />
+                <IconX size={18} aria-hidden="true" />
               </button>
             )}
           </div>

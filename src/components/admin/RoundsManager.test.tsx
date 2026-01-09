@@ -1222,7 +1222,7 @@ describe('RoundsManager', () => {
         '2': mockRoundsData[1],
       };
       renderWithMantine(<RoundsManager />);
-      const exportButtons = screen.getAllByTitle('Excel Export');
+      const exportButtons = screen.getAllByTitle('Excel-Export');
       expect(exportButtons.length).toBe(2);
     });
   });

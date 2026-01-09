@@ -191,60 +191,63 @@ export default function RegisterPage() {
       </div>
 
       {/* Password Register Form */}
-      <form onSubmit={handlePasswordRegister} className="space-y-4 mb-6">
-        <TextInput
-          label="Benutzername"
-          placeholder="mindestens 3 Zeichen"
-          description="Wird für die Identifikation verwendet"
-          value={username}
-          onChange={(e) =>
-            setUsername(e.currentTarget.value.toLowerCase().replaceAll(/[^a-z0-9_-]/g, ''))
-          }
-          error={username.length > 0 && username.length < 3 ? 'Mindestens 3 Zeichen' : undefined}
-          required
-          disabled={isLoading || isPasskeyLoading}
-        />
+      <form onSubmit={handlePasswordRegister} className="mb-6">
+        <fieldset className="border-0 p-0 m-0 space-y-4">
+          <legend className="sr-only">Registrierungsdaten</legend>
+          <TextInput
+            label="Benutzername"
+            placeholder="mindestens 3 Zeichen"
+            description="Wird für die Identifikation verwendet"
+            value={username}
+            onChange={(e) =>
+              setUsername(e.currentTarget.value.toLowerCase().replaceAll(/[^a-z0-9_-]/g, ''))
+            }
+            error={username.length > 0 && username.length < 3 ? 'Mindestens 3 Zeichen' : undefined}
+            required
+            disabled={isLoading || isPasskeyLoading}
+          />
 
-        <TextInput
-          label="Anzeigename"
-          placeholder={username || 'Wie sollen andere dich sehen?'}
-          description="Optional - standardmäßig dein Benutzername"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.currentTarget.value)}
-          disabled={isLoading || isPasskeyLoading}
-        />
+          <TextInput
+            label="Anzeigename"
+            placeholder={username || 'Wie sollen andere dich sehen?'}
+            description="Optional - standardmäßig dein Benutzername"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.currentTarget.value)}
+            disabled={isLoading || isPasskeyLoading}
+          />
 
-        <PasswordInput
-          label="Passwort"
-          placeholder="mindestens 8 Zeichen"
-          value={password}
-          onChange={(e) => setPassword(e.currentTarget.value)}
-          error={password.length > 0 && password.length < 8 ? 'Mindestens 8 Zeichen' : undefined}
-          required
-          disabled={isLoading || isPasskeyLoading}
-        />
+          <PasswordInput
+            label="Passwort"
+            placeholder="mindestens 8 Zeichen"
+            value={password}
+            onChange={(e) => setPassword(e.currentTarget.value)}
+            error={password.length > 0 && password.length < 8 ? 'Mindestens 8 Zeichen' : undefined}
+            required
+            disabled={isLoading || isPasskeyLoading}
+          />
 
-        <PasswordInput
-          label="Passwort bestätigen"
-          placeholder="Passwort wiederholen"
-          value={passwordConfirm}
-          onChange={(e) => setPasswordConfirm(e.currentTarget.value)}
-          error={
-            passwordConfirm.length > 0 && !doPasswordsMatch
-              ? 'Passwörter stimmen nicht überein'
-              : undefined
-          }
-          required
-          disabled={isLoading || isPasskeyLoading}
-        />
+          <PasswordInput
+            label="Passwort bestätigen"
+            placeholder="Passwort wiederholen"
+            value={passwordConfirm}
+            onChange={(e) => setPasswordConfirm(e.currentTarget.value)}
+            error={
+              passwordConfirm.length > 0 && !doPasswordsMatch
+                ? 'Passwörter stimmen nicht überein'
+                : undefined
+            }
+            required
+            disabled={isLoading || isPasskeyLoading}
+          />
 
-        <Button
-          type="submit"
-          disabled={isLoading || isPasskeyLoading || !isFormValid}
-          className="w-full"
-        >
-          {isLoading ? 'Registriere...' : 'Mit Passwort registrieren'}
-        </Button>
+          <Button
+            type="submit"
+            disabled={isLoading || isPasskeyLoading || !isFormValid}
+            className="w-full"
+          >
+            {isLoading ? 'Registriere...' : 'Mit Passwort registrieren'}
+          </Button>
+        </fieldset>
       </form>
 
       {/* Divider */}
@@ -279,17 +282,27 @@ export default function RegisterPage() {
             <path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z" />
             <circle cx="16.5" cy="7.5" r=".5" fill="currentColor" />
           </svg>
-          {isPasskeyLoading ? 'Erstelle Passkey...' : 'Mit Passkey registrieren'}
+          {isPasskeyLoading ? (
+            <>
+              Erstelle <span lang="en">Passkey</span>...
+            </>
+          ) : (
+            <>
+              Mit <span lang="en">Passkey</span> registrieren
+            </>
+          )}
         </span>
       </Button>
 
       {/* Info about passkey */}
       <div className="mt-6 p-3 rounded-lg bg-[rgba(6,182,212,0.1)] border border-[rgba(6,182,212,0.2)]">
         <div className="flex items-start gap-2">
-          <GlowBadge size="sm">Info</GlowBadge>
+          <GlowBadge size="sm">
+            <span lang="en">Info</span>
+          </GlowBadge>
           <p className="text-sm text-(--text-secondary)">
-            Passkeys sind sicherer als Passwörter und ermöglichen schnelles Anmelden per
-            Fingerabdruck, Gesicht oder PIN.
+            <span lang="en">Passkeys</span> sind sicherer als Passwörter und ermöglichen schnelles
+            Anmelden per Fingerabdruck, Gesicht oder PIN.
           </p>
         </div>
       </div>

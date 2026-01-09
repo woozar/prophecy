@@ -151,20 +151,28 @@ export const PasskeyManager = memo(function PasskeyManager({
     <>
       <Card padding="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-cyan-400">Passkeys</h3>
+          <h3 className="text-lg font-semibold text-cyan-400" lang="en">
+            Passkeys
+          </h3>
           <Button
             variant="ghost"
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-cyan-400 border border-cyan-400/50 rounded-lg hover:bg-cyan-400/10 hover:border-cyan-400"
           >
             <IconPlus size={16} />
-            <span className="min-[400px]:hidden">Passkey</span>
-            <span className="hidden min-[400px]:inline">Passkey hinzufügen</span>
+            <span className="min-[400px]:hidden" lang="en">
+              Passkey
+            </span>
+            <span className="hidden min-[400px]:inline">
+              <span lang="en">Passkey</span> hinzufügen
+            </span>
           </Button>
         </div>
 
         {passkeys.length === 0 ? (
-          <p className="text-(--text-muted) text-sm">Keine Passkeys registriert.</p>
+          <p className="text-(--text-muted) text-sm">
+            Keine <span lang="en">Passkeys</span> registriert.
+          </p>
         ) : (
           <div className="space-y-3">
             {passkeys.map((passkey) => (
@@ -281,9 +289,11 @@ export const PasskeyManager = memo(function PasskeyManager({
             <circle cx="16.5" cy="7.5" r=".5" fill="currentColor" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-white text-center mb-2">Neuer Passkey</h3>
+        <h3 className="text-lg font-semibold text-white text-center mb-2">
+          Neuer <span lang="en">Passkey</span>
+        </h3>
         <p className="text-sm text-(--text-secondary) text-center mb-4">
-          Gib deinem Passkey einen Namen, um ihn später wiederzuerkennen.
+          Gib deinem <span lang="en">Passkey</span> einen Namen, um ihn später wiederzuerkennen.
         </p>
         <input
           type="text"
@@ -304,7 +314,13 @@ export const PasskeyManager = memo(function PasskeyManager({
             Abbrechen
           </Button>
           <Button onClick={handleAddPasskey} disabled={isAdding} className="flex-1">
-            {isAdding ? 'Wird registriert...' : 'Passkey erstellen'}
+            {isAdding ? (
+              'Wird registriert...'
+            ) : (
+              <>
+                <span lang="en">Passkey</span> erstellen
+              </>
+            )}
           </Button>
         </div>
       </Modal>
@@ -335,7 +351,9 @@ export const PasskeyManager = memo(function PasskeyManager({
             <path d="m15 5 4 4" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-white text-center mb-2">Passkey umbenennen</h3>
+        <h3 className="text-lg font-semibold text-white text-center mb-2">
+          <span lang="en">Passkey</span> umbenennen
+        </h3>
         <input
           type="text"
           value={editName}
@@ -385,9 +403,11 @@ export const PasskeyManager = memo(function PasskeyManager({
             <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-white text-center mb-2">Passkey löschen?</h3>
+        <h3 className="text-lg font-semibold text-white text-center mb-2">
+          <span lang="en">Passkey</span> löschen?
+        </h3>
         <p className="text-sm text-(--text-secondary) text-center mb-6">
-          Möchtest du den Passkey{' '}
+          Möchtest du den <span lang="en">Passkey</span>{' '}
           <span className="text-white font-medium">&quot;{confirmDelete?.name}&quot;</span> wirklich
           löschen? Diese Aktion kann nicht rückgängig gemacht werden.
         </p>

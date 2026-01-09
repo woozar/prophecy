@@ -25,5 +25,12 @@ export const SSEStatusIndicator = memo(function SSEStatusIndicator() {
     [connectionStatus]
   );
 
-  return <div style={indicatorStyle} title={`SSE: ${statusConfig[connectionStatus].label}`} />;
+  return (
+    <output
+      aria-live="polite"
+      aria-label={`Verbindungsstatus: ${statusConfig[connectionStatus].label}`}
+      style={indicatorStyle}
+      title={`SSE: ${statusConfig[connectionStatus].label}`}
+    />
+  );
 });

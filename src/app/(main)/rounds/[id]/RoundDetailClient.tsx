@@ -455,7 +455,15 @@ export const RoundDetailClient = memo(function RoundDetailClient({
             <Button variant="outline" onClick={() => exportRound(round.id)} disabled={isExporting}>
               <div className="flex flex-row gap-2 items-center">
                 <IconDownload size={18} />
-                <span>{isExporting ? 'Exportieren...' : 'Excel Export'}</span>
+                <span>
+                  {isExporting ? (
+                    'Exportieren...'
+                  ) : (
+                    <>
+                      <span lang="en">Excel</span> Export
+                    </>
+                  )}
+                </span>
               </div>
             </Button>
           )}

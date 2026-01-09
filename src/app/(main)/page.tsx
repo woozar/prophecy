@@ -152,7 +152,7 @@ const RoundCard = memo(function RoundCard({ round, formatDate }: RoundCardProps)
       <div className="mt-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
         <Link
           href={`/rounds/${round.id}`}
-          className="text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors"
+          className="text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors p-2 rounded-md"
         >
           Zur Runde &rarr;
         </Link>

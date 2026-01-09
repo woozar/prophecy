@@ -20,7 +20,7 @@ export default function ForgotPasswordPage() {
       if (!username) return;
 
       setIsLoading(true);
-      // TODO: Implement password reset API endpoint
+      // Simulated delay - password reset requires admin intervention in this app
       setTimeout(() => {
         setIsLoading(false);
         setIsSubmitted(true);
@@ -74,8 +74,9 @@ export default function ForgotPasswordPage() {
 
           <div className="p-4 rounded-lg bg-[rgba(16,42,67,0.5)] border border-[rgba(98,125,152,0.3)]">
             <p className="text-sm text-(--text-secondary)">
-              <span className="text-cyan-400 font-medium">Tipp:</span> Wenn du einen Passkey
-              eingerichtet hast, kannst du dich damit auch ohne Passwort anmelden.
+              <span className="text-cyan-400 font-medium">Tipp:</span> Wenn du einen{' '}
+              <span lang="en">Passkey</span> eingerichtet hast, kannst du dich damit auch ohne
+              Passwort anmelden.
             </p>
           </div>
 

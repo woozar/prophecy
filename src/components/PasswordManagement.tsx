@@ -86,12 +86,12 @@ export const PasswordManagement = memo(function PasswordManagement({
             <div className="flex items-center gap-2">
               {passwordLoginEnabled ? (
                 <>
-                  <IconKey size={20} className="text-cyan-400" />
+                  <IconKey size={20} className="text-cyan-400" aria-hidden="true" />
                   <span className="text-(--text-secondary)">Passwort-Login aktiv</span>
                 </>
               ) : (
                 <>
-                  <IconKeyOff size={20} className="text-(--text-muted)" />
+                  <IconKeyOff size={20} className="text-(--text-muted)" aria-hidden="true" />
                   <span className="text-(--text-muted)">Passwort-Login deaktiviert</span>
                 </>
               )}

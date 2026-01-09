@@ -173,7 +173,7 @@ describe('BadgesPage', () => {
 
     renderWithMantine(<BadgesPage />);
 
-    expect(screen.getByText('Achievements werden geladen...')).toBeInTheDocument();
+    expect(screen.getByText('Auszeichnungen werden geladen...')).toBeInTheDocument();
   });
 
   it('shows empty state when no achievements awarded', () => {
@@ -186,7 +186,7 @@ describe('BadgesPage', () => {
 
     renderWithMantine(<BadgesPage />);
 
-    expect(screen.getByText('Noch keine Achievements freigeschaltet.')).toBeInTheDocument();
+    expect(screen.getByText('Noch keine Auszeichnungen freigeschaltet.')).toBeInTheDocument();
   });
 
   it('renders awarded badges with first achiever info', () => {
@@ -481,9 +481,9 @@ describe('BadgesPage', () => {
 
     renderWithMantine(<BadgesPage />);
 
-    expect(screen.getByRole('heading', { name: 'Achievements' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Auszeichnungen' })).toBeInTheDocument();
     expect(
-      screen.getByText(/Alle Achievements, die bereits freigeschaltet wurden/)
+      screen.getByText(/Alle Auszeichnungen, die bereits freigeschaltet wurden/)
     ).toBeInTheDocument();
   });
 });

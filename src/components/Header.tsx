@@ -49,15 +49,25 @@ export const Header = memo(function Header({ user: serverUser }: Readonly<Header
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close user menu when clicking outside
+  // Close user menu when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setUserMenuOpen(false);
       }
     };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setUserMenuOpen(false);
+        setMobileMenuOpen(false);
+      }
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const handleLogout = useCallback(async () => {
@@ -91,7 +101,7 @@ export const Header = memo(function Header({ user: serverUser }: Readonly<Header
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link href="/" className="flex items-center gap-2 group p-2">
             <span className="text-xl font-bold">
               <span className="text-white group-hover:text-cyan-100 transition-colors">Prophe</span>
               <span className="text-cyan-400 group-hover:text-cyan-300 transition-colors">
@@ -106,7 +116,7 @@ export const Header = memo(function Header({ user: serverUser }: Readonly<Header
               <Link
                 key={item.href}
                 href={item.href}
-                className={`link-underline ghost-glow text-sm font-medium py-1 px-2 ${
+                className={`link-underline ghost-glow text-sm font-medium p-2 ${
                   isActive(item.href) ? 'link-underline-active' : ''
                 }`}
               >
@@ -129,6 +139,9 @@ export const Header = memo(function Header({ user: serverUser }: Readonly<Header
               <Button
                 variant="ghost"
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
+                aria-expanded={userMenuOpen}
+                aria-haspopup="menu"
+                aria-label="Benutzermenü"
                 className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[rgba(98,125,152,0.15)]"
               >
                 <div className="text-right">
@@ -142,31 +155,41 @@ export const Header = memo(function Header({ user: serverUser }: Readonly<Header
                 <UserAvatar user={user} size="md" />
                 <IconChevronDown
                   size={16}
+                  aria-hidden="true"
                   className={`text-(--text-muted) transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`}
                 />
               </Button>
 
               {/* Dropdown Menu */}
               {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 rounded-lg bg-[rgba(10,25,41,0.95)] backdrop-blur-xl border border-[rgba(98,125,152,0.3)] shadow-[0_4px_24px_rgba(0,0,0,0.4)] overflow-hidden">
+                <div
+                  role="menu"
+                  aria-label="Benutzermenü"
+                  className="absolute right-0 top-full mt-2 w-48 rounded-lg bg-[rgba(10,25,41,0.95)] backdrop-blur-xl border border-[rgba(98,125,152,0.3)] shadow-[0_4px_24px_rgba(0,0,0,0.4)] overflow-hidden"
+                >
                   <Link
                     href="/profile"
+                    role="menuitem"
                     onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-(--text-secondary) hover:text-white hover:bg-[rgba(98,125,152,0.15)] transition-colors"
+                    className="w-[calc(100%-0.5rem)] flex items-center gap-3 mx-1 mt-1 px-3 py-2.5 rounded-md text-sm text-(--text-secondary) hover:text-white hover:bg-[rgba(98,125,152,0.15)] transition-colors"
                   >
-                    <IconUser size={18} />
+                    <IconUser size={18} aria-hidden="true" />
                     Profil
                   </Link>
-                  <div className="border-t border-[rgba(98,125,152,0.2)]" />
-                  <Button
-                    variant="ghost"
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-[rgba(239,68,68,0.1)]"
+                  <hr className="border-t border-[rgba(98,125,152,0.2)] my-1 mx-1" />
+                  <Link
+                    href="#"
+                    role="menuitem"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (!isLoggingOut) handleLogout();
+                    }}
+                    aria-disabled={isLoggingOut}
+                    className={`w-[calc(100%-0.5rem)] flex items-center gap-3 mx-1 mb-1 px-3 py-2.5 rounded-md text-sm text-red-400 hover:bg-[rgba(239,68,68,0.1)] transition-colors ${isLoggingOut ? 'opacity-50 pointer-events-none' : ''}`}
                   >
-                    <IconLogout size={18} />
+                    <IconLogout size={18} aria-hidden="true" />
                     {isLoggingOut ? 'Abmelden...' : 'Abmelden'}
-                  </Button>
+                  </Link>
                 </div>
               )}
             </div>
@@ -175,9 +198,15 @@ export const Header = memo(function Header({ user: serverUser }: Readonly<Header
             <Button
               variant="ghost"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-expanded={mobileMenuOpen}
+              aria-label={mobileMenuOpen ? 'Menü schließen' : 'Menü öffnen'}
               className="md:hidden p-2 rounded-lg text-(--text-secondary) hover:text-white hover:bg-[rgba(98,125,152,0.15)]"
             >
-              {mobileMenuOpen ? <IconX size={24} /> : <IconMenu2 size={24} />}
+              {mobileMenuOpen ? (
+                <IconX size={24} aria-hidden="true" />
+              ) : (
+                <IconMenu2 size={24} aria-hidden="true" />
+              )}
             </Button>
           </div>
         </div>
@@ -234,7 +263,7 @@ export const Header = memo(function Header({ user: serverUser }: Readonly<Header
               disabled={isLoggingOut}
               className="flex items-center justify-center gap-2 py-3 mx-auto text-sm text-red-400 hover:text-red-300"
             >
-              <IconLogout size={18} />
+              <IconLogout size={18} aria-hidden="true" />
               {isLoggingOut ? 'Abmelden...' : 'Abmelden'}
             </Button>
           </div>

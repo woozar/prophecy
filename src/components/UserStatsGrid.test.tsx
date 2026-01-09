@@ -9,7 +9,7 @@ describe('UserStatsGrid', () => {
 
     expect(screen.getByText('Prophezeiungen')).toBeInTheDocument();
     expect(screen.getByText('Bewertungen')).toBeInTheDocument();
-    expect(screen.getByText('Achievements')).toBeInTheDocument();
+    expect(screen.getByText('Auszeichnungen')).toBeInTheDocument();
   });
 
   it('displays correct prophecy count', () => {

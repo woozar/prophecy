@@ -2638,7 +2638,7 @@ describe('RoundDetailClient', () => {
         await setupAdminStores([]);
         await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
 
-        expect(screen.getByText('Excel Export')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Excel/ })).toBeInTheDocument();
       });
 
       it('calls export API when export button clicked', async () => {
@@ -2659,7 +2659,7 @@ describe('RoundDetailClient', () => {
         await setupAdminStores([]);
         await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
 
-        fireEvent.click(screen.getByText('Excel Export'));
+        fireEvent.click(screen.getByRole('button', { name: /Excel/ }));
 
         await waitFor(() => {
           expect(mockRoundsExport).toHaveBeenCalledWith('round-awaiting');
@@ -2676,7 +2676,7 @@ describe('RoundDetailClient', () => {
         await setupAdminStores([]);
         await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
 
-        fireEvent.click(screen.getByText('Excel Export'));
+        fireEvent.click(screen.getByRole('button', { name: /Excel/ }));
 
         await waitFor(() => {
           expect(screen.getByText('Exportieren...')).toBeInTheDocument();
@@ -2699,7 +2699,7 @@ describe('RoundDetailClient', () => {
         await setupAdminStores([]);
         await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
 
-        fireEvent.click(screen.getByText('Excel Export'));
+        fireEvent.click(screen.getByRole('button', { name: /Excel/ }));
 
         await waitFor(() => {
           expect(showErrorToast).toHaveBeenCalledWith('Export fehlgeschlagen');

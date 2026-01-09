@@ -204,13 +204,13 @@ export const UserProfileModal = memo(function UserProfileModal({
           />
         </div>
 
-        {/* Achievements */}
+        {/* Auszeichnungen */}
         <div className="flex flex-col min-h-0 flex-1">
           <h3 className="text-sm font-semibold text-white mb-3 shrink-0">
-            Achievements ({badgeCount})
+            Auszeichnungen ({badgeCount})
           </h3>
           {displayItems.length === 0 ? (
-            <p className="text-sm text-(--text-muted)">Noch keine Achievements freigeschaltet.</p>
+            <p className="text-sm text-(--text-muted)">Noch keine Auszeichnungen freigeschaltet.</p>
           ) : (
             <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 overflow-y-auto pr-2">
               {displayItems.map((item) => {

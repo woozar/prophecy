@@ -264,7 +264,7 @@ export const RoundsManager = memo(function RoundsManager() {
                       size="sm"
                       onClick={() => exportRound(round.id)}
                       disabled={exportingRoundId === round.id}
-                      title="Excel Export"
+                      title="Excel-Export"
                       icon={<IconDownload size={14} />}
                     />
                     {new Date(round.submissionDeadline) < new Date() && (

@@ -131,7 +131,7 @@ export const AvatarUpload = memo(function AvatarUpload({
           variant="ghost"
           onClick={handleDelete}
           disabled={isDeleting}
-          className="flex items-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+          className="flex items-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2"
         >
           <IconTrash size={16} />
           {isDeleting ? 'Wird entfernt...' : 'Avatar entfernen'}

@@ -91,18 +91,20 @@ describe('PasskeyManager', () => {
 
   it('renders card with title', () => {
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
-    expect(screen.getByText('Passkeys')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Passkeys' })).toBeInTheDocument();
   });
 
   it('shows add button', () => {
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
     // Button shows either "Passkey" or "Passkey hinzufügen" depending on screen size
-    expect(screen.getByText('Passkey hinzufügen')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Passkey.*hinzufügen/i })).toBeInTheDocument();
   });
 
   it('shows empty state when no passkeys', () => {
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
-    expect(screen.getByText('Keine Passkeys registriert.')).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Keine Passkeys registriert.')
+    ).toBeInTheDocument();
   });
 
   it('displays passkey names', () => {
@@ -123,23 +125,23 @@ describe('PasskeyManager', () => {
 
   it('opens add passkey modal when button clicked', async () => {
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
-    fireEvent.click(screen.getByText('Passkey hinzufügen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*hinzufügen/i }));
     await waitFor(() => {
-      expect(screen.getByText('Neuer Passkey')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Neuer.*Passkey/i })).toBeInTheDocument();
     });
     expect(screen.getByPlaceholderText('z.B. MacBook Pro, iPhone...')).toBeInTheDocument();
   });
 
   it('closes add modal when cancel clicked', async () => {
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
-    fireEvent.click(screen.getByText('Passkey hinzufügen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*hinzufügen/i }));
     await waitFor(() => {
-      expect(screen.getByText('Neuer Passkey')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Neuer.*Passkey/i })).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText('Abbrechen'));
     await waitFor(() => {
-      expect(screen.queryByText('Neuer Passkey')).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: /Neuer.*Passkey/i })).not.toBeInTheDocument();
     });
   });
 
@@ -151,7 +153,7 @@ describe('PasskeyManager', () => {
     fireEvent.click(deleteButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Passkey löschen?')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Passkey.*löschen/i })).toBeInTheDocument();
     });
     expect(screen.getByText(/"MacBook Pro"/)).toBeInTheDocument();
   });
@@ -164,7 +166,7 @@ describe('PasskeyManager', () => {
     fireEvent.click(deleteButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Passkey löschen?')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Passkey.*löschen/i })).toBeInTheDocument();
     });
 
     // Click cancel
@@ -172,7 +174,7 @@ describe('PasskeyManager', () => {
     fireEvent.click(cancelButtons[cancelButtons.length - 1]);
 
     await waitFor(() => {
-      expect(screen.queryByText('Passkey löschen?')).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: /Passkey.*löschen/i })).not.toBeInTheDocument();
     });
   });
 
@@ -184,7 +186,7 @@ describe('PasskeyManager', () => {
     fireEvent.click(editButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Passkey umbenennen')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Passkey.*umbenennen/i })).toBeInTheDocument();
     });
     expect(screen.getByDisplayValue('MacBook Pro')).toBeInTheDocument();
   });
@@ -197,7 +199,7 @@ describe('PasskeyManager', () => {
     fireEvent.click(editButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Passkey umbenennen')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Passkey.*umbenennen/i })).toBeInTheDocument();
     });
 
     // Clear the input
@@ -219,7 +221,7 @@ describe('PasskeyManager', () => {
     fireEvent.click(deleteButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Passkey löschen?')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Passkey.*löschen/i })).toBeInTheDocument();
     });
 
     // Find the confirm button in the modal (the red "Löschen" button)
@@ -247,7 +249,7 @@ describe('PasskeyManager', () => {
     fireEvent.click(deleteButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Passkey löschen?')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Passkey.*löschen/i })).toBeInTheDocument();
     });
 
     // Confirm delete
@@ -273,7 +275,7 @@ describe('PasskeyManager', () => {
     fireEvent.click(deleteButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Passkey löschen?')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Passkey.*löschen/i })).toBeInTheDocument();
     });
 
     const allButtons = screen.getAllByRole('button');
@@ -299,7 +301,7 @@ describe('PasskeyManager', () => {
     fireEvent.click(editButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Passkey umbenennen')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Passkey.*umbenennen/i })).toBeInTheDocument();
     });
 
     // Change the name
@@ -328,7 +330,7 @@ describe('PasskeyManager', () => {
     fireEvent.click(editButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Passkey umbenennen')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Passkey.*umbenennen/i })).toBeInTheDocument();
     });
 
     const input = screen.getByDisplayValue('MacBook Pro');
@@ -358,16 +360,16 @@ describe('PasskeyManager', () => {
     renderWithMantine(<PasskeyManager initialPasskeys={mockPasskeys} />);
 
     // Open add modal
-    fireEvent.click(screen.getByText('Passkey hinzufügen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*hinzufügen/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Neuer Passkey')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Neuer.*Passkey/i })).toBeInTheDocument();
     });
 
     // Enter name and create
     const input = screen.getByPlaceholderText('z.B. MacBook Pro, iPhone...');
     fireEvent.change(input, { target: { value: 'New Device' } });
-    fireEvent.click(screen.getByText('Passkey erstellen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*erstellen/i }));
 
     // Verify API calls
     await waitFor(() => {
@@ -389,13 +391,13 @@ describe('PasskeyManager', () => {
 
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
 
-    fireEvent.click(screen.getByText('Passkey hinzufügen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*hinzufügen/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Neuer Passkey')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Neuer.*Passkey/i })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Passkey erstellen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*erstellen/i }));
 
     await waitFor(() => {
       expect(mockErrorToast).toHaveBeenCalledWith('Fehler', 'Server error');
@@ -413,13 +415,13 @@ describe('PasskeyManager', () => {
 
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
 
-    fireEvent.click(screen.getByText('Passkey hinzufügen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*hinzufügen/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Neuer Passkey')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Neuer.*Passkey/i })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Passkey erstellen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*erstellen/i }));
 
     await waitFor(() => {
       expect(mockErrorToast).toHaveBeenCalledWith(
@@ -440,13 +442,13 @@ describe('PasskeyManager', () => {
 
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
 
-    fireEvent.click(screen.getByText('Passkey hinzufügen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*hinzufügen/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Neuer Passkey')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Neuer.*Passkey/i })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Passkey erstellen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*erstellen/i }));
 
     await waitFor(() => {
       expect(mockErrorToast).toHaveBeenCalledWith('Fehler', 'Verification failed');
@@ -473,13 +475,13 @@ describe('PasskeyManager', () => {
 
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
 
-    fireEvent.click(screen.getByText('Passkey hinzufügen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*hinzufügen/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Neuer Passkey')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Neuer.*Passkey/i })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Passkey erstellen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*erstellen/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Wird registriert...')).toBeInTheDocument();
@@ -508,14 +510,14 @@ describe('PasskeyManager', () => {
 
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
 
-    fireEvent.click(screen.getByText('Passkey hinzufügen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*hinzufügen/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Neuer Passkey')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Neuer.*Passkey/i })).toBeInTheDocument();
     });
 
     // Don't enter a name, just create
-    fireEvent.click(screen.getByText('Passkey erstellen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*erstellen/i }));
 
     await waitFor(() => {
       // When no name is entered, the verify call should pass undefined for the name
@@ -535,7 +537,7 @@ describe('PasskeyManager', () => {
     fireEvent.click(editButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Passkey umbenennen')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Passkey.*umbenennen/i })).toBeInTheDocument();
     });
 
     // Change the name
@@ -546,7 +548,9 @@ describe('PasskeyManager', () => {
     fireEvent.click(screen.getByText('Abbrechen'));
 
     await waitFor(() => {
-      expect(screen.queryByText('Passkey umbenennen')).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('heading', { name: /Passkey.*umbenennen/i })
+      ).not.toBeInTheDocument();
     });
 
     // Original name should still be displayed
@@ -561,7 +565,7 @@ describe('PasskeyManager', () => {
     fireEvent.click(editButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Passkey umbenennen')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Passkey.*umbenennen/i })).toBeInTheDocument();
     });
 
     // Change the name
@@ -575,7 +579,9 @@ describe('PasskeyManager', () => {
     }
 
     await waitFor(() => {
-      expect(screen.queryByText('Passkey umbenennen')).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('heading', { name: /Passkey.*umbenennen/i })
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -587,7 +593,7 @@ describe('PasskeyManager', () => {
     fireEvent.click(deleteButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Passkey löschen?')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Passkey.*löschen/i })).toBeInTheDocument();
     });
 
     // Close modal via overlay click (triggers onClose)
@@ -597,7 +603,7 @@ describe('PasskeyManager', () => {
     }
 
     await waitFor(() => {
-      expect(screen.queryByText('Passkey löschen?')).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: /Passkey.*löschen/i })).not.toBeInTheDocument();
     });
   });
 
@@ -611,13 +617,13 @@ describe('PasskeyManager', () => {
 
     renderWithMantine(<PasskeyManager initialPasskeys={[]} />);
 
-    fireEvent.click(screen.getByText('Passkey hinzufügen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*hinzufügen/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Neuer Passkey')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Neuer.*Passkey/i })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Passkey erstellen'));
+    fireEvent.click(screen.getByRole('button', { name: /Passkey.*erstellen/i }));
 
     await waitFor(() => {
       expect(mockErrorToast).toHaveBeenCalledWith('Fehler', 'Generic error');

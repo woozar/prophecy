@@ -231,7 +231,7 @@ export const UsersManager = memo(function UsersManager() {
     return (
       <Card padding="p-6">
         <div className="flex items-center justify-center gap-2 text-(--text-muted)">
-          <IconLoader2 size={20} className="animate-spin" />
+          <IconLoader2 size={20} className="animate-spin" aria-hidden="true" />
           <span>Benutzer werden geladen...</span>
         </div>
       </Card>
@@ -453,12 +453,12 @@ const UserCard = memo(function UserCard({
               </h3>
               {user.role === 'ADMIN' && (
                 <GlowBadge size="sm" color="violet">
-                  Admin
+                  <span lang="en">Admin</span>
                 </GlowBadge>
               )}
               {user.isBot && (
                 <GlowBadge size="sm" color="cyan">
-                  Bot
+                  <span lang="en">Bot</span>
                 </GlowBadge>
               )}
               {!user.isBot && user.status !== 'APPROVED' && (
@@ -515,8 +515,9 @@ const UserCard = memo(function UserCard({
                 disabled={isSubmitting}
                 className="p-2 rounded-lg bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 hover:shadow-[0_0_12px_rgba(34,197,94,0.3)]"
                 title="Freigeben"
+                aria-label="Benutzer freigeben"
               >
-                <IconCheck size={18} />
+                <IconCheck size={18} aria-hidden="true" />
               </Button>
             )}
             {onReject && (
@@ -526,8 +527,9 @@ const UserCard = memo(function UserCard({
                 disabled={isSubmitting}
                 className="p-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30 hover:shadow-[0_0_12px_rgba(239,68,68,0.3)]"
                 title="Ablehnen"
+                aria-label="Benutzer ablehnen"
               >
-                <IconX size={18} />
+                <IconX size={18} aria-hidden="true" />
               </Button>
             )}
             {onSuspend && (
@@ -537,8 +539,9 @@ const UserCard = memo(function UserCard({
                 disabled={isSubmitting}
                 className="p-2 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-yellow-400 hover:border-yellow-400/50 hover:shadow-[0_0_12px_rgba(234,179,8,0.3)]"
                 title="Sperren"
+                aria-label="Benutzer sperren"
               >
-                <IconBan size={18} />
+                <IconBan size={18} aria-hidden="true" />
               </Button>
             )}
             {onReactivate && (
@@ -548,8 +551,9 @@ const UserCard = memo(function UserCard({
                 disabled={isSubmitting}
                 className="p-2 rounded-lg bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 hover:shadow-[0_0_12px_rgba(34,197,94,0.3)]"
                 title="Reaktivieren"
+                aria-label="Benutzer reaktivieren"
               >
-                <IconCheck size={18} />
+                <IconCheck size={18} aria-hidden="true" />
               </Button>
             )}
             {onToggleAdmin && (
@@ -559,8 +563,13 @@ const UserCard = memo(function UserCard({
                 disabled={isSubmitting}
                 className="p-2 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-violet-400 hover:border-violet-400/50 hover:shadow-[0_0_12px_rgba(139,92,246,0.3)]"
                 title={user.role === 'ADMIN' ? 'Adminrechte entziehen' : 'Zum Admin machen'}
+                aria-label={user.role === 'ADMIN' ? 'Adminrechte entziehen' : 'Zum Admin machen'}
               >
-                {user.role === 'ADMIN' ? <IconUser size={18} /> : <IconShield size={18} />}
+                {user.role === 'ADMIN' ? (
+                  <IconUser size={18} aria-hidden="true" />
+                ) : (
+                  <IconShield size={18} aria-hidden="true" />
+                )}
               </Button>
             )}
             {onResetPassword && (
@@ -570,8 +579,9 @@ const UserCard = memo(function UserCard({
                 disabled={isSubmitting}
                 className="p-2 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-cyan-400 hover:border-cyan-400/50 hover:shadow-[0_0_12px_rgba(6,182,212,0.3)]"
                 title="Passwort zurücksetzen"
+                aria-label="Passwort zurücksetzen"
               >
-                <IconKey size={18} />
+                <IconKey size={18} aria-hidden="true" />
               </Button>
             )}
             {onDelete && (
@@ -581,8 +591,9 @@ const UserCard = memo(function UserCard({
                 disabled={isSubmitting}
                 className="p-2 rounded-lg bg-[rgba(10,25,41,0.6)] border border-[rgba(98,125,152,0.3)] text-[#9fb3c8] hover:text-red-400 hover:border-red-400/50 hover:shadow-[0_0_12px_rgba(239,68,68,0.3)]"
                 title="Löschen"
+                aria-label="Benutzer löschen"
               >
-                <IconTrash size={18} />
+                <IconTrash size={18} aria-hidden="true" />
               </Button>
             )}
           </div>

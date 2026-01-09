@@ -113,11 +113,11 @@ export default function BadgesPage() {
   if (!isInitialized) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold text-white">Achievements</h1>
+        <h1 className="text-2xl font-bold text-white">Auszeichnungen</h1>
         <Card padding="p-6">
           <div className="flex items-center justify-center gap-2 text-(--text-muted)">
             <IconLoader2 size={20} className="animate-spin" />
-            <span>Achievements werden geladen...</span>
+            <span>Auszeichnungen werden geladen...</span>
           </div>
         </Card>
       </div>
@@ -127,20 +127,22 @@ export default function BadgesPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Achievements</h1>
+        <h1 className="text-2xl font-bold text-white">Auszeichnungen</h1>
         <Link href="/users" className="text-sm text-cyan-400 hover:text-cyan-300">
           ← Zurück zu Benutzer
         </Link>
       </div>
 
       <p className="text-(--text-muted)">
-        Alle Achievements, die bereits freigeschaltet wurden. Sortiert nach dem Datum der ersten
+        Alle Auszeichnungen, die bereits freigeschaltet wurden. Sortiert nach dem Datum der ersten
         Freischaltung.
       </p>
 
       {awardedBadges.length === 0 ? (
         <Card padding="p-6">
-          <p className="text-center text-(--text-muted)">Noch keine Achievements freigeschaltet.</p>
+          <p className="text-center text-(--text-muted)">
+            Noch keine Auszeichnungen freigeschaltet.
+          </p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -240,11 +240,13 @@ const BadgeCard = memo(function BadgeCard({
   firstAchiever,
   onClick,
 }: Readonly<BadgeCardProps>) {
+  const isLegendary = badge.rarity === 'LEGENDARY';
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left p-4 badge-card cursor-pointer"
+      className={`w-full text-left p-4 badge-card cursor-pointer ${isLegendary ? 'badge-card-legendary' : ''}`}
     >
       <div className="flex items-start gap-4">
         <BadgeIcon badgeKey={badge.badgeKey} size="lg" />

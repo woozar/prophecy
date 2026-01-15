@@ -212,7 +212,7 @@ export const UserProfileModal = memo(function UserProfileModal({
           {displayItems.length === 0 ? (
             <p className="text-sm text-(--text-muted)">Noch keine Auszeichnungen freigeschaltet.</p>
           ) : (
-            <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 overflow-y-auto pr-2">
+            <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 overflow-y-auto pr-6 pl-6 -mx-6 pt-6 -mt-6 pb-2">
               {displayItems.map((item) => {
                 const badge = item.type === 'tier' ? item.group.highestEarned : item.badge;
                 const earnedAt = userBadgesWithDates.get(badge.key) ?? '';
@@ -258,10 +258,15 @@ export const UserProfileModal = memo(function UserProfileModal({
                     position="top"
                     events={{ hover: true, focus: true, touch: true }}
                     classNames={{
-                      tooltip: 'achievement-tooltip',
+                      tooltip:
+                        badge.rarity === 'LEGENDARY'
+                          ? 'achievement-tooltip-legendary'
+                          : 'achievement-tooltip',
                     }}
                   >
-                    <div className="flex items-center gap-3 p-3 badge-card cursor-default">
+                    <div
+                      className={`flex items-center gap-3 p-3 badge-card cursor-default ${badge.rarity === 'LEGENDARY' ? 'badge-card-legendary' : ''}`}
+                    >
                       <BadgeIcon badgeKey={badge.key} size="md" />
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-violet-400 truncate">{badge.name}</p>

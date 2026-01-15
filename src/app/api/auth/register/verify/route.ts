@@ -11,6 +11,7 @@ import {
 } from '@/lib/auth/registration';
 import { clearChallenge, getChallenge, webauthnConfig } from '@/lib/auth/webauthn';
 import { prisma } from '@/lib/db/prisma';
+import { sseEmitter } from '@/lib/sse/event-emitter';
 
 export async function POST(request: NextRequest) {
   try {
@@ -89,6 +90,19 @@ export async function POST(request: NextRequest) {
       },
       include: {
         authenticators: true,
+      },
+    });
+
+    // Notify admins via SSE about new user registration
+    sseEmitter.broadcast({
+      type: 'user:created',
+      data: {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        role: user.role,
+        status: user.status,
+        createdAt: user.createdAt.toISOString(),
       },
     });
 

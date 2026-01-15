@@ -13,6 +13,7 @@ import {
 } from '@/lib/auth/registration';
 import { ensureInitialized, prisma } from '@/lib/db/prisma';
 import { registerPasswordSchema } from '@/lib/schemas/auth';
+import { sseEmitter } from '@/lib/sse/event-emitter';
 
 export async function POST(request: NextRequest) {
   await ensureInitialized();
@@ -41,6 +42,19 @@ export async function POST(request: NextRequest) {
         displayName: displayName || username,
         passwordHash,
         status: 'PENDING',
+      },
+    });
+
+    // Notify admins via SSE about new user registration
+    sseEmitter.broadcast({
+      type: 'user:created',
+      data: {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        role: user.role,
+        status: user.status,
+        createdAt: user.createdAt.toISOString(),
       },
     });
 

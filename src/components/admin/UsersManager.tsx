@@ -59,6 +59,7 @@ export const UsersManager = memo(function UsersManager() {
   const setUser = useUserStore((state) => state.setUser);
   const removeUserFromStore = useUserStore((state) => state.removeUser);
   const isLoading = useUserStore((state) => !state.isInitialized);
+  const currentUserId = useUserStore((state) => state.currentUserId);
 
   // Get badges from badge store
   const badges = useBadgeStore((state) => state.badges);
@@ -254,12 +255,15 @@ export const UsersManager = memo(function UsersManager() {
               onClick={() => openUserProfile(user)}
               onApprove={() => handleStatusChange(user.id, 'APPROVED')}
               onReject={() => handleStatusChange(user.id, 'REJECTED')}
-              onDelete={() =>
-                setConfirmAction({
-                  userId: user.id,
-                  username: user.displayName || user.username,
-                  type: 'delete',
-                })
+              onDelete={
+                user.id === currentUserId
+                  ? undefined
+                  : () =>
+                      setConfirmAction({
+                        userId: user.id,
+                        username: user.displayName || user.username,
+                        type: 'delete',
+                      })
               }
               isSubmitting={isSubmitting}
             />
@@ -302,12 +306,15 @@ export const UsersManager = memo(function UsersManager() {
               onResetPassword={() =>
                 handleResetPassword(user.id, user.displayName || user.username)
               }
-              onDelete={() =>
-                setConfirmAction({
-                  userId: user.id,
-                  username: user.displayName || user.username,
-                  type: 'delete',
-                })
+              onDelete={
+                user.id === currentUserId
+                  ? undefined
+                  : () =>
+                      setConfirmAction({
+                        userId: user.id,
+                        username: user.displayName || user.username,
+                        type: 'delete',
+                      })
               }
               isSubmitting={isSubmitting}
             />
@@ -328,12 +335,15 @@ export const UsersManager = memo(function UsersManager() {
               badges={badges}
               onClick={() => openUserProfile(user)}
               onReactivate={() => handleStatusChange(user.id, 'APPROVED')}
-              onDelete={() =>
-                setConfirmAction({
-                  userId: user.id,
-                  username: user.displayName || user.username,
-                  type: 'delete',
-                })
+              onDelete={
+                user.id === currentUserId
+                  ? undefined
+                  : () =>
+                      setConfirmAction({
+                        userId: user.id,
+                        username: user.displayName || user.username,
+                        type: 'delete',
+                      })
               }
               isSubmitting={isSubmitting}
             />

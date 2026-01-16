@@ -42,7 +42,7 @@ const mockSession = {
   userId: 'admin-1',
   username: 'admin',
   role: 'ADMIN' as const,
-  iat: Date.now(),
+  status: 'APPROVED' as const,
 };
 const pastDate = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
 const futureDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);

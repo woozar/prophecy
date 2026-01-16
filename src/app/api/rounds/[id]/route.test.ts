@@ -2,14 +2,24 @@ import { NextRequest } from 'next/server';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getSession } from '@/lib/auth/session';
+import { validateAdminSession, validateSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
 import { DELETE, GET, PUT } from './route';
 
-const mockUser = { userId: 'user-1', username: 'testuser', role: 'USER' as const, iat: Date.now() };
-const mockAdmin = { userId: 'admin-1', username: 'admin', role: 'ADMIN' as const, iat: Date.now() };
+const mockSession = {
+  userId: 'user-1',
+  username: 'testuser',
+  role: 'USER' as const,
+  status: 'APPROVED' as const,
+};
+const mockAdminSession = {
+  userId: 'admin-1',
+  username: 'admin',
+  role: 'ADMIN' as const,
+  status: 'APPROVED' as const,
+};
 
 const createMockRound = (overrides = {}) => ({
   id: 'round-1',
@@ -31,7 +41,9 @@ describe('GET /api/rounds/[id]', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(getSession).mockResolvedValue(null);
+    vi.mocked(validateSession).mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }) as never,
+    });
 
     const request = new NextRequest('http://localhost/api/rounds/1');
     const response = await GET(request, createParams('1'));
@@ -42,7 +54,7 @@ describe('GET /api/rounds/[id]', () => {
   });
 
   it('returns 404 when round not found', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.round.findUnique).mockResolvedValue(null);
 
     const request = new NextRequest('http://localhost/api/rounds/1');
@@ -54,7 +66,7 @@ describe('GET /api/rounds/[id]', () => {
   });
 
   it('returns round when found', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     const mockRound = createMockRound({ id: '1', title: 'Round 1' });
     vi.mocked(prisma.round.findUnique).mockResolvedValue(mockRound);
 
@@ -68,7 +80,7 @@ describe('GET /api/rounds/[id]', () => {
 
   it('returns 500 on database error', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.round.findUnique).mockRejectedValue(new Error('DB Error'));
 
     const request = new NextRequest('http://localhost/api/rounds/1');
@@ -87,7 +99,9 @@ describe('PUT /api/rounds/[id]', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(getSession).mockResolvedValue(null);
+    vi.mocked(validateAdminSession).mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }) as never,
+    });
 
     const request = new NextRequest('http://localhost/api/rounds/1', {
       method: 'PUT',
@@ -102,7 +116,9 @@ describe('PUT /api/rounds/[id]', () => {
   });
 
   it('returns 403 when not admin', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(validateAdminSession).mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 }) as never,
+    });
 
     const request = new NextRequest('http://localhost/api/rounds/1', {
       method: 'PUT',
@@ -117,7 +133,7 @@ describe('PUT /api/rounds/[id]', () => {
   });
 
   it('returns 400 for invalid input', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockAdmin);
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
 
     const request = new NextRequest('http://localhost/api/rounds/1', {
       method: 'PUT',
@@ -130,7 +146,7 @@ describe('PUT /api/rounds/[id]', () => {
   });
 
   it('updates round when admin with valid data', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockAdmin);
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
     const mockRound = createMockRound({ id: '1', title: 'Updated Round' });
     vi.mocked(prisma.round.update).mockResolvedValue(mockRound);
 
@@ -155,7 +171,7 @@ describe('PUT /api/rounds/[id]', () => {
 
   it('returns 500 on database error', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(getSession).mockResolvedValue(mockAdmin);
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
     vi.mocked(prisma.round.update).mockRejectedValue(new Error('DB Error'));
 
     const request = new NextRequest('http://localhost/api/rounds/1', {
@@ -183,7 +199,9 @@ describe('DELETE /api/rounds/[id]', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(getSession).mockResolvedValue(null);
+    vi.mocked(validateAdminSession).mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }) as never,
+    });
 
     const request = new NextRequest('http://localhost/api/rounds/1', {
       method: 'DELETE',
@@ -197,7 +215,9 @@ describe('DELETE /api/rounds/[id]', () => {
   });
 
   it('returns 403 when not admin', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(validateAdminSession).mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 }) as never,
+    });
 
     const request = new NextRequest('http://localhost/api/rounds/1', {
       method: 'DELETE',
@@ -211,7 +231,7 @@ describe('DELETE /api/rounds/[id]', () => {
   });
 
   it('deletes round when admin', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockAdmin);
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
     vi.mocked(prisma.round.delete).mockResolvedValue(createMockRound({ id: '1' }));
 
     const request = new NextRequest('http://localhost/api/rounds/1', {
@@ -231,7 +251,7 @@ describe('DELETE /api/rounds/[id]', () => {
 
   it('returns 500 on database error', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(getSession).mockResolvedValue(mockAdmin);
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
     vi.mocked(prisma.round.delete).mockRejectedValue(new Error('DB Error'));
 
     const request = new NextRequest('http://localhost/api/rounds/1', {

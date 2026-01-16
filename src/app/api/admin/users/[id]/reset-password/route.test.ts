@@ -1,28 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { validateAdminSession } from '@/lib/auth/admin-validation';
+import { prisma } from '@/lib/db/prisma';
+
 import { POST } from './route';
 
-// Mock prisma
-const mockFindUnique = vi.fn();
-const mockUpdate = vi.fn();
+vi.mock('@/lib/auth/admin-validation', () => ({
+  validateAdminSession: vi.fn(),
+}));
 
 vi.mock('@/lib/db/prisma', () => ({
   prisma: {
     user: {
-      findUnique: (...args: unknown[]) => mockFindUnique(...args),
-      update: (...args: unknown[]) => mockUpdate(...args),
+      findUnique: vi.fn(),
+      update: vi.fn(),
     },
   },
-}));
-
-// Mock session
-let mockSession: { userId: string; role: string } | null = null;
-
-vi.mock('@/lib/auth/session', () => ({
-  requireSession: vi.fn(async () => {
-    if (!mockSession) throw new Error('Nicht angemeldet');
-    return mockSession;
-  }),
 }));
 
 // Mock bcrypt
@@ -32,14 +25,22 @@ vi.mock('bcrypt', () => ({
   },
 }));
 
+const mockAdminSession = {
+  userId: 'admin-1',
+  username: 'admin',
+  role: 'ADMIN' as const,
+  status: 'APPROVED' as const,
+};
+
 describe('POST /api/admin/users/[id]/reset-password', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSession = null;
   });
 
-  it('returns 401 when not logged in', async () => {
-    mockSession = null;
+  it('returns 401 when not authenticated', async () => {
+    vi.mocked(validateAdminSession).mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }) as never,
+    });
 
     const request = new Request('http://localhost/api/admin/users/123/reset-password', {
       method: 'POST',
@@ -49,11 +50,13 @@ describe('POST /api/admin/users/[id]/reset-password', () => {
     const data = await response.json();
 
     expect(response.status).toBe(401);
-    expect(data.error).toBe('Nicht angemeldet');
+    expect(data.error).toBe('Unauthorized');
   });
 
   it('returns 403 when user is not admin', async () => {
-    mockSession = { userId: 'user-1', role: 'USER' };
+    vi.mocked(validateAdminSession).mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 }) as never,
+    });
 
     const request = new Request('http://localhost/api/admin/users/123/reset-password', {
       method: 'POST',
@@ -63,12 +66,12 @@ describe('POST /api/admin/users/[id]/reset-password', () => {
     const data = await response.json();
 
     expect(response.status).toBe(403);
-    expect(data.error).toBe('Nicht autorisiert');
+    expect(data.error).toBe('Forbidden');
   });
 
   it('returns 404 when user not found', async () => {
-    mockSession = { userId: 'admin-1', role: 'ADMIN' };
-    mockFindUnique.mockResolvedValue(null);
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
     const request = new Request('http://localhost/api/admin/users/123/reset-password', {
       method: 'POST',
@@ -82,9 +85,12 @@ describe('POST /api/admin/users/[id]/reset-password', () => {
   });
 
   it('resets password successfully', async () => {
-    mockSession = { userId: 'admin-1', role: 'ADMIN' };
-    mockFindUnique.mockResolvedValue({ id: 'user-123', username: 'testuser' });
-    mockUpdate.mockResolvedValue({});
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: 'user-123',
+      username: 'testuser',
+    } as never);
+    vi.mocked(prisma.user.update).mockResolvedValue({} as never);
 
     const request = new Request('http://localhost/api/admin/users/user-123/reset-password', {
       method: 'POST',
@@ -101,9 +107,12 @@ describe('POST /api/admin/users/[id]/reset-password', () => {
   });
 
   it('sets forcePasswordChange flag when resetting password', async () => {
-    mockSession = { userId: 'admin-1', role: 'ADMIN' };
-    mockFindUnique.mockResolvedValue({ id: 'user-123', username: 'testuser' });
-    mockUpdate.mockResolvedValue({});
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: 'user-123',
+      username: 'testuser',
+    } as never);
+    vi.mocked(prisma.user.update).mockResolvedValue({} as never);
 
     const request = new Request('http://localhost/api/admin/users/user-123/reset-password', {
       method: 'POST',
@@ -111,7 +120,7 @@ describe('POST /api/admin/users/[id]/reset-password', () => {
 
     await POST(request, { params: Promise.resolve({ id: 'user-123' }) });
 
-    expect(mockUpdate).toHaveBeenCalledWith({
+    expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-123' },
       data: expect.objectContaining({
         passwordHash: 'hashed-password',
@@ -121,9 +130,12 @@ describe('POST /api/admin/users/[id]/reset-password', () => {
   });
 
   it('generates URL-safe passwords without special characters', async () => {
-    mockSession = { userId: 'admin-1', role: 'ADMIN' };
-    mockFindUnique.mockResolvedValue({ id: 'user-123', username: 'testuser' });
-    mockUpdate.mockResolvedValue({});
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: 'user-123',
+      username: 'testuser',
+    } as never);
+    vi.mocked(prisma.user.update).mockResolvedValue({} as never);
 
     const request = new Request('http://localhost/api/admin/users/user-123/reset-password', {
       method: 'POST',
@@ -140,8 +152,8 @@ describe('POST /api/admin/users/[id]/reset-password', () => {
 
   it('handles database errors gracefully', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    mockSession = { userId: 'admin-1', role: 'ADMIN' };
-    mockFindUnique.mockRejectedValue(new Error('Database error'));
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
+    vi.mocked(prisma.user.findUnique).mockRejectedValue(new Error('Database error'));
 
     const request = new Request('http://localhost/api/admin/users/user-123/reset-password', {
       method: 'POST',

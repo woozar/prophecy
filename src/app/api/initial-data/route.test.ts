@@ -1,13 +1,13 @@
 import { BadgeCategory, BadgeRarity } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getSession } from '@/lib/auth/session';
+import { validateSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
 
 import { GET } from './route';
 
-vi.mock('@/lib/auth/session', () => ({
-  getSession: vi.fn(),
+vi.mock('@/lib/auth/admin-validation', () => ({
+  validateSession: vi.fn(),
 }));
 
 describe('GET /api/initial-data', () => {
@@ -15,7 +15,7 @@ describe('GET /api/initial-data', () => {
     userId: 'user-1',
     username: 'testuser1',
     role: 'USER' as const,
-    iat: Date.now(),
+    status: 'APPROVED' as const,
   };
 
   const mockUsers = [
@@ -163,17 +163,16 @@ describe('GET /api/initial-data', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(getSession).mockResolvedValue(null);
+    const mockError = new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    vi.mocked(validateSession).mockResolvedValue({ error: mockError as never });
 
     const response = await GET();
-    const data = await response.json();
 
     expect(response.status).toBe(401);
-    expect(data.error).toBe('Nicht autorisiert');
   });
 
   it('returns all data for authenticated user', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     setupMocks();
 
     const response = await GET();
@@ -191,7 +190,7 @@ describe('GET /api/initial-data', () => {
   });
 
   it('transforms dates to ISO strings', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     setupMocks();
 
     const response = await GET();
@@ -221,7 +220,7 @@ describe('GET /api/initial-data', () => {
   });
 
   it('parses avatarEffectColors JSON string', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     setupMocks({ rounds: [], prophecies: [], ratings: [] });
 
     const response = await GET();
@@ -235,7 +234,7 @@ describe('GET /api/initial-data', () => {
   });
 
   it('includes prophecy count in rounds', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     setupMocks({ users: [], prophecies: [], ratings: [] });
 
     const response = await GET();
@@ -246,7 +245,7 @@ describe('GET /api/initial-data', () => {
   });
 
   it('includes user badge ids from allUserBadges', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     setupMocks();
 
     const response = await GET();
@@ -259,7 +258,7 @@ describe('GET /api/initial-data', () => {
   });
 
   it('only fetches approved users for non-admin', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     setupMocks({ users: [], rounds: [], prophecies: [], ratings: [] });
 
     await GET();
@@ -283,7 +282,7 @@ describe('GET /api/initial-data', () => {
 
   it('fetches all users for admin', async () => {
     const adminSession = { ...mockSession, role: 'ADMIN' as const };
-    vi.mocked(getSession).mockResolvedValue(adminSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: adminSession });
     setupMocks({ users: [], rounds: [], prophecies: [], ratings: [] });
 
     await GET();
@@ -298,7 +297,7 @@ describe('GET /api/initial-data', () => {
   });
 
   it('fetches rounds ordered by createdAt descending', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     setupMocks({ users: [], rounds: [], prophecies: [], ratings: [] });
 
     await GET();

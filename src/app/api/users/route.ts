@@ -1,19 +1,16 @@
 import { NextResponse } from 'next/server';
 
-import { getSession } from '@/lib/auth/session';
+import { validateSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
 
 // GET /api/users - Get all users (public list)
 // Admins see all users, normal users see only APPROVED users
 export async function GET() {
-  const session = await getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const validation = await validateSession();
+  if (validation.error) return validation.error;
 
   try {
-    const isAdmin = session.role === 'ADMIN';
+    const isAdmin = validation.session.role === 'ADMIN';
 
     const users = await prisma.user.findMany({
       where: isAdmin ? {} : { status: 'APPROVED' },

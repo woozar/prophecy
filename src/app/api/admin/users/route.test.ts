@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getSession } from '@/lib/auth/session';
+import { validateAdminSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
 
 import { GET } from './route';
 
-const mockUser = { userId: 'user-1', username: 'testuser', role: 'USER' as const, iat: Date.now() };
-const mockAdmin = { userId: 'admin-1', username: 'admin', role: 'ADMIN' as const, iat: Date.now() };
+const mockAdminSession = {
+  userId: 'admin-1',
+  username: 'admin',
+  role: 'ADMIN' as const,
+  status: 'APPROVED' as const,
+};
 
 const createMockUser = (overrides = {}) => ({
   id: 'user-1',
@@ -31,7 +35,9 @@ describe('GET /api/admin/users', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(getSession).mockResolvedValue(null);
+    vi.mocked(validateAdminSession).mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }) as never,
+    });
 
     const response = await GET();
     const data = await response.json();
@@ -41,7 +47,9 @@ describe('GET /api/admin/users', () => {
   });
 
   it('returns 403 when not admin', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(validateAdminSession).mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 }) as never,
+    });
 
     const response = await GET();
     const data = await response.json();
@@ -51,7 +59,7 @@ describe('GET /api/admin/users', () => {
   });
 
   it('returns users when admin', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockAdmin);
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
     const mockUsers = [
       createMockUser({ id: '1', username: 'user1' }),
       createMockUser({ id: '2', username: 'user2' }),
@@ -68,7 +76,7 @@ describe('GET /api/admin/users', () => {
 
   it('returns 500 on database error', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(getSession).mockResolvedValue(mockAdmin);
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
     vi.mocked(prisma.user.findMany).mockRejectedValue(new Error('DB Error'));
 
     const response = await GET();

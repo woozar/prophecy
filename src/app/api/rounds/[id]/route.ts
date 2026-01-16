@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { validateBody } from '@/lib/api/validation';
-import { getSession } from '@/lib/auth/session';
+import { validateAdminSession, validateSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
 import { updateRoundSchema } from '@/lib/schemas/round';
 import { sseEmitter } from '@/lib/sse/event-emitter';
@@ -11,13 +11,11 @@ interface RouteParams {
 }
 
 // GET /api/rounds/[id] - Get a single round
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  const session = await getSession();
-  const { id } = await params;
+export async function GET(_request: NextRequest, { params }: RouteParams) {
+  const validation = await validateSession();
+  if (validation.error) return validation.error;
 
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { id } = await params;
 
   try {
     const round = await prisma.round.findUnique({
@@ -37,22 +35,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 // PUT /api/rounds/[id] - Update a round (Admin only)
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-  const session = await getSession();
+  const validation = await validateAdminSession();
+  if (validation.error) return validation.error;
+
   const { id } = await params;
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  if (session.role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
 
   try {
     // Validate request body with Zod
-    const validation = await validateBody(request, updateRoundSchema);
-    if (!validation.success) return validation.response;
-    const { title, submissionDeadline, ratingDeadline, fulfillmentDate } = validation.data;
+    const bodyValidation = await validateBody(request, updateRoundSchema);
+    if (!bodyValidation.success) return bodyValidation.response;
+    const { title, submissionDeadline, ratingDeadline, fulfillmentDate } = bodyValidation.data;
 
     const round = await prisma.round.update({
       where: { id },
@@ -78,17 +70,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 }
 
 // DELETE /api/rounds/[id] - Delete a round (Admin only)
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  const session = await getSession();
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  const validation = await validateAdminSession();
+  if (validation.error) return validation.error;
+
   const { id } = await params;
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  if (session.role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
 
   try {
     await prisma.round.delete({

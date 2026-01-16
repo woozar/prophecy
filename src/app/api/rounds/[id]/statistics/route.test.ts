@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getSession } from '@/lib/auth/session';
+import { validateSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
 import { calculateRoundStatistics } from '@/lib/statistics/calculate';
 
@@ -16,16 +16,26 @@ vi.mock('@/lib/db/prisma', () => ({
   },
 }));
 
-vi.mock('@/lib/auth/session', () => ({
-  getSession: vi.fn(),
+vi.mock('@/lib/auth/admin-validation', () => ({
+  validateSession: vi.fn(),
 }));
 
 vi.mock('@/lib/statistics/calculate', () => ({
   calculateRoundStatistics: vi.fn(),
 }));
 
-const mockUser = { userId: 'user-1', username: 'testuser', role: 'USER' as const, iat: Date.now() };
-const mockAdmin = { userId: 'admin-1', username: 'admin', role: 'ADMIN' as const, iat: Date.now() };
+const mockSession = {
+  userId: 'user-1',
+  username: 'testuser',
+  role: 'USER' as const,
+  status: 'APPROVED' as const,
+};
+const mockAdminSession = {
+  userId: 'admin-1',
+  username: 'admin',
+  role: 'ADMIN' as const,
+  status: 'APPROVED' as const,
+};
 
 const createMockRound = (overrides = {}) => ({
   id: 'round-1',
@@ -57,7 +67,9 @@ describe('GET /api/rounds/[id]/statistics', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(getSession).mockResolvedValue(null);
+    vi.mocked(validateSession).mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }) as never,
+    });
 
     const request = new NextRequest('http://localhost/api/rounds/1/statistics');
     const response = await GET(request, createParams('1'));
@@ -68,7 +80,7 @@ describe('GET /api/rounds/[id]/statistics', () => {
   });
 
   it('returns 404 when round not found', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.round.findUnique).mockResolvedValue(null);
 
     const request = new NextRequest('http://localhost/api/rounds/1/statistics');
@@ -80,7 +92,7 @@ describe('GET /api/rounds/[id]/statistics', () => {
   });
 
   it('returns 403 for regular user when results not published', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.round.findUnique).mockResolvedValue(createMockRound());
 
     const request = new NextRequest('http://localhost/api/rounds/1/statistics');
@@ -92,7 +104,7 @@ describe('GET /api/rounds/[id]/statistics', () => {
   });
 
   it('returns statistics for regular user when results are published', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.round.findUnique).mockResolvedValue(
       createMockRound({ resultsPublishedAt: new Date() })
     );
@@ -108,7 +120,7 @@ describe('GET /api/rounds/[id]/statistics', () => {
   });
 
   it('returns statistics for admin even when results not published', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockAdmin);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockAdminSession });
     vi.mocked(prisma.round.findUnique).mockResolvedValue(createMockRound());
     vi.mocked(calculateRoundStatistics).mockResolvedValue(createMockStatistics());
 
@@ -123,7 +135,7 @@ describe('GET /api/rounds/[id]/statistics', () => {
 
   it('returns 500 on database error', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(getSession).mockResolvedValue(mockAdmin);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockAdminSession });
     vi.mocked(prisma.round.findUnique).mockRejectedValue(new Error('DB Error'));
 
     const request = new NextRequest('http://localhost/api/rounds/1/statistics');

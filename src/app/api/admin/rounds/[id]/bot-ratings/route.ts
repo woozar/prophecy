@@ -1,20 +1,14 @@
 import { NextResponse } from 'next/server';
 
-import { getSession } from '@/lib/auth/session';
+import { validateAdminSession } from '@/lib/auth/admin-validation';
 import { runBotRatingsForRound } from '@/lib/bots/bot-rating-service';
 
 // POST /api/admin/rounds/[id]/bot-ratings - Trigger bot ratings for a round
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
+  const validation = await validateAdminSession();
+  if (validation.error) return validation.error;
+
   const { id } = await params;
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  if (session.role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
 
   try {
     const result = await runBotRatingsForRound(id);

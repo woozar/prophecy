@@ -28,7 +28,7 @@ const mockSession = {
   userId: 'admin-1',
   username: 'admin',
   role: 'ADMIN' as const,
-  iat: Date.now(),
+  status: 'APPROVED' as const,
 };
 
 const createMockRound = (overrides = {}) => ({

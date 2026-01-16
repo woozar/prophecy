@@ -3,14 +3,14 @@ import { NextRequest } from 'next/server';
 import { BadgeCategory, BadgeRarity } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getSession } from '@/lib/auth/session';
+import { validateSession } from '@/lib/auth/admin-validation';
 import { getUserStats } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
 
 import { GET } from './route';
 
-vi.mock('@/lib/auth/session', () => ({
-  getSession: vi.fn(),
+vi.mock('@/lib/auth/admin-validation', () => ({
+  validateSession: vi.fn(),
 }));
 
 vi.mock('@/lib/db/prisma', () => ({
@@ -29,14 +29,14 @@ const mockSession = {
   userId: 'user-1',
   username: 'testuser',
   role: 'USER' as const,
-  iat: Date.now(),
+  status: 'APPROVED' as const,
 };
 
 const mockAdminSession = {
   userId: 'admin-1',
   username: 'admin',
   role: 'ADMIN' as const,
-  iat: Date.now(),
+  status: 'APPROVED' as const,
 };
 
 const mockUser = {
@@ -95,7 +95,9 @@ describe('GET /api/users/[id]', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(getSession).mockResolvedValue(null);
+    vi.mocked(validateSession).mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }) as never,
+    });
 
     const response = await GET(createRequest(), createParams('user-1'));
     const data = await response.json();
@@ -105,7 +107,7 @@ describe('GET /api/users/[id]', () => {
   });
 
   it('returns 404 when user does not exist', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
     const response = await GET(createRequest(), createParams('nonexistent'));
@@ -116,7 +118,7 @@ describe('GET /api/users/[id]', () => {
   });
 
   it('returns user profile with badges and stats', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
     vi.mocked(getUserStats).mockResolvedValue(mockStats);
 
@@ -131,7 +133,7 @@ describe('GET /api/users/[id]', () => {
   });
 
   it('calls getUserStats with correct user id', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
     vi.mocked(getUserStats).mockResolvedValue(mockStats);
 
@@ -141,7 +143,7 @@ describe('GET /api/users/[id]', () => {
   });
 
   it('returns 404 for non-approved user when accessed by non-admin', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       ...mockUser,
       status: 'PENDING',
@@ -155,7 +157,7 @@ describe('GET /api/users/[id]', () => {
   });
 
   it('returns non-approved user for admin', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockAdminSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockAdminSession });
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       ...mockUser,
       status: 'PENDING',
@@ -171,7 +173,7 @@ describe('GET /api/users/[id]', () => {
 
   it('returns 500 on database error', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.user.findUnique).mockRejectedValue(new Error('Database error'));
 
     const response = await GET(createRequest(), createParams('user-1'));
@@ -183,7 +185,7 @@ describe('GET /api/users/[id]', () => {
   });
 
   it('includes user stats in response', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
     vi.mocked(getUserStats).mockResolvedValue(mockStats);
 

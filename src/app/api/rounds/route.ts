@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { validateBody } from '@/lib/api/validation';
-import { getSession } from '@/lib/auth/session';
+import { validateAdminSession, validateSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
 import { createRoundSchema } from '@/lib/schemas/round';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
 // GET /api/rounds - Get all rounds
 export async function GET() {
-  const session = await getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const validation = await validateSession();
+  if (validation.error) return validation.error;
 
   try {
     const rounds = await prisma.round.findMany({
@@ -28,21 +25,14 @@ export async function GET() {
 
 // POST /api/rounds - Create a new round (Admin only)
 export async function POST(request: NextRequest) {
-  const session = await getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  if (session.role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const validation = await validateAdminSession();
+  if (validation.error) return validation.error;
 
   try {
     // Validate request body with Zod
-    const validation = await validateBody(request, createRoundSchema);
-    if (!validation.success) return validation.response;
-    const { title, submissionDeadline, ratingDeadline, fulfillmentDate } = validation.data;
+    const bodyValidation = await validateBody(request, createRoundSchema);
+    if (!bodyValidation.success) return bodyValidation.response;
+    const { title, submissionDeadline, ratingDeadline, fulfillmentDate } = bodyValidation.data;
 
     const round = await prisma.round.create({
       data: {

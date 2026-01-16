@@ -230,6 +230,12 @@ vi.mock('@/lib/auth/session', () => ({
   loginErrorResponse: vi.fn(),
 }));
 
+// Mock admin validation for server tests
+vi.mock('@/lib/auth/admin-validation', () => ({
+  validateSession: vi.fn(),
+  validateAdminSession: vi.fn(),
+}));
+
 // Mock SSE for server tests
 vi.mock('@/lib/sse/event-emitter', () => ({
   sseEmitter: {

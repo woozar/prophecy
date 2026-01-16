@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateBody } from '@/lib/api/validation';
 import { validateAdminSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
+import { transformUserForBroadcast, userSelectForBroadcast } from '@/lib/db/user-select';
 import { updateUserSchema } from '@/lib/schemas/user';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
@@ -58,26 +59,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(status && { status }),
         ...(role && { role }),
       },
-      select: {
-        id: true,
-        username: true,
-        displayName: true,
-        avatarUrl: true,
-        avatarEffect: true,
-        avatarEffectColors: true,
-        role: true,
-        status: true,
-        createdAt: true,
-      },
+      select: userSelectForBroadcast,
     });
+
+    const userForBroadcast = transformUserForBroadcast(user);
 
     // Broadcast to all connected clients
     sseEmitter.broadcast({
       type: 'user:updated',
-      data: user,
+      data: userForBroadcast,
     });
 
-    return NextResponse.json({ user });
+    return NextResponse.json({ user: userForBroadcast });
   } catch (error) {
     console.error('Error updating user:', error);
     return NextResponse.json({ error: 'Fehler beim Aktualisieren des Benutzers' }, { status: 500 });

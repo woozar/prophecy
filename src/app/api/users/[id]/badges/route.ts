@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getSession } from '@/lib/auth/session';
+import { validateSession } from '@/lib/auth/admin-validation';
 import { getUserBadges } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
 
@@ -10,12 +10,10 @@ interface RouteParams {
 
 // GET /api/users/[id]/badges - Get all badges for a user
 export async function GET(_request: NextRequest, { params }: RouteParams) {
-  const session = await getSession();
+  const validation = await validateSession();
+  if (validation.error) return validation.error;
 
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+  const { session } = validation;
   const { id } = await params;
 
   try {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getSession } from '@/lib/auth/session';
+import { validateSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
 import { calculateRoundStatistics } from '@/lib/statistics/calculate';
 
@@ -10,12 +10,10 @@ interface RouteParams {
 
 // GET /api/rounds/[id]/statistics - Get statistics for a round
 export async function GET(_request: NextRequest, { params }: RouteParams) {
-  const session = await getSession();
+  const validation = await validateSession();
+  if (validation.error) return validation.error;
 
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+  const { session } = validation;
   const { id } = await params;
 
   try {

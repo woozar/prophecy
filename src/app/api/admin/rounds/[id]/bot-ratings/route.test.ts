@@ -1,29 +1,34 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { validateAdminSession } from '@/lib/auth/admin-validation';
+import { runBotRatingsForRound } from '@/lib/bots/bot-rating-service';
+
 import { POST } from './route';
 
-// Mock session
-let mockSession: { userId: string; role: string } | null = null;
-
-vi.mock('@/lib/auth/session', () => ({
-  getSession: vi.fn(async () => mockSession),
+vi.mock('@/lib/auth/admin-validation', () => ({
+  validateAdminSession: vi.fn(),
 }));
-
-// Mock bot-rating-service
-const mockRunBotRatingsForRound = vi.fn();
 
 vi.mock('@/lib/bots/bot-rating-service', () => ({
-  runBotRatingsForRound: (...args: unknown[]) => mockRunBotRatingsForRound(...args),
+  runBotRatingsForRound: vi.fn(),
 }));
+
+const mockAdminSession = {
+  userId: 'admin-1',
+  username: 'admin',
+  role: 'ADMIN' as const,
+  status: 'APPROVED' as const,
+};
 
 describe('POST /api/admin/rounds/[id]/bot-ratings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSession = null;
   });
 
-  it('returns 401 when not logged in', async () => {
-    mockSession = null;
+  it('returns 401 when not authenticated', async () => {
+    vi.mocked(validateAdminSession).mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }) as never,
+    });
 
     const request = new Request('http://localhost/api/admin/rounds/round-1/bot-ratings', {
       method: 'POST',
@@ -37,7 +42,9 @@ describe('POST /api/admin/rounds/[id]/bot-ratings', () => {
   });
 
   it('returns 403 when user is not admin', async () => {
-    mockSession = { userId: 'user-1', role: 'USER' };
+    vi.mocked(validateAdminSession).mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 }) as never,
+    });
 
     const request = new Request('http://localhost/api/admin/rounds/round-1/bot-ratings', {
       method: 'POST',
@@ -51,7 +58,7 @@ describe('POST /api/admin/rounds/[id]/bot-ratings', () => {
   });
 
   it('runs bot ratings successfully and returns result', async () => {
-    mockSession = { userId: 'admin-1', role: 'ADMIN' };
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
 
     const mockResult = {
       roundId: 'round-1',
@@ -63,7 +70,7 @@ describe('POST /api/admin/rounds/[id]/bot-ratings', () => {
       totalRatingsCreated: 10,
     };
 
-    mockRunBotRatingsForRound.mockResolvedValue(mockResult);
+    vi.mocked(runBotRatingsForRound).mockResolvedValue(mockResult);
 
     const request = new Request('http://localhost/api/admin/rounds/round-1/bot-ratings', {
       method: 'POST',
@@ -76,13 +83,13 @@ describe('POST /api/admin/rounds/[id]/bot-ratings', () => {
     expect(data.success).toBe(true);
     expect(data.message).toBe('10 Bot-Bewertungen erstellt');
     expect(data.result).toEqual(mockResult);
-    expect(mockRunBotRatingsForRound).toHaveBeenCalledWith('round-1');
+    expect(runBotRatingsForRound).toHaveBeenCalledWith('round-1');
   });
 
   it('returns 400 when round not found', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    mockSession = { userId: 'admin-1', role: 'ADMIN' };
-    mockRunBotRatingsForRound.mockRejectedValue(new Error('Runde nicht gefunden'));
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
+    vi.mocked(runBotRatingsForRound).mockRejectedValue(new Error('Runde nicht gefunden'));
 
     const request = new Request('http://localhost/api/admin/rounds/non-existent/bot-ratings', {
       method: 'POST',
@@ -98,8 +105,8 @@ describe('POST /api/admin/rounds/[id]/bot-ratings', () => {
 
   it('returns 400 when submission phase not ended', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    mockSession = { userId: 'admin-1', role: 'ADMIN' };
-    mockRunBotRatingsForRound.mockRejectedValue(
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
+    vi.mocked(runBotRatingsForRound).mockRejectedValue(
       new Error('Einreichungsphase ist noch nicht beendet')
     );
 
@@ -117,8 +124,8 @@ describe('POST /api/admin/rounds/[id]/bot-ratings', () => {
 
   it('returns 400 when no bots found', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    mockSession = { userId: 'admin-1', role: 'ADMIN' };
-    mockRunBotRatingsForRound.mockRejectedValue(new Error('Keine Bot-User gefunden'));
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
+    vi.mocked(runBotRatingsForRound).mockRejectedValue(new Error('Keine Bot-User gefunden'));
 
     const request = new Request('http://localhost/api/admin/rounds/round-1/bot-ratings', {
       method: 'POST',
@@ -134,8 +141,8 @@ describe('POST /api/admin/rounds/[id]/bot-ratings', () => {
 
   it('handles non-Error exceptions gracefully', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    mockSession = { userId: 'admin-1', role: 'ADMIN' };
-    mockRunBotRatingsForRound.mockRejectedValue('Unknown error');
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
+    vi.mocked(runBotRatingsForRound).mockRejectedValue('Unknown error');
 
     const request = new Request('http://localhost/api/admin/rounds/round-1/bot-ratings', {
       method: 'POST',
@@ -150,8 +157,8 @@ describe('POST /api/admin/rounds/[id]/bot-ratings', () => {
   });
 
   it('passes the correct round id to the service', async () => {
-    mockSession = { userId: 'admin-1', role: 'ADMIN' };
-    mockRunBotRatingsForRound.mockResolvedValue({
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockAdminSession });
+    vi.mocked(runBotRatingsForRound).mockResolvedValue({
       roundId: 'specific-round-id',
       roundTitle: 'Specific Round',
       results: [],
@@ -164,6 +171,6 @@ describe('POST /api/admin/rounds/[id]/bot-ratings', () => {
 
     await POST(request, { params: Promise.resolve({ id: 'specific-round-id' }) });
 
-    expect(mockRunBotRatingsForRound).toHaveBeenCalledWith('specific-round-id');
+    expect(runBotRatingsForRound).toHaveBeenCalledWith('specific-round-id');
   });
 });

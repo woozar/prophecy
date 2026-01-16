@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getSession } from '@/lib/auth/session';
+import { validateSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
 
 import { GET } from './route';
 
-vi.mock('@/lib/auth/session', () => ({
-  getSession: vi.fn(),
+vi.mock('@/lib/auth/admin-validation', () => ({
+  validateSession: vi.fn(),
 }));
 
 vi.mock('@/lib/db/prisma', () => ({
@@ -21,14 +21,14 @@ const mockSession = {
   userId: 'user-1',
   username: 'testuser',
   role: 'USER' as const,
-  iat: Date.now(),
+  status: 'APPROVED' as const,
 };
 
 const mockAdminSession = {
   userId: 'admin-1',
   username: 'admin',
   role: 'ADMIN' as const,
-  iat: Date.now(),
+  status: 'APPROVED' as const,
 };
 
 const mockUsers = [
@@ -100,7 +100,9 @@ describe('GET /api/users', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(getSession).mockResolvedValue(null);
+    vi.mocked(validateSession).mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }) as never,
+    });
 
     const response = await GET();
     const data = await response.json();
@@ -110,7 +112,7 @@ describe('GET /api/users', () => {
   });
 
   it('returns only approved users for normal users', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers);
 
     const response = await GET();
@@ -126,7 +128,7 @@ describe('GET /api/users', () => {
   });
 
   it('returns all users for admins', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockAdminSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockAdminSession });
     vi.mocked(prisma.user.findMany).mockResolvedValue([...mockUsers, mockPendingUser]);
 
     const response = await GET();
@@ -142,7 +144,7 @@ describe('GET /api/users', () => {
   });
 
   it('includes user badges', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers);
 
     const response = await GET();
@@ -155,7 +157,7 @@ describe('GET /api/users', () => {
 
   it('returns 500 on database error', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.user.findMany).mockRejectedValue(new Error('Database error'));
 
     const response = await GET();
@@ -167,7 +169,7 @@ describe('GET /api/users', () => {
   });
 
   it('orders users by displayName', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers);
 
     await GET();
@@ -180,7 +182,7 @@ describe('GET /api/users', () => {
   });
 
   it('limits badges to top 3 per user', async () => {
-    vi.mocked(getSession).mockResolvedValue(mockSession);
+    vi.mocked(validateSession).mockResolvedValue({ session: mockSession });
     vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers);
 
     await GET();

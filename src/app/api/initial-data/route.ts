@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
 
-import { getSession } from '@/lib/auth/session';
+import { validateSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
 
 // GET: Alle Daten für initialen Store-State laden
 export async function GET() {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
-  }
+  const validation = await validateSession();
+  if (validation.error) return validation.error;
 
+  const { session } = validation;
   const isAdmin = session.role === 'ADMIN';
 
   const [users, rounds, prophecies, ratings, badges, myBadges, allUserBadges] = await Promise.all([

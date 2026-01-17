@@ -59,6 +59,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       where: { prophecyId: id },
     });
 
+    // Notify clients about deleted ratings
+    for (const rating of ratingsToDelete) {
+      sseEmitter.broadcast({
+        type: 'rating:deleted',
+        data: { id: rating.id },
+      });
+    }
+
     const updatedProphecy = await prisma.prophecy.update({
       where: { id },
       data: {

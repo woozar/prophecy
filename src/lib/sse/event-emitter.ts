@@ -20,6 +20,7 @@ export type SSEEventType =
   | 'prophecy:rated'
   | 'rating:created'
   | 'rating:updated'
+  | 'rating:deleted'
   | 'badge:awarded'
   | 'badge:revoked'
   | 'auditLog:created';

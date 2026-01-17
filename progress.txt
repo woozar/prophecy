@@ -25,3 +25,20 @@
 - Removed placeholder console.log from forgot-password/page.tsx
 - Updated tests in useSSE.test.ts to test actual behavior rather than logging implementation
 - All 1751 tests passing
+
+### 4. Textformatierung in Beschreibungen (feature)
+- Created FormattedText component (src/components/FormattedText.tsx)
+- Line handling:
+  - Lines are trimmed (leading/trailing whitespace removed)
+  - Multiple consecutive empty lines collapse to a single empty line
+  - Leading/trailing empty lines are removed
+- Inline formatting (within single lines only):
+  - *text* → **bold**
+  - _text_ → underlined
+  - -text- → ~~strikethrough~~
+- Bullet point lists:
+  - Lines starting with "* " or "- " with odd marker count become bullet points
+  - Consecutive bullets are grouped into a single list
+- Integrated FormattedText in prophecy description display (RoundDetailClient.tsx)
+- Created comprehensive test suite (39 tests) in FormattedText.test.tsx
+- All 1795 tests passing

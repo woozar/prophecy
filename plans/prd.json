@@ -79,7 +79,8 @@
       "Parser-Komponente erstellen die diese Regeln umsetzt",
       "Komponente in allen Beschreibungs-Anzeigen verwenden (Prophezeiungen, Runden, etc.)",
       "Tests für alle Formatierungsregeln schreiben"
-    ]
+    ],
+    "passes": true
   },
   {
     "category": "bugfix",
@@ -90,6 +91,7 @@
       "Analyse: Z-Index, Opacity, Position prüfen",
       "Fix implementieren um Sichtbarkeit wiederherzustellen",
       "Sicherstellen dass der Indicator in allen Zuständen (connected, disconnected, reconnecting) sichtbar ist"
-    ]
+    ],
+    "passes": true
   }
 ]

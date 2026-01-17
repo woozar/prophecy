@@ -62,6 +62,7 @@ const mockUserFull = {
   isBot: false,
   createdAt: new Date(),
   updatedAt: new Date(),
+  badges: [] as { badgeId: string }[],
 };
 
 describe('POST /api/users/me/avatar', () => {
@@ -443,7 +444,11 @@ describe('DELETE /api/users/me/avatar', () => {
     });
     expect(sseEmitter.broadcast).toHaveBeenCalledWith({
       type: 'user:updated',
-      data: mockUserFull,
+      data: expect.objectContaining({
+        id: mockUserFull.id,
+        username: mockUserFull.username,
+        badgeIds: [],
+      }),
     });
   });
 

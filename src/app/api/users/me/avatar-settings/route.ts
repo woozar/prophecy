@@ -4,6 +4,7 @@ import { validateBody } from '@/lib/api/validation';
 import { getSession } from '@/lib/auth/session';
 import { awardBadge } from '@/lib/badges/badge-service';
 import { ensureInitialized, prisma } from '@/lib/db/prisma';
+import { transformUserForBroadcast, userSelectForBroadcast } from '@/lib/db/user-select';
 import { updateAvatarSettingsSchema } from '@/lib/schemas/user';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
@@ -38,22 +39,13 @@ export async function PATCH(request: NextRequest) {
     const user = await prisma.user.update({
       where: { id: session.userId },
       data: updateData,
-      select: {
-        id: true,
-        username: true,
-        displayName: true,
-        avatarUrl: true,
-        avatarEffect: true,
-        avatarEffectColors: true,
-        role: true,
-        status: true,
-      },
+      select: userSelectForBroadcast,
     });
 
     // Broadcast update
     sseEmitter.broadcast({
       type: 'user:updated',
-      data: user,
+      data: transformUserForBroadcast(user),
     });
 
     // Award "Modebewusst" badge if user has both avatar and effect

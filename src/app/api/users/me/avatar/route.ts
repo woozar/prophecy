@@ -9,6 +9,7 @@ import sharp from 'sharp';
 import { getSession } from '@/lib/auth/session';
 import { awardBadge } from '@/lib/badges/badge-service';
 import { ensureInitialized, prisma } from '@/lib/db/prisma';
+import { transformUserForBroadcast, userSelectForBroadcast } from '@/lib/db/user-select';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
 const UPLOAD_DIR =
@@ -90,19 +91,10 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.update({
       where: { id: session.userId },
       data: { avatarUrl },
-      select: {
-        id: true,
-        username: true,
-        displayName: true,
-        avatarUrl: true,
-        avatarEffect: true,
-        avatarEffectColors: true,
-        role: true,
-        status: true,
-      },
+      select: userSelectForBroadcast,
     });
 
-    sseEmitter.broadcast({ type: 'user:updated', data: user });
+    sseEmitter.broadcast({ type: 'user:updated', data: transformUserForBroadcast(user) });
 
     if (user.avatarUrl && user.avatarEffect) {
       const badgeResult = await awardBadge(session.userId, 'special_stylist');
@@ -158,22 +150,13 @@ export async function DELETE() {
     const user = await prisma.user.update({
       where: { id: session.userId },
       data: { avatarUrl: null },
-      select: {
-        id: true,
-        username: true,
-        displayName: true,
-        avatarUrl: true,
-        avatarEffect: true,
-        avatarEffectColors: true,
-        role: true,
-        status: true,
-      },
+      select: userSelectForBroadcast,
     });
 
     // Broadcast update
     sseEmitter.broadcast({
       type: 'user:updated',
-      data: user,
+      data: transformUserForBroadcast(user),
     });
 
     return NextResponse.json({ success: true });

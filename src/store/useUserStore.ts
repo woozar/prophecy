@@ -57,21 +57,24 @@ export const useUserStore = create<UserState>((set) => ({
   setUser: (user) =>
     set((state) => {
       const existing = state.users[user.id];
+      // Merge with existing user to preserve fields not in update (e.g., badgeIds)
+      const mergedUser = existing ? { ...existing, ...user } : user;
       // Skip update if nothing changed
       if (
         existing &&
-        existing.username === user.username &&
-        existing.displayName === user.displayName &&
-        existing.avatarUrl === user.avatarUrl &&
-        existing.avatarEffect === user.avatarEffect &&
-        JSON.stringify(existing.avatarEffectColors) === JSON.stringify(user.avatarEffectColors) &&
-        existing.role === user.role &&
-        existing.status === user.status &&
-        JSON.stringify(existing.badgeIds) === JSON.stringify(user.badgeIds)
+        existing.username === mergedUser.username &&
+        existing.displayName === mergedUser.displayName &&
+        existing.avatarUrl === mergedUser.avatarUrl &&
+        existing.avatarEffect === mergedUser.avatarEffect &&
+        JSON.stringify(existing.avatarEffectColors) ===
+          JSON.stringify(mergedUser.avatarEffectColors) &&
+        existing.role === mergedUser.role &&
+        existing.status === mergedUser.status &&
+        JSON.stringify(existing.badgeIds) === JSON.stringify(mergedUser.badgeIds)
       ) {
         return state;
       }
-      return { users: { ...state.users, [user.id]: user } };
+      return { users: { ...state.users, [mergedUser.id]: mergedUser } };
     }),
 
   removeUser: (id) =>

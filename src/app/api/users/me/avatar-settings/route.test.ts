@@ -40,6 +40,7 @@ describe('PATCH /api/users/me/avatar-settings', () => {
     isBot: false,
     createdAt: new Date(),
     updatedAt: new Date(),
+    badges: [{ badgeId: 'badge-1' }],
   };
 
   beforeEach(() => {
@@ -208,7 +209,11 @@ describe('PATCH /api/users/me/avatar-settings', () => {
 
     expect(sseEmitter.broadcast).toHaveBeenCalledWith({
       type: 'user:updated',
-      data: mockUser,
+      data: expect.objectContaining({
+        id: mockUser.id,
+        username: mockUser.username,
+        badgeIds: ['badge-1'],
+      }),
     });
   });
 

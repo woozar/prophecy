@@ -25,6 +25,10 @@ export const ProfileAvatarSection = memo(function ProfileAvatarSection({
   const [avatarEffect, setAvatarEffect] = useState(initialAvatarEffect);
   const [avatarEffectColors, setAvatarEffectColors] = useState(initialAvatarEffectColors);
 
+  // Preview state for live effect preview
+  const [previewEffect, setPreviewEffect] = useState(initialAvatarEffect);
+  const [previewColors, setPreviewColors] = useState(initialAvatarEffectColors);
+
   const handleAvatarChange = useCallback((url: string | null) => {
     setAvatarUrl(url);
   }, []);
@@ -32,6 +36,13 @@ export const ProfileAvatarSection = memo(function ProfileAvatarSection({
   const handleEffectChange = useCallback((effect: string | null, colors: string[]) => {
     setAvatarEffect(effect);
     setAvatarEffectColors(colors);
+    setPreviewEffect(effect);
+    setPreviewColors(colors);
+  }, []);
+
+  const handlePreviewChange = useCallback((effect: string | null, colors: string[]) => {
+    setPreviewEffect(effect);
+    setPreviewColors(colors);
   }, []);
 
   return (
@@ -46,8 +57,8 @@ export const ProfileAvatarSection = memo(function ProfileAvatarSection({
             username={username}
             displayName={displayName}
             avatarUrl={avatarUrl}
-            avatarEffect={avatarEffect}
-            avatarEffectColors={avatarEffectColors}
+            avatarEffect={previewEffect}
+            avatarEffectColors={previewColors}
             onAvatarChange={handleAvatarChange}
           />
         </div>
@@ -62,6 +73,7 @@ export const ProfileAvatarSection = memo(function ProfileAvatarSection({
           currentEffect={avatarEffect}
           currentColors={avatarEffectColors}
           onEffectChange={handleEffectChange}
+          onPreviewChange={handlePreviewChange}
         />
       </div>
     </Card>

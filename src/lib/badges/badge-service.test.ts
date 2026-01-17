@@ -337,15 +337,15 @@ describe('badge-service', () => {
       expect(result.some((b) => b.badge.key === 'social_generous')).toBe(true);
     });
 
-    it('does not check passkey badges in checkAndAwardBadges (handled separately)', async () => {
+    it('checks passkey badges in checkAndAwardBadges', async () => {
       mockProphecyFindMany.mockResolvedValue([]);
       mockRatingFindMany.mockResolvedValue([]);
       mockRoundFindMany.mockResolvedValue([]);
+      mockAuthenticatorCount.mockResolvedValue(0);
 
       await checkAndAwardBadges('user-1');
 
-      // awardSecurityBadges is now called separately in passkey/login routes
-      expect(mockAuthenticatorCount).not.toHaveBeenCalled();
+      expect(mockAuthenticatorCount).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
     });
   });
 

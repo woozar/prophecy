@@ -11,7 +11,9 @@ import { IconActionButton } from '@/components/IconActionButton';
 import { Modal } from '@/components/Modal';
 import { UserAvatar } from '@/components/UserAvatar';
 import { UserStatsGrid } from '@/components/UserStatsGrid';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { apiClient } from '@/lib/api-client/client';
+import { getLegendaryBadgeClass } from '@/lib/badges/badge-styles';
 import { type TierGroup, groupBadgesByTier, isTierGroupAscending } from '@/lib/badges/badge-tiers';
 import { formatDate } from '@/lib/formatting/date';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
@@ -34,6 +36,7 @@ export const UserProfileModal = memo(function UserProfileModal({
   opened,
   onClose,
 }: Readonly<UserProfileModalProps>) {
+  const reducedMotion = useReducedMotion();
   const badges = useBadgeStore((state) => state.badges);
   const allUserBadges = useBadgeStore((state) => state.allUserBadges);
   const currentUserId = useUserStore((state) => state.currentUserId);
@@ -241,6 +244,9 @@ export const UserProfileModal = memo(function UserProfileModal({
                       })
                     : undefined;
 
+                const isLegendary = badge.rarity === 'LEGENDARY';
+                const legendaryClass = getLegendaryBadgeClass(isLegendary, reducedMotion);
+
                 return (
                   <Tooltip
                     key={badge.id}
@@ -258,14 +264,13 @@ export const UserProfileModal = memo(function UserProfileModal({
                     position="top"
                     events={{ hover: true, focus: true, touch: true }}
                     classNames={{
-                      tooltip:
-                        badge.rarity === 'LEGENDARY'
-                          ? 'achievement-tooltip-legendary'
-                          : 'achievement-tooltip',
+                      tooltip: isLegendary
+                        ? 'achievement-tooltip-legendary'
+                        : 'achievement-tooltip',
                     }}
                   >
                     <div
-                      className={`flex items-center gap-3 p-3 badge-card cursor-default ${badge.rarity === 'LEGENDARY' ? 'badge-card-legendary' : ''}`}
+                      className={`flex items-center gap-3 p-3 badge-card cursor-default ${legendaryClass}`}
                     >
                       <BadgeIcon badgeKey={badge.key} size="md" />
                       <div className="min-w-0 flex-1">

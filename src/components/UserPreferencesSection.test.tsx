@@ -1,11 +1,34 @@
+import { MantineProvider } from '@mantine/core';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { apiClient } from '@/lib/api-client';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
 import { useUserStore } from '@/store/useUserStore';
 
 import { UserPreferencesSection } from './UserPreferencesSection';
+
+// Mock matchMedia for Mantine
+beforeAll(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: (query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  });
+});
+
+// Wrapper component for Mantine context
+function renderWithMantine(ui: React.ReactElement) {
+  return render(<MantineProvider>{ui}</MantineProvider>);
+}
 
 vi.mock('@/lib/api-client', () => ({
   apiClient: {
@@ -49,17 +72,17 @@ describe('UserPreferencesSection', () => {
   });
 
   it('renders with animations enabled', () => {
-    render(<UserPreferencesSection animationsEnabled={true} />);
+    renderWithMantine(<UserPreferencesSection animationsEnabled={true} />);
 
-    expect(screen.getByText('Animationen aktiv')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Deaktivieren' })).toBeInTheDocument();
+    const switchElement = screen.getByRole('switch', { name: /animationen/i });
+    expect(switchElement).toBeChecked();
   });
 
   it('renders with animations disabled', () => {
-    render(<UserPreferencesSection animationsEnabled={false} />);
+    renderWithMantine(<UserPreferencesSection animationsEnabled={false} />);
 
-    expect(screen.getByText('Animationen deaktiviert')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Aktivieren' })).toBeInTheDocument();
+    const switchElement = screen.getByRole('switch', { name: /animationen/i });
+    expect(switchElement).not.toBeChecked();
   });
 
   it('toggles animations off successfully', async () => {
@@ -68,10 +91,10 @@ describe('UserPreferencesSection', () => {
       error: undefined,
     } as never);
 
-    render(<UserPreferencesSection animationsEnabled={true} />);
+    renderWithMantine(<UserPreferencesSection animationsEnabled={true} />);
 
-    const button = screen.getByRole('button', { name: 'Deaktivieren' });
-    fireEvent.click(button);
+    const switchElement = screen.getByRole('switch', { name: /animationen/i });
+    fireEvent.click(switchElement);
 
     await waitFor(() => {
       expect(apiClient.user.preferences.update).toHaveBeenCalledWith({
@@ -89,10 +112,10 @@ describe('UserPreferencesSection', () => {
       error: undefined,
     } as never);
 
-    render(<UserPreferencesSection animationsEnabled={false} />);
+    renderWithMantine(<UserPreferencesSection animationsEnabled={false} />);
 
-    const button = screen.getByRole('button', { name: 'Aktivieren' });
-    fireEvent.click(button);
+    const switchElement = screen.getByRole('switch', { name: /animationen/i });
+    fireEvent.click(switchElement);
 
     await waitFor(() => {
       expect(apiClient.user.preferences.update).toHaveBeenCalledWith({
@@ -109,10 +132,10 @@ describe('UserPreferencesSection', () => {
       error: { error: 'Server error' },
     } as never);
 
-    render(<UserPreferencesSection animationsEnabled={true} />);
+    renderWithMantine(<UserPreferencesSection animationsEnabled={true} />);
 
-    const button = screen.getByRole('button', { name: 'Deaktivieren' });
-    fireEvent.click(button);
+    const switchElement = screen.getByRole('switch', { name: /animationen/i });
+    fireEvent.click(switchElement);
 
     await waitFor(() => {
       expect(showErrorToast).toHaveBeenCalledWith('Server error');
@@ -122,36 +145,36 @@ describe('UserPreferencesSection', () => {
   it('shows connection error toast on network error', async () => {
     vi.mocked(apiClient.user.preferences.update).mockRejectedValue(new Error('Network error'));
 
-    render(<UserPreferencesSection animationsEnabled={true} />);
+    renderWithMantine(<UserPreferencesSection animationsEnabled={true} />);
 
-    const button = screen.getByRole('button', { name: 'Deaktivieren' });
-    fireEvent.click(button);
+    const switchElement = screen.getByRole('switch', { name: /animationen/i });
+    fireEvent.click(switchElement);
 
     await waitFor(() => {
       expect(showErrorToast).toHaveBeenCalledWith('Verbindungsfehler');
     });
   });
 
-  it('shows loading state while updating', async () => {
+  it('disables switch while updating', async () => {
     let resolvePromise: (value: never) => void;
     const promise = new Promise<never>((resolve) => {
       resolvePromise = resolve;
     });
     vi.mocked(apiClient.user.preferences.update).mockReturnValue(promise);
 
-    render(<UserPreferencesSection animationsEnabled={true} />);
+    renderWithMantine(<UserPreferencesSection animationsEnabled={true} />);
 
-    const button = screen.getByRole('button', { name: 'Deaktivieren' });
-    fireEvent.click(button);
+    const switchElement = screen.getByRole('switch', { name: /animationen/i });
+    fireEvent.click(switchElement);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Wird aktualisiert...' })).toBeDisabled();
+      expect(switchElement).toBeDisabled();
     });
 
     resolvePromise!({ data: { success: true, animationsEnabled: false } } as never);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Aktivieren' })).not.toBeDisabled();
+      expect(switchElement).not.toBeDisabled();
     });
   });
 });

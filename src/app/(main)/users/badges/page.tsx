@@ -10,6 +10,8 @@ import { Card } from '@/components/Card';
 import { Link } from '@/components/Link';
 import { Modal } from '@/components/Modal';
 import { UserAvatar } from '@/components/UserAvatar';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { getLegendaryBadgeClass } from '@/lib/badges/badge-styles';
 import { formatDate } from '@/lib/formatting/date';
 import { useBadgeStore } from '@/store/useBadgeStore';
 import { useUserStore } from '@/store/useUserStore';
@@ -240,13 +242,15 @@ const BadgeCard = memo(function BadgeCard({
   firstAchiever,
   onClick,
 }: Readonly<BadgeCardProps>) {
+  const reducedMotion = useReducedMotion();
   const isLegendary = badge.rarity === 'LEGENDARY';
+  const legendaryClass = getLegendaryBadgeClass(isLegendary, reducedMotion);
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left p-4 badge-card cursor-pointer ${isLegendary ? 'badge-card-legendary' : ''}`}
+      className={`w-full text-left p-4 badge-card cursor-pointer ${legendaryClass}`}
     >
       <div className="flex items-start gap-4">
         <BadgeIcon badgeKey={badge.badgeKey} size="lg" />

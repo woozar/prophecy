@@ -77,12 +77,6 @@ describe('AvatarEffectSelector', () => {
 
       expect(screen.queryByText('Farben wählen (Mehrfachauswahl)')).not.toBeInTheDocument();
     });
-
-    it('shows avatar preview', () => {
-      render(<AvatarEffectSelector {...defaultProps} />);
-
-      expect(screen.getByTitle('Test User')).toBeInTheDocument();
-    });
   });
 
   describe('effect selection', () => {

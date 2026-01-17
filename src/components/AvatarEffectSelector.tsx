@@ -8,11 +8,12 @@ import {
   IconCircleDot,
   IconCircleOff,
   IconFlame,
+  IconInfoCircle,
   IconSparkles,
 } from '@tabler/icons-react';
 
 import { Button } from '@/components/Button';
-import { AvatarPreview } from '@/components/UserAvatar';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { apiClient } from '@/lib/api-client';
 import { avatarColors } from '@/lib/schemas/user';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
@@ -28,6 +29,7 @@ interface AvatarEffectSelectorProps {
   currentEffect?: string | null;
   currentColors?: string[];
   onEffectChange: (effect: string | null, colors: string[]) => void;
+  onPreviewChange?: (effect: string | null, colors: string[]) => void;
 }
 
 const EFFECTS: { value: AvatarEffect; label: string; icon: React.ReactNode }[] = [
@@ -51,13 +53,12 @@ const COLORS = [
 ];
 
 export const AvatarEffectSelector = memo(function AvatarEffectSelector({
-  username,
-  displayName,
-  avatarUrl,
   currentEffect,
   currentColors = [],
   onEffectChange,
+  onPreviewChange,
 }: Readonly<AvatarEffectSelectorProps>) {
+  const reducedMotion = useReducedMotion();
   const [selectedEffect, setSelectedEffect] = useState<AvatarEffect>(
     (currentEffect as AvatarEffect) || 'none'
   );
@@ -74,20 +75,31 @@ export const AvatarEffectSelector = memo(function AvatarEffectSelector({
     return effectChanged || colorsChanged;
   }, [selectedEffect, selectedColors, currentEffect, currentColors]);
 
-  const handleEffectChange = useCallback((effect: AvatarEffect) => {
-    setSelectedEffect(effect);
-  }, []);
+  const handleEffectChange = useCallback(
+    (effect: AvatarEffect) => {
+      setSelectedEffect(effect);
+      onPreviewChange?.(effect === 'none' ? null : effect, selectedColors);
+    },
+    [onPreviewChange, selectedColors]
+  );
 
-  const handleColorToggle = useCallback((color: string) => {
-    setSelectedColors((prev) => {
-      if (prev.includes(color)) {
-        // Don't allow removing the last color
-        if (prev.length === 1) return prev;
-        return prev.filter((c) => c !== color);
-      }
-      return [...prev, color];
-    });
-  }, []);
+  const handleColorToggle = useCallback(
+    (color: string) => {
+      setSelectedColors((prev) => {
+        let newColors: string[];
+        if (prev.includes(color)) {
+          // Don't allow removing the last color
+          if (prev.length === 1) return prev;
+          newColors = prev.filter((c) => c !== color);
+        } else {
+          newColors = [...prev, color];
+        }
+        onPreviewChange?.(selectedEffect === 'none' ? null : selectedEffect, newColors);
+        return newColors;
+      });
+    },
+    [onPreviewChange, selectedEffect]
+  );
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
@@ -147,17 +159,16 @@ export const AvatarEffectSelector = memo(function AvatarEffectSelector({
 
   return (
     <div className="space-y-6">
-      {/* Preview */}
-      <div className="flex justify-center">
-        <AvatarPreview
-          username={username}
-          displayName={displayName}
-          avatarUrl={avatarUrl}
-          avatarEffect={selectedEffect === 'none' ? null : selectedEffect}
-          avatarEffectColors={selectedColors}
-          size="xl"
-        />
-      </div>
+      {/* Info when animations are disabled */}
+      {reducedMotion && selectedEffect !== 'none' && (
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+          <IconInfoCircle size={18} className="text-yellow-400 shrink-0 mt-0.5" />
+          <p className="text-sm text-yellow-300">
+            Du hast Animationen deaktiviert. Der gewählte Effekt wird dir nicht angezeigt, aber
+            andere Benutzer sehen ihn.
+          </p>
+        </div>
+      )}
 
       {/* Effect Selection */}
       <div>

@@ -86,8 +86,8 @@ export const AvatarUpload = memo(function AvatarUpload({
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4">
+      <div className="flex flex-col items-center gap-2">
         <AvatarPreview
           username={username}
           displayName={displayName}
@@ -96,47 +96,46 @@ export const AvatarUpload = memo(function AvatarUpload({
           avatarEffectColors={avatarEffectColors}
           size="xl"
         />
-        <div className="flex-1">
-          <Dropzone
-            onDrop={handleDrop}
-            accept={IMAGE_MIME_TYPE}
-            maxSize={5 * 1024 * 1024}
-            multiple={false}
-            loading={isUploading}
-            style={dropzoneStyle}
-            className="hover:border-cyan-400/50 transition-colors"
+        {avatarUrl && (
+          <Button
+            variant="ghost"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="flex items-center gap-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 p-1 text-xs"
           >
-            <div className="flex flex-col items-center justify-center py-4 gap-2">
-              <Dropzone.Accept>
-                <IconUpload size={32} className="text-cyan-400" />
-              </Dropzone.Accept>
-              <Dropzone.Reject>
-                <IconX size={32} className="text-red-400" />
-              </Dropzone.Reject>
-              <Dropzone.Idle>
-                <IconPhoto size={32} className="text-(--text-muted)" />
-              </Dropzone.Idle>
-
-              <div className="text-center">
-                <p className="text-sm text-(--text-secondary)">Bild hier ablegen oder klicken</p>
-                <p className="text-xs text-(--text-muted)">Max. 5MB (JPEG, PNG, WebP, GIF)</p>
-              </div>
-            </div>
-          </Dropzone>
-        </div>
+            <IconTrash size={14} />
+            {isDeleting ? 'Entfernen...' : 'Entfernen'}
+          </Button>
+        )}
       </div>
-
-      {avatarUrl && (
-        <Button
-          variant="ghost"
-          onClick={handleDelete}
-          disabled={isDeleting}
-          className="flex items-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2"
+      <div className="flex-1">
+        <Dropzone
+          onDrop={handleDrop}
+          accept={IMAGE_MIME_TYPE}
+          maxSize={5 * 1024 * 1024}
+          multiple={false}
+          loading={isUploading}
+          style={dropzoneStyle}
+          className="hover:border-cyan-400/50 transition-colors"
         >
-          <IconTrash size={16} />
-          {isDeleting ? 'Wird entfernt...' : 'Avatar entfernen'}
-        </Button>
-      )}
+          <div className="flex flex-col items-center justify-center py-4 gap-2">
+            <Dropzone.Accept>
+              <IconUpload size={32} className="text-cyan-400" />
+            </Dropzone.Accept>
+            <Dropzone.Reject>
+              <IconX size={32} className="text-red-400" />
+            </Dropzone.Reject>
+            <Dropzone.Idle>
+              <IconPhoto size={32} className="text-(--text-muted)" />
+            </Dropzone.Idle>
+
+            <div className="text-center">
+              <p className="text-sm text-(--text-secondary)">Bild hier ablegen oder klicken</p>
+              <p className="text-xs text-(--text-muted)">Max. 5MB (JPEG, PNG, WebP, GIF)</p>
+            </div>
+          </div>
+        </Dropzone>
+      </div>
     </div>
   );
 });

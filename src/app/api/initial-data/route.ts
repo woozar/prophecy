@@ -22,6 +22,7 @@ export async function GET() {
         avatarUrl: true,
         avatarEffect: true,
         avatarEffectColors: true,
+        animationsEnabled: true,
         role: true,
         status: true,
         isBot: true,

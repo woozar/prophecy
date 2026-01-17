@@ -81,13 +81,13 @@ describe('AvatarUpload', () => {
         <AvatarUpload {...defaultProps} avatarUrl="/api/uploads/avatars/test.webp" />
       );
 
-      expect(screen.getByText('Avatar entfernen')).toBeInTheDocument();
+      expect(screen.getByText('Entfernen')).toBeInTheDocument();
     });
 
     it('hides delete button when no avatar', () => {
       renderWithMantine(<AvatarUpload {...defaultProps} avatarUrl={null} />);
 
-      expect(screen.queryByText('Avatar entfernen')).not.toBeInTheDocument();
+      expect(screen.queryByText('Entfernen')).not.toBeInTheDocument();
     });
   });
 
@@ -163,7 +163,7 @@ describe('AvatarUpload', () => {
         />
       );
 
-      fireEvent.click(screen.getByText('Avatar entfernen'));
+      fireEvent.click(screen.getByText('Entfernen'));
 
       await waitFor(() => {
         expect(mockAvatarDelete).toHaveBeenCalled();
@@ -183,7 +183,7 @@ describe('AvatarUpload', () => {
         <AvatarUpload {...defaultProps} avatarUrl="/api/uploads/avatars/test.webp" />
       );
 
-      fireEvent.click(screen.getByText('Avatar entfernen'));
+      fireEvent.click(screen.getByText('Entfernen'));
 
       await waitFor(() => {
         expect(showErrorToast).toHaveBeenCalledWith('Delete failed');
@@ -202,14 +202,14 @@ describe('AvatarUpload', () => {
         <AvatarUpload {...defaultProps} avatarUrl="/api/uploads/avatars/test.webp" />
       );
 
-      fireEvent.click(screen.getByText('Avatar entfernen'));
+      fireEvent.click(screen.getByText('Entfernen'));
 
-      expect(screen.getByText('Wird entfernt...')).toBeInTheDocument();
+      expect(screen.getByText('Entfernen...')).toBeInTheDocument();
 
       resolvePromise!({ data: { success: true }, error: null });
 
       await waitFor(() => {
-        expect(screen.queryByText('Wird entfernt...')).not.toBeInTheDocument();
+        expect(screen.queryByText('Entfernen...')).not.toBeInTheDocument();
       });
     });
   });

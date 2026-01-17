@@ -856,6 +856,27 @@ body {
     inset 0 0 15px rgba(255, 215, 0, 0.2);
 }
 
+/* Static version without animations for reduced motion preference */
+.badge-card-legendary-static {
+  position: relative;
+  overflow: clip;
+  border-color: rgba(255, 215, 0, 0.7) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 25, 41, 0.8) 0%,
+    rgba(45, 35, 15, 0.6) 50%,
+    rgba(10, 25, 41, 0.8) 100%
+  );
+}
+
+.badge-card-legendary-static:hover {
+  border-color: rgba(255, 215, 0, 1) !important;
+  box-shadow:
+    0 0 15px rgba(255, 215, 0, 0.8),
+    0 0 22px rgba(255, 165, 0, 0.5),
+    inset 0 0 15px rgba(255, 215, 0, 0.2);
+}
+
 /* Badge running animation - liquid flowing effect with bubbles */
 @keyframes badge-liquid-flow {
   0% {

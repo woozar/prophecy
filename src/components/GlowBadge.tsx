@@ -2,6 +2,8 @@
 
 import { HTMLAttributes, ReactNode, memo, useMemo } from 'react';
 
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+
 type BadgeColor = 'cyan' | 'green' | 'yellow' | 'red' | 'violet' | 'gray';
 
 interface GlowBadgeProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'color'> {
@@ -34,16 +36,19 @@ export const GlowBadge = memo(function GlowBadge({
   className = '',
   ...props
 }: Readonly<GlowBadgeProps>) {
+  const reducedMotion = useReducedMotion();
+  const shouldAnimate = animated && !reducedMotion;
+
   const badgeClassName = useMemo(() => {
     const sizeClasses = size === 'sm' ? 'px-3 py-1 text-xs' : 'px-4 py-2 text-sm';
     const colorClasses = colorStyles[color];
-    const animatedClass = animated ? 'glow-badge-animated' : '';
+    const animatedClass = shouldAnimate ? 'glow-badge-animated' : '';
     return `inline-flex items-center gap-1.5 border rounded-full font-medium ${sizeClasses} ${colorClasses} ${animatedClass} ${className}`.trim();
-  }, [size, color, animated, className]);
+  }, [size, color, shouldAnimate, className]);
 
   return (
     <span className={badgeClassName} {...props}>
-      {animated && (
+      {shouldAnimate && (
         <>
           <span className="bubble-extra" />
           <span className="bubble-extra" />
@@ -57,7 +62,12 @@ export const GlowBadge = memo(function GlowBadge({
           <span className="bubble-extra" />
         </>
       )}
-      {withDot && <span className="inline-block w-2 h-2 bg-current rounded-full animate-pulse" />}
+      {withDot && !reducedMotion && (
+        <span className="inline-block w-2 h-2 bg-current rounded-full animate-pulse" />
+      )}
+      {withDot && reducedMotion && (
+        <span className="inline-block w-2 h-2 bg-current rounded-full" />
+      )}
       {children}
     </span>
   );

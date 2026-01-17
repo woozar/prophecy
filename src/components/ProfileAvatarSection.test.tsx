@@ -74,9 +74,8 @@ describe('ProfileAvatarSection', () => {
     it('renders avatar preview', () => {
       renderWithMantine(<ProfileAvatarSection {...defaultProps} />);
 
-      // Should have multiple avatar previews (upload + effect selector)
-      const avatars = screen.getAllByTitle('Test User');
-      expect(avatars.length).toBeGreaterThan(0);
+      // Should have one avatar preview (in the upload section)
+      expect(screen.getByTitle('Test User')).toBeInTheDocument();
     });
   });
 
@@ -132,7 +131,7 @@ describe('ProfileAvatarSection', () => {
       );
 
       // Delete button should be visible since avatar exists
-      expect(screen.getByText('Avatar entfernen')).toBeInTheDocument();
+      expect(screen.getByText('Entfernen')).toBeInTheDocument();
 
       // Color selection should be visible since effect is glow
       expect(screen.getByText('Farben wählen (Mehrfachauswahl)')).toBeInTheDocument();

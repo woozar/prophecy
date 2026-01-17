@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { UserProfileModalContext } from '@/contexts/UserProfileModalContext';
 import { useAnimationLoop } from '@/hooks/useAnimationLoop';
 import { useColorCycling } from '@/hooks/useColorCycling';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useUser } from '@/hooks/useUser';
 
 /**
@@ -941,6 +942,7 @@ export const AvatarPreview = memo(function AvatarPreview({
   size = 'md',
   className = '',
 }: Readonly<AvatarPreviewProps>) {
+  const reducedMotion = useReducedMotion();
   const name = displayName || username || 'Unknown';
   const initials = getInitials(name);
   const colorClass = getColorFromString(username);
@@ -951,7 +953,8 @@ export const AvatarPreview = memo(function AvatarPreview({
     return avatarEffectColors.length > 0 ? avatarEffectColors : ['cyan'];
   }, [avatarEffectColors]);
 
-  const effect = avatarEffect || 'none';
+  // Disable effects when reduced motion is preferred
+  const effect = reducedMotion ? 'none' : avatarEffect || 'none';
 
   // Use a separate component for the image to manage loading state per-URL
   const avatarContent = (

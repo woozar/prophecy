@@ -19,20 +19,13 @@ const createRouteParams = (id: string) => ({
   params: Promise.resolve({ id }),
 });
 
-const createMockProphecy = (id: string) =>
-  ({
-    id,
-    title: 'Test Prophecy',
-    description: 'Test description',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    roundId: 'round-1',
-    creatorId: 'user-1',
-    fulfilled: null,
-    resolvedAt: null,
-    averageRating: null,
-    ratingCount: 0,
-  }) as const;
+// Create a mock prophecy with round info (ratingDeadline in the past by default)
+const createMockProphecy = (id: string, ratingDeadline = new Date('2020-01-01')) => ({
+  id,
+  round: {
+    ratingDeadline,
+  },
+});
 
 const createMockAuditLog = (overrides = {}) => ({
   id: 'audit-1',
@@ -195,5 +188,127 @@ describe('GET /api/prophecies/[id]/audit', () => {
     const data = await response.json();
 
     expect(data.auditLogs[0].createdAt).toBe('2025-01-15T10:00:00.000Z');
+  });
+
+  describe('rating value masking', () => {
+    it('shows rating values when rating deadline has passed', async () => {
+      vi.mocked(getSession).mockResolvedValue(mockUser);
+      // Rating deadline in the past
+      vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(
+        createMockProphecy('prophecy-1', new Date('2020-01-01'))
+      );
+      vi.mocked(prisma.auditLog.findMany).mockResolvedValue([
+        createMockAuditLog({
+          id: 'audit-rating',
+          entityType: auditEntityTypeSchema.enum.RATING,
+          entityId: 'rating-1',
+          action: AuditActions.CREATE,
+          newValue: '{"value":5,"userId":"user-2"}',
+        }),
+      ]);
+
+      const request = new NextRequest('http://localhost/api/prophecies/prophecy-1/audit');
+      const response = await GET(request, createRouteParams('prophecy-1'));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.auditLogs[0].newValue).toBe('{"value":5,"userId":"user-2"}');
+    });
+
+    it('masks rating values when rating deadline has not passed', async () => {
+      vi.mocked(getSession).mockResolvedValue(mockUser);
+      // Rating deadline in the future
+      vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(
+        createMockProphecy('prophecy-1', new Date('2099-01-01'))
+      );
+      vi.mocked(prisma.auditLog.findMany).mockResolvedValue([
+        createMockAuditLog({
+          id: 'audit-rating',
+          entityType: auditEntityTypeSchema.enum.RATING,
+          entityId: 'rating-1',
+          action: AuditActions.CREATE,
+          newValue: '{"value":5,"userId":"user-2"}',
+        }),
+      ]);
+
+      const request = new NextRequest('http://localhost/api/prophecies/prophecy-1/audit');
+      const response = await GET(request, createRouteParams('prophecy-1'));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      // Value should be removed but userId preserved
+      expect(data.auditLogs[0].newValue).toBe('{"userId":"user-2"}');
+    });
+
+    it('masks both oldValue and newValue for rating updates before deadline', async () => {
+      vi.mocked(getSession).mockResolvedValue(mockUser);
+      vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(
+        createMockProphecy('prophecy-1', new Date('2099-01-01'))
+      );
+      vi.mocked(prisma.auditLog.findMany).mockResolvedValue([
+        createMockAuditLog({
+          id: 'audit-rating',
+          entityType: auditEntityTypeSchema.enum.RATING,
+          entityId: 'rating-1',
+          action: AuditActions.UPDATE,
+          oldValue: '{"value":3}',
+          newValue: '{"value":5}',
+        }),
+      ]);
+
+      const request = new NextRequest('http://localhost/api/prophecies/prophecy-1/audit');
+      const response = await GET(request, createRouteParams('prophecy-1'));
+      const data = await response.json();
+
+      expect(data.auditLogs[0].oldValue).toBe('{}');
+      expect(data.auditLogs[0].newValue).toBe('{}');
+    });
+
+    it('does not mask prophecy entries even before deadline', async () => {
+      vi.mocked(getSession).mockResolvedValue(mockUser);
+      vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(
+        createMockProphecy('prophecy-1', new Date('2099-01-01'))
+      );
+      vi.mocked(prisma.auditLog.findMany).mockResolvedValue([
+        createMockAuditLog({
+          entityType: auditEntityTypeSchema.enum.PROPHECY,
+          action: AuditActions.UPDATE,
+          oldValue: '{"title":"Old Title"}',
+          newValue: '{"title":"New Title"}',
+        }),
+      ]);
+
+      const request = new NextRequest('http://localhost/api/prophecies/prophecy-1/audit');
+      const response = await GET(request, createRouteParams('prophecy-1'));
+      const data = await response.json();
+
+      expect(data.auditLogs[0].oldValue).toBe('{"title":"Old Title"}');
+      expect(data.auditLogs[0].newValue).toBe('{"title":"New Title"}');
+    });
+
+    it('masks values in bulk delete ratings array before deadline', async () => {
+      vi.mocked(getSession).mockResolvedValue(mockUser);
+      vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(
+        createMockProphecy('prophecy-1', new Date('2099-01-01'))
+      );
+      vi.mocked(prisma.auditLog.findMany).mockResolvedValue([
+        createMockAuditLog({
+          entityType: auditEntityTypeSchema.enum.RATING,
+          action: AuditActions.BULK_DELETE,
+          oldValue:
+            '{"count":2,"ratings":[{"id":"r1","value":3,"userId":"u1"},{"id":"r2","value":-2,"userId":"u2"}]}',
+          newValue: null,
+        }),
+      ]);
+
+      const request = new NextRequest('http://localhost/api/prophecies/prophecy-1/audit');
+      const response = await GET(request, createRouteParams('prophecy-1'));
+      const data = await response.json();
+
+      const parsedOldValue = JSON.parse(data.auditLogs[0].oldValue);
+      expect(parsedOldValue.count).toBe(2);
+      expect(parsedOldValue.ratings[0]).toEqual({ id: 'r1', userId: 'u1' });
+      expect(parsedOldValue.ratings[1]).toEqual({ id: 'r2', userId: 'u2' });
+    });
   });
 });

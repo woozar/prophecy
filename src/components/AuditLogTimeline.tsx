@@ -138,21 +138,28 @@ function formatRatingValue(value: number): string {
 }
 
 function getRatingDescription(log: AuditLogEntry, userName: string): string | null {
-  if (log.action === AuditActions.BULK_DELETE) {
-    const oldData = log.oldValue ? JSON.parse(log.oldValue) : {};
-    const count = oldData.count || 'Alle';
-    const plural = oldData.count === 1 ? '' : 'en';
-    return `${count} Bewertung${plural} wurden zurückgesetzt`;
-  }
+  const newData = log.newValue ? JSON.parse(log.newValue) : null;
+  const oldData = log.oldValue ? JSON.parse(log.oldValue) : null;
 
-  const newData = log.newValue ? JSON.parse(log.newValue) : {};
-  const oldData = log.oldValue ? JSON.parse(log.oldValue) : {};
+  // Check if rating values are available (they may be masked before deadline)
+  const hasNewValue = newData && typeof newData === 'object' && 'value' in newData;
+  const hasOldValue = oldData && typeof oldData === 'object' && 'value' in oldData;
 
   switch (log.action) {
+    case AuditActions.BULK_DELETE: {
+      const count = oldData?.count || 'Alle';
+      const plural = oldData?.count === 1 ? '' : 'en';
+      return `${count} Bewertung${plural} wurden zurückgesetzt`;
+    }
     case AuditActions.CREATE:
-      return `${userName} hat mit ${formatRatingValue(newData.value)} bewertet`;
+      return hasNewValue
+        ? `${userName} hat mit ${formatRatingValue(newData.value)} bewertet`
+        : `${userName} hat bewertet`;
     case AuditActions.UPDATE:
-      return `${userName} hat Bewertung von ${formatRatingValue(oldData.value)} auf ${formatRatingValue(newData.value)} geändert`;
+      if (hasOldValue && hasNewValue) {
+        return `${userName} hat Bewertung von ${formatRatingValue(oldData.value)} auf ${formatRatingValue(newData.value)} geändert`;
+      }
+      return `${userName} hat Bewertung geändert`;
     case AuditActions.DELETE:
       return `${userName} hat Bewertung entfernt`;
     default:

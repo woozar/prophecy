@@ -78,6 +78,8 @@ vi.mock('@/store/useBadgeStore', () => ({
 
 vi.mock('@/store/useUserStore', () => ({
   useUserStore: vi.fn(),
+  selectCurrentUser: (state: { currentUserId: string | null; users: Record<string, unknown> }) =>
+    state.currentUserId ? state.users[state.currentUserId] : null,
 }));
 
 // Mock UserAvatar to avoid complex rendering

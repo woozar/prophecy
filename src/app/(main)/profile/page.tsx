@@ -8,6 +8,7 @@ import { type Passkey, PasskeyManager } from '@/components/PasskeyManager';
 import { PasswordManagement } from '@/components/PasswordManagement';
 import { ProfileAvatarSection } from '@/components/ProfileAvatarSection';
 import { UserAvatar } from '@/components/UserAvatar';
+import { UserPreferencesSection } from '@/components/UserPreferencesSection';
 import { UserStatsGrid } from '@/components/UserStatsGrid';
 import { useCurrentUser } from '@/hooks/useUser';
 import { apiClient } from '@/lib/api-client/client';
@@ -135,6 +136,9 @@ export default function ProfilePage() {
 
       {/* Password Management */}
       <PasswordManagement hasPasskeys={passkeys.length > 0} />
+
+      {/* User Preferences */}
+      <UserPreferencesSection animationsEnabled={currentUser.animationsEnabled !== false} />
 
       {/* Account Info */}
       <Card padding="p-6">

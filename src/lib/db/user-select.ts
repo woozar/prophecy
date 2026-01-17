@@ -11,6 +11,7 @@ export const userSelectForBroadcast = {
   avatarUrl: true,
   avatarEffect: true,
   avatarEffectColors: true,
+  animationsEnabled: true,
   role: true,
   status: true,
   createdAt: true,
@@ -28,6 +29,7 @@ export interface UserForBroadcast {
   avatarUrl: string | null;
   avatarEffect: string | null;
   avatarEffectColors: string | null;
+  animationsEnabled: boolean;
   role: string;
   status: string;
   createdAt: Date;

@@ -35,6 +35,7 @@ describe('PATCH /api/users/me/avatar-settings', () => {
     avatarUrl: '/api/uploads/avatars/test.webp',
     avatarEffect: 'glow',
     avatarEffectColors: '["cyan","teal"]',
+    animationsEnabled: true,
     role: 'USER',
     status: 'APPROVED',
     isBot: false,

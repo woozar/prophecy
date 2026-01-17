@@ -2,6 +2,8 @@
 
 import { useSyncExternalStore } from 'react';
 
+import { selectCurrentUser, useUserStore } from '@/store/useUserStore';
+
 const MEDIA_QUERY = '(prefers-reduced-motion: reduce)';
 
 function getSnapshot(): boolean {
@@ -19,9 +21,18 @@ function subscribe(callback: () => void): () => void {
 }
 
 /**
- * Hook to detect OS preference for reduced motion.
- * Returns true if user prefers reduced motion.
+ * Hook to detect if animations should be reduced.
+ * Returns true if:
+ * - OS prefers reduced motion (via prefers-reduced-motion media query), OR
+ * - User has disabled animations in their settings (animationsEnabled === false)
  */
 export function useReducedMotion(): boolean {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const osReducedMotion = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const currentUser = useUserStore(selectCurrentUser);
+
+  // Reduce motion if OS preference is set OR if user has explicitly disabled animations
+  // Note: animationsEnabled defaults to true in the database, so undefined means enabled
+  const userDisabledAnimations = currentUser?.animationsEnabled === false;
+
+  return osReducedMotion || userDisabledAnimations;
 }

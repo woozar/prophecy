@@ -17,6 +17,7 @@ model User {
   avatarUrl           String?
   avatarEffect        String?  // 'glow' | 'particles' | 'lightning' | 'none'
   avatarEffectColors  String?  // JSON-Array: ["cyan", "violet", "teal"]
+  animationsEnabled   Boolean  @default(true)       // User preference to enable/disable animations
   role                String   @default("USER")     // UserRole: USER, ADMIN
   status              String   @default("PENDING")  // UserStatus: PENDING, APPROVED, REJECTED, SUSPENDED
   isBot               Boolean  @default(false)      // Künstliche Teilnehmer (Randolf, Kimberly)

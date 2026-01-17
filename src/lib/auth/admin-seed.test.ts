@@ -73,6 +73,7 @@ describe('ensureAdminExists', () => {
       avatarUrl: null,
       avatarEffect: null,
       avatarEffectColors: null,
+      animationsEnabled: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -100,6 +101,7 @@ describe('ensureAdminExists', () => {
       avatarUrl: null,
       avatarEffect: null,
       avatarEffectColors: null,
+      animationsEnabled: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -150,6 +152,7 @@ describe('ensureAdminExists', () => {
       avatarUrl: null,
       avatarEffect: null,
       avatarEffectColors: null,
+      animationsEnabled: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -186,6 +189,7 @@ describe('ensureBotsExist', () => {
       avatarUrl: '/api/uploads/avatars/bot-randolf.webp',
       avatarEffect: 'particles',
       avatarEffectColors: JSON.stringify(['orange', 'amber']),
+      animationsEnabled: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -213,6 +217,7 @@ describe('ensureBotsExist', () => {
       avatarUrl: '/api/uploads/avatars/bot-randolf.webp',
       avatarEffect: 'particles',
       avatarEffectColors: JSON.stringify(['orange', 'amber']),
+      animationsEnabled: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -249,6 +254,7 @@ describe('ensureBotsExist', () => {
       avatarUrl: '/api/uploads/avatars/bot-randolf.webp',
       avatarEffect: 'particles',
       avatarEffectColors: JSON.stringify(['orange', 'amber']),
+      animationsEnabled: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -274,6 +280,7 @@ describe('ensureBotsExist', () => {
       avatarUrl: null,
       avatarEffect: 'particles',
       avatarEffectColors: JSON.stringify(['orange', 'amber']),
+      animationsEnabled: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -303,6 +310,7 @@ describe('ensureBotsExist', () => {
       avatarUrl: null,
       avatarEffect: 'particles',
       avatarEffectColors: JSON.stringify(['orange', 'amber']),
+      animationsEnabled: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -346,6 +354,7 @@ describe('ensureBotsExist', () => {
       avatarUrl: '/api/uploads/avatars/bot-randolf.webp',
       avatarEffect: 'particles',
       avatarEffectColors: JSON.stringify(['orange', 'amber']),
+      animationsEnabled: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -392,6 +401,7 @@ describe('ensureBotsExist', () => {
       avatarUrl: null,
       avatarEffect: 'particles',
       avatarEffectColors: JSON.stringify(['orange', 'amber']),
+      animationsEnabled: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

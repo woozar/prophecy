@@ -56,6 +56,7 @@ describe('POST /api/auth/register/verify', () => {
     avatarUrl: null,
     avatarEffect: null,
     avatarEffectColors: null,
+    animationsEnabled: true,
     role: 'USER',
     status: 'PENDING',
     isBot: false,

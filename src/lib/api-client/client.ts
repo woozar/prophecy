@@ -167,6 +167,28 @@ export const apiClient = {
         api.PATCH('/api/users/me/avatar-settings', { body: data }),
     },
 
+    preferences: {
+      get: () =>
+        fetch('/api/users/me/preferences', { credentials: 'include' }).then(async (res) => ({
+          data: res.ok ? ((await res.json()) as { animationsEnabled: boolean }) : null,
+          error: res.ok ? null : await res.json(),
+          response: res,
+        })),
+      update: (data: { animationsEnabled?: boolean }) =>
+        fetch('/api/users/me/preferences', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+          credentials: 'include',
+        }).then(async (res) => ({
+          data: res.ok
+            ? ((await res.json()) as { success: boolean; animationsEnabled: boolean })
+            : null,
+          error: res.ok ? null : await res.json(),
+          response: res,
+        })),
+    },
+
     passkeys: {
       list: () => api.GET('/api/users/me/passkeys'),
       // Passkey registration uses action-based POST which doesn't fit OpenAPI well

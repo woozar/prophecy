@@ -46,6 +46,7 @@ const mockUser = {
   avatarUrl: '/avatars/test.webp',
   avatarEffect: 'glow',
   avatarEffectColors: '["cyan","teal"]',
+  animationsEnabled: true,
   role: 'USER',
   status: 'APPROVED',
   isBot: false,

@@ -14,6 +14,7 @@ export const userResponseSchema = z
     avatarUrl: z.string().nullable(),
     avatarEffect: z.string().nullable(),
     avatarEffectColors: z.array(z.string()),
+    animationsEnabled: z.boolean(),
     role: roleSchema,
     status: userStatusSchema,
     createdAt: z.string().datetime(),
@@ -97,6 +98,22 @@ export const avatarSettingsResponseSchema = z
   .openapi('AvatarSettingsResponse');
 
 // ============================================================================
+// User Preferences (Animations)
+// ============================================================================
+
+export const updateUserPreferencesSchema = z
+  .object({
+    animationsEnabled: z.boolean().optional(),
+  })
+  .openapi('UpdateUserPreferencesRequest');
+
+export const userPreferencesResponseSchema = z
+  .object({
+    animationsEnabled: z.boolean(),
+  })
+  .openapi('UserPreferencesResponse');
+
+// ============================================================================
 // Passkeys
 // ============================================================================
 
@@ -148,5 +165,7 @@ export type TogglePasswordLoginInput = z.infer<typeof togglePasswordLoginSchema>
 export type PasswordLoginStatus = z.infer<typeof passwordLoginStatusSchema>;
 export type UpdateAvatarSettingsInput = z.infer<typeof updateAvatarSettingsSchema>;
 export type AvatarSettingsResponse = z.infer<typeof avatarSettingsResponseSchema>;
+export type UpdateUserPreferencesInput = z.infer<typeof updateUserPreferencesSchema>;
+export type UserPreferencesResponse = z.infer<typeof userPreferencesResponseSchema>;
 export type Passkey = z.infer<typeof passkeySchema>;
 export type PasskeysListResponse = z.infer<typeof passkeysListResponseSchema>;

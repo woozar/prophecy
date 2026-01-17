@@ -185,6 +185,7 @@ describe('registration utilities', () => {
         avatarUrl: null,
         avatarEffect: null,
         avatarEffectColors: null,
+        animationsEnabled: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

@@ -9,6 +9,7 @@ export interface User {
   avatarUrl?: string | null;
   avatarEffect?: string | null;
   avatarEffectColors?: string[];
+  animationsEnabled?: boolean;
   role: string;
   status: string;
   isBot?: boolean;
@@ -68,6 +69,7 @@ export const useUserStore = create<UserState>((set) => ({
         existing.avatarEffect === mergedUser.avatarEffect &&
         JSON.stringify(existing.avatarEffectColors) ===
           JSON.stringify(mergedUser.avatarEffectColors) &&
+        existing.animationsEnabled === mergedUser.animationsEnabled &&
         existing.role === mergedUser.role &&
         existing.status === mergedUser.status &&
         JSON.stringify(existing.badgeIds) === JSON.stringify(mergedUser.badgeIds)

@@ -55,7 +55,8 @@
       "CSS/Framer-Motion Animationen conditionally disablen basierend auf Setting",
       "prefers-reduced-motion Media Query als Fallback berücksichtigen",
       "Setting im UserStore verfügbar machen"
-    ]
+    ],
+    "passes": true
   },
   {
     "category": "ui",

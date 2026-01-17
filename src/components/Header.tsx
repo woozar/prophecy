@@ -94,7 +94,6 @@ export const Header = memo(function Header({ user: serverUser }: Readonly<Header
   };
 
   const allNavItems = user.role === 'ADMIN' ? [...navItems, ...adminItems] : navItems;
-  const isAdmin = user.role === 'ADMIN';
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[rgba(10,25,41,0.85)] backdrop-blur-xl border-b border-[rgba(98,125,152,0.2)]">
@@ -127,12 +126,10 @@ export const Header = memo(function Header({ user: serverUser }: Readonly<Header
 
           {/* User Menu */}
           <div className="flex items-center gap-4">
-            {/* SSE Status Indicator (Admin only) */}
-            {isAdmin && (
-              <div className="hidden md:block">
-                <SSEStatusIndicator />
-              </div>
-            )}
+            {/* SSE Status Indicator */}
+            <div className="hidden md:block">
+              <SSEStatusIndicator />
+            </div>
 
             {/* User Dropdown (Desktop) */}
             <div className="hidden md:block relative" ref={userMenuRef}>
@@ -219,7 +216,7 @@ export const Header = memo(function Header({ user: serverUser }: Readonly<Header
             {/* User Info (Mobile) */}
             <div className="flex items-center gap-3 pb-4 border-b border-[rgba(98,125,152,0.2)]">
               <UserAvatar user={user} size="md" />
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-medium text-white">
                   {user.displayName || user.username}
                 </p>
@@ -227,6 +224,7 @@ export const Header = memo(function Header({ user: serverUser }: Readonly<Header
                   {user.role === 'ADMIN' ? 'Administrator' : 'Benutzer'}
                 </p>
               </div>
+              <SSEStatusIndicator />
             </div>
 
             {/* Nav Items */}

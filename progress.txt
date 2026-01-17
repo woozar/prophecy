@@ -60,3 +60,30 @@
   - Test: does not award passkey pioneer badge when user has no passkeys
 - Badge will appear in badge overview automatically once a user registers a passkey
 - All 1710 tests passing
+
+### 7. Setting für Animationen deaktivieren (feature)
+- Added new database field `animationsEnabled: Boolean @default(true)` to User model in Prisma schema
+- Created new API endpoint `/api/users/me/preferences` with GET and PATCH methods
+- Extended `userResponseSchema` and `UserForBroadcast` to include `animationsEnabled`
+- Updated `useUserStore` interface to include `animationsEnabled` property
+- Enhanced `useReducedMotion` hook to check both OS preference AND user setting:
+  - Returns true if OS prefers-reduced-motion is set
+  - Returns true if user has explicitly disabled animations (animationsEnabled === false)
+  - All existing components using useReducedMotion() automatically respect the new setting
+- Created `UserPreferencesSection` component with toggle button in profile page
+- Added apiClient method `user.preferences.update()` for frontend-backend communication
+- SSE broadcasts `user:updated` event when preference changes for real-time sync
+- Added comprehensive test suite:
+  - 10 tests in route.test.ts for preferences API endpoint
+  - 6 additional tests in useReducedMotion.test.ts for user setting integration
+- All 1725 tests passing
+- npm run lint shows 0 warnings
+
+### 8. Connection Indicator wieder sichtbar machen (bugfix)
+- SSEStatusIndicator war nur für Admin-Benutzer sichtbar (isAdmin && ...)
+- Entfernt die Admin-Einschränkung in Header.tsx (Zeile 130-135)
+- SSEStatusIndicator wird jetzt für alle eingeloggten Benutzer auf Desktop angezeigt
+- SSEStatusIndicator auch zum mobilen Menü hinzugefügt (im User Info Bereich)
+- Entfernt unbenutzte `isAdmin` Variable
+- Alle 1820 Tests bestanden
+- npm run lint zeigt 0 Warnungen

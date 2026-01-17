@@ -24,6 +24,7 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { CountdownTimer } from '@/components/CountdownTimer';
 import { EmptyState } from '@/components/EmptyState';
 import { FilterButton } from '@/components/FilterButton';
+import { FormattedText } from '@/components/FormattedText';
 import { GlowBadge } from '@/components/GlowBadge';
 import { IconActionButton } from '@/components/IconActionButton';
 import { type IndividualRating, IndividualRatingsBox } from '@/components/IndividualRatingsBox';
@@ -563,6 +564,10 @@ export const RoundDetailClient = memo(function RoundDetailClient({
             placeholder="Beschreibe deine Prophezeiung genauer..."
             rows={4}
           />
+          <p className="text-xs text-gray-400 mt-1">
+            Formatierung: *fett*, _unterstrichen_, -durchgestrichen- · Zeilen mit * oder - am
+            Anfang werden als Liste dargestellt
+          </p>
         </div>
 
         <div className="flex justify-end gap-3 mt-6">
@@ -645,6 +650,10 @@ export const RoundDetailClient = memo(function RoundDetailClient({
             placeholder="Beschreibe deine Prophezeiung genauer..."
             rows={4}
           />
+          <p className="text-xs text-gray-400 mt-1">
+            Formatierung: *fett*, _unterstrichen_, -durchgestrichen- · Zeilen mit * oder - am
+            Anfang werden als Liste dargestellt
+          </p>
         </div>
 
         <div className="flex justify-end gap-3 mt-6">
@@ -804,7 +813,12 @@ const ProphecyCard = memo(function ProphecyCard({
               </GlowBadge>
             )}
           </div>
-          <p className="text-sm text-(--text-secondary) mb-3">{prophecy.description}</p>
+          {prophecy.description && (
+            <FormattedText
+              text={prophecy.description}
+              className="text-sm text-(--text-secondary) mb-3"
+            />
+          )}
           <div className="flex items-center gap-4 text-xs text-(--text-muted)">
             <span className="flex items-center gap-1.5">
               <UserAvatar userId={prophecy.creatorId} size="sm" clickable />

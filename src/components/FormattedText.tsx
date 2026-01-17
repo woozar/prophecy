@@ -97,18 +97,36 @@ interface FormatMatch {
 }
 
 /**
+ * Checks if a character is whitespace or undefined (for start/end of string).
+ */
+function isWhitespaceOrBoundary(char: string | undefined): boolean {
+  return char === undefined || char === ' ' || char === '\t';
+}
+
+/**
  * Tries to find a valid format match at the start of the text.
  * Returns null if no valid format is found.
+ *
+ * Format markers are only valid when:
+ * - The opening marker is preceded by whitespace or start of line (prevChar)
+ * - The closing marker is followed by whitespace or end of line
  */
-function tryMatchFormat(text: string): FormatMatch | null {
+function tryMatchFormat(text: string, prevChar: string | undefined): FormatMatch | null {
   for (const { marker, prop } of FORMAT_MARKERS) {
     if (!text.startsWith(marker)) continue;
+
+    // Opening marker must be preceded by whitespace or line start
+    if (!isWhitespaceOrBoundary(prevChar)) continue;
 
     const closeIndex = text.indexOf(marker, 1);
     if (closeIndex <= 1) continue;
 
     const formattedText = text.slice(1, closeIndex);
     if (formattedText.includes('\n')) continue;
+
+    // Closing marker must be followed by whitespace or line end
+    const charAfterClose = text[closeIndex + 1];
+    if (!isWhitespaceOrBoundary(charAfterClose)) continue;
 
     return { prop, text: formattedText, endIndex: closeIndex + 1 };
   }
@@ -119,14 +137,16 @@ function tryMatchFormat(text: string): FormatMatch | null {
  * Parses inline formatting within a line.
  * Supports: *bold*, _underline_, -strikethrough-
  * Formatting is only applied within a single line (no newlines in formatted content).
+ * Format markers must be surrounded by whitespace or line boundaries.
  */
 function parseInlineFormatting(line: string): FormattedSegment[] {
   const segments: FormattedSegment[] = [];
   let remaining = line;
   let currentSegment: FormattedSegment = { text: '' };
+  let prevChar: string | undefined = undefined;
 
   while (remaining.length > 0) {
-    const match = tryMatchFormat(remaining);
+    const match = tryMatchFormat(remaining, prevChar);
 
     if (match) {
       if (currentSegment.text) {
@@ -134,8 +154,10 @@ function parseInlineFormatting(line: string): FormattedSegment[] {
         currentSegment = { text: '' };
       }
       segments.push({ text: match.text, [match.prop]: true });
+      prevChar = remaining[match.endIndex - 1]; // The closing marker
       remaining = remaining.slice(match.endIndex);
     } else {
+      prevChar = remaining[0];
       currentSegment.text += remaining[0];
       remaining = remaining.slice(1);
     }

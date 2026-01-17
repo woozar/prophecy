@@ -141,10 +141,24 @@ describe('FormattedText', () => {
       expect(screen.getByText('strike')).toHaveClass('line-through');
     });
 
-    it('handles adjacent formatted sections', () => {
-      render(<FormattedText text="*bold*_underline_" />);
+    it('handles adjacent formatted sections with space', () => {
+      render(<FormattedText text="*bold* _underline_" />);
       expect(screen.getByText('bold').tagName).toBe('STRONG');
       expect(screen.getByText('underline')).toHaveClass('underline');
+    });
+
+    it('does not format adjacent markers without space', () => {
+      // Without whitespace between markers, formatting is not applied
+      render(<FormattedText text="*bold*_underline_" />);
+      expect(screen.getByText('*bold*_underline_')).toBeInTheDocument();
+    });
+
+    it('does not format hyphenated words like back-to-back', () => {
+      render(<FormattedText text="This is back-to-back testing" />);
+      // The text should contain "back-to-back" as plain text, not with "to" struck through
+      expect(screen.getByText(/back-to-back/)).toBeInTheDocument();
+      // There should be no strikethrough elements
+      expect(document.querySelector('.line-through')).toBeNull();
     });
   });
 
@@ -216,8 +230,14 @@ describe('FormattedText', () => {
     });
 
     it('handles nested-looking markers (no actual nesting)', () => {
-      // Since we process left-to-right, *bold* matches first
+      // Format markers must be surrounded by whitespace, so *bold*extra* is plain text
       render(<FormattedText text="*bold*extra*" />);
+      expect(screen.getByText('*bold*extra*')).toBeInTheDocument();
+    });
+
+    it('handles markers with proper whitespace boundaries', () => {
+      // With whitespace, *bold* is formatted
+      render(<FormattedText text="*bold* extra" />);
       expect(screen.getByText('bold').tagName).toBe('STRONG');
     });
 

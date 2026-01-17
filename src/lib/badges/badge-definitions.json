@@ -497,6 +497,14 @@
       "requirement": "Prophezeiung über Prominente erstellt",
       "category": "SPECIAL",
       "rarity": "BRONZE"
+    },
+    {
+      "key": "special_passkey_pioneer",
+      "name": "Security Pioneer",
+      "description": "Sicherheit durch moderne Authentifizierung",
+      "requirement": "Mindestens einen Passkey registriert",
+      "category": "SPECIAL",
+      "rarity": "SILVER"
     }
   ],
   "social": [

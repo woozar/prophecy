@@ -5,6 +5,7 @@ import {
   awardBadge,
   awardLeaderboardBadges,
   awardRoundCompletionBadges,
+  awardSecurityBadges,
   checkAndAwardBadges,
   getAwardedBadges,
   getBadgeHolders,
@@ -51,6 +52,7 @@ const {
   mockRoundFindUnique,
   mockUserFindMany,
   mockUserFindUnique,
+  mockAuthenticatorCount,
 } = vi.hoisted(() => ({
   mockBadgeUpsert: vi.fn(),
   mockBadgeFindUnique: vi.fn(),
@@ -65,6 +67,7 @@ const {
   mockRoundFindUnique: vi.fn(),
   mockUserFindMany: vi.fn(),
   mockUserFindUnique: vi.fn(),
+  mockAuthenticatorCount: vi.fn(),
 }));
 
 vi.mock('@/lib/db/prisma', () => ({
@@ -93,6 +96,9 @@ vi.mock('@/lib/db/prisma', () => ({
     user: {
       findMany: mockUserFindMany,
       findUnique: mockUserFindUnique,
+    },
+    authenticator: {
+      count: mockAuthenticatorCount,
     },
   },
   ensureInitialized: vi.fn(),
@@ -261,6 +267,7 @@ describe('badge-service', () => {
       mockProphecyFindMany.mockResolvedValue([]);
       mockRatingFindMany.mockResolvedValue([]);
       mockRoundFindMany.mockResolvedValue([]);
+      mockAuthenticatorCount.mockResolvedValue(0);
     });
 
     it('awards creator badge when threshold met', async () => {
@@ -328,6 +335,17 @@ describe('badge-service', () => {
       const result = await checkAndAwardBadges('user-1');
 
       expect(result.some((b) => b.badge.key === 'social_generous')).toBe(true);
+    });
+
+    it('does not check passkey badges in checkAndAwardBadges (handled separately)', async () => {
+      mockProphecyFindMany.mockResolvedValue([]);
+      mockRatingFindMany.mockResolvedValue([]);
+      mockRoundFindMany.mockResolvedValue([]);
+
+      await checkAndAwardBadges('user-1');
+
+      // awardSecurityBadges is now called separately in passkey/login routes
+      expect(mockAuthenticatorCount).not.toHaveBeenCalled();
     });
   });
 
@@ -1071,6 +1089,40 @@ describe('badge-service', () => {
       // Only 4 accepted prophecies, below minimum of 5
       const accuracyBadges = result.filter((b) => b.badge.key.startsWith('accuracy_rate_'));
       expect(accuracyBadges).toHaveLength(0);
+    });
+  });
+
+  describe('awardSecurityBadges', () => {
+    it('awards passkey pioneer badge when user has registered a passkey', async () => {
+      mockAuthenticatorCount.mockResolvedValue(1);
+
+      const passkeyBadge = {
+        ...mockBadge,
+        id: 'badge-passkey',
+        key: 'special_passkey_pioneer',
+        name: 'Security Pioneer',
+      };
+      mockBadgeFindUnique.mockResolvedValue(passkeyBadge);
+      mockUserBadgeFindUnique.mockResolvedValue(null);
+      mockUserBadgeCreate.mockResolvedValue({
+        ...mockUserBadge,
+        badgeId: 'badge-passkey',
+        badge: passkeyBadge,
+      });
+
+      const result = await awardSecurityBadges('user-1');
+
+      expect(mockAuthenticatorCount).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
+      expect(result.some((b) => b.badge.key === 'special_passkey_pioneer')).toBe(true);
+    });
+
+    it('does not award passkey pioneer badge when user has no passkeys', async () => {
+      mockAuthenticatorCount.mockResolvedValue(0);
+
+      const result = await awardSecurityBadges('user-1');
+
+      expect(mockAuthenticatorCount).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
+      expect(result).toHaveLength(0);
     });
   });
 });

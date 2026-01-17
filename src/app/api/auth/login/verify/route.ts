@@ -7,6 +7,7 @@ import {
 
 import { loginErrorResponse, loginSuccessResponse, setSessionCookie } from '@/lib/auth/session';
 import { clearChallenge, getChallenge, webauthnConfig } from '@/lib/auth/webauthn';
+import { awardSecurityBadges } from '@/lib/badges/badge-service';
 import { prisma } from '@/lib/db/prisma';
 import { debug } from '@/lib/logger';
 
@@ -101,6 +102,9 @@ export async function POST(request: NextRequest) {
     });
 
     await setSessionCookie(authenticator.user);
+
+    // Award security badge for using passkey login
+    await awardSecurityBadges(authenticator.user.id);
 
     return loginSuccessResponse(authenticator.user);
   } catch (error) {

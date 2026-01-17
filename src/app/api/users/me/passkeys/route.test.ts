@@ -47,6 +47,10 @@ vi.mock('@/lib/auth/webauthn', () => ({
   clearChallenge: vi.fn(),
 }));
 
+vi.mock('@/lib/badges/badge-service', () => ({
+  awardSecurityBadges: vi.fn().mockResolvedValue([]),
+}));
+
 const mockSession = {
   userId: 'user-1',
   username: 'testuser',

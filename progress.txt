@@ -48,3 +48,15 @@
 - Changed modal size from "lg" to "xl" for both create and edit prophecy modals (lines 545 and 627)
 - Mobile-Ansicht proportionally adjusted via Mantine's responsive modal sizing
 - All 1795 tests passing
+
+### 6. Badge für Passkey-Login Nutzer (feature)
+- Added new badge "Passkey Pionier" (key: special_passkey_pioneer) in badge-definitions.json
+  - Category: SPECIAL, Rarity: SILVER
+  - Requirement: User has at least one passkey registered
+- Created awardSecurityBadges() function in badge-service.ts that checks Authenticator count
+- Integrated security badges into checkAndAwardBadges() for automatic badge awarding
+- Added 2 new tests in badge-service.test.ts:
+  - Test: awards passkey pioneer badge when user has registered a passkey
+  - Test: does not award passkey pioneer badge when user has no passkeys
+- Badge will appear in badge overview automatically once a user registers a passkey
+- All 1710 tests passing

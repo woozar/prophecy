@@ -36,6 +36,10 @@ vi.mock('@simplewebauthn/server', () => ({
   verifyAuthenticationResponse: vi.fn(),
 }));
 
+vi.mock('@/lib/badges/badge-service', () => ({
+  awardSecurityBadges: vi.fn().mockResolvedValue([]),
+}));
+
 describe('POST /api/auth/login/verify', () => {
   const mockUser: AuthenticatorWithUser['user'] = {
     id: 'user-1',

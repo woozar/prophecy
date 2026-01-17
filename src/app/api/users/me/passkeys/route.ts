@@ -8,6 +8,7 @@ import {
 } from '@simplewebauthn/server';
 
 import { clearChallenge, getChallenge, storeChallenge, webauthnConfig } from '@/lib/auth/webauthn';
+import { awardSecurityBadges } from '@/lib/badges/badge-service';
 import { ensureInitialized, prisma } from '@/lib/db/prisma';
 
 // Session-Helper
@@ -155,6 +156,9 @@ export async function POST(request: NextRequest) {
         name: name || `Passkey ${existingCount + 1}`,
       },
     });
+
+    // Award security badge for using passkey
+    await awardSecurityBadges(session.userId);
 
     return NextResponse.json({
       success: true,

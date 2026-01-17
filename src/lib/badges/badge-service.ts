@@ -335,6 +335,25 @@ async function awardRaterAccuracyBadges(
 }
 
 /**
+ * Award security badges based on authentication methods.
+ * Called when a user adds a passkey or logs in with a passkey.
+ */
+export async function awardSecurityBadges(userId: string): Promise<AwardedUserBadge[]> {
+  const badges: (AwardedUserBadge | null)[] = [];
+
+  // Check if user has registered at least one passkey
+  const authenticatorCount = await prisma.authenticator.count({
+    where: { userId },
+  });
+
+  if (authenticatorCount > 0) {
+    badges.push(await tryAwardBadge(userId, 'special_passkey_pioneer'));
+  }
+
+  return badges.filter((b): b is AwardedUserBadge => b !== null);
+}
+
+/**
  * Award social badges based on rating patterns
  * Rating scale: -10 = "Sicher" (will happen/optimistic), +10 = "Unmöglich" (won't happen/skeptical)
  */
@@ -375,6 +394,7 @@ export async function checkAndAwardBadges(userId: string): Promise<AwardedUserBa
 
   // Collect all badge awards in parallel where possible
   // Note: accuracy_rate badges are only awarded when round results are published
+  // Note: security badges are only checked when adding/using passkeys (see awardSecurityBadges)
   const badgePromises: Promise<AwardedUserBadge[]>[] = [
     awardThresholdBadges(userId, stats.propheciesCreated, [1, 5, 15, 30, 50, 100], 'creator_'),
     awardThresholdBadges(userId, stats.propheciesFulfilled, [1, 5, 10, 20, 35, 50], 'fulfilled_'),

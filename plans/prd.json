@@ -42,7 +42,8 @@
       "Badge-Service erweitern um Passkey-Nutzung zu erkennen",
       "Badge in der Badge-Übersicht anzeigen",
       "Tests für die neue Badge-Logik schreiben"
-    ]
+    ],
+    "passes": true
   },
   {
     "category": "feature",

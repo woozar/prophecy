@@ -403,6 +403,8 @@ export async function checkAndAwardBadges(userId: string): Promise<AwardedUserBa
     awardSocialBadges(userId, stats),
     // Rater accuracy badges use resolved counts
     awardRaterAccuracyBadges(userId, stats.raterAccuracy, stats.ratingsOnResolved),
+    // Security badges based on authentication methods
+    awardSecurityBadges(userId),
   ];
 
   const results = await Promise.all(badgePromises);

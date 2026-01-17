@@ -32,5 +32,64 @@
       "Keep bot logging but consider adding a debug flag or proper logger"
     ],
     "passes": true
+  },
+  {
+    "category": "feature",
+    "description": "Badge für Passkey-Login Nutzer",
+    "steps": [
+      "Neue Badge definieren (z.B. 'Sicherheitsprofi' oder 'Passkey Pioneer')",
+      "Badge-Kriterien: User hat mindestens einen Passkey registriert und nutzt ihn zum Login",
+      "Badge-Service erweitern um Passkey-Nutzung zu erkennen",
+      "Badge in der Badge-Übersicht anzeigen",
+      "Tests für die neue Badge-Logik schreiben"
+    ]
+  },
+  {
+    "category": "feature",
+    "description": "Setting für Animationen deaktivieren",
+    "steps": [
+      "Neues User-Setting 'animationsEnabled' (default: true) in der Datenbank",
+      "API-Endpoint für User-Settings erweitern",
+      "Toggle im Profil-Bereich hinzufügen",
+      "CSS/Framer-Motion Animationen conditionally disablen basierend auf Setting",
+      "prefers-reduced-motion Media Query als Fallback berücksichtigen",
+      "Setting im UserStore verfügbar machen"
+    ]
+  },
+  {
+    "category": "ui",
+    "description": "Prophezeiung Modal und Textarea vergrößern",
+    "steps": [
+      "Textarea für Prophezeiung-Beschreibung höher machen (mehr Zeilen sichtbar)",
+      "Modal bei Desktop-Auflösung breiter machen (responsive)",
+      "Mobile-Ansicht unverändert lassen oder proportional anpassen"
+    ]
+  },
+  {
+    "category": "feature",
+    "description": "Textformatierung in Beschreibungen",
+    "steps": [
+      "Zeilenumbrüche und Leerzeilen erhalten bleiben (max 1 Leerzeile)",
+      "Zeilen trimmen damit Leerzeichen/Tabs nicht als 'nicht leer' zählen",
+      "Text zwischen *...* fettgedruckt darstellen (Sterne entfernen)",
+      "Text zwischen _..._ unterstrichen darstellen (Unterstriche entfernen)",
+      "Text zwischen -...- durchgestrichen darstellen (Bindestriche entfernen)",
+      "Formatierung nur zeilenweise - keine Formatierung über Zeilenumbrüche hinweg",
+      "Zeilen mit ungerader Anzahl * oder - die mit * oder - beginnen als Bulletpoint-Liste darstellen",
+      "Parser-Komponente erstellen die diese Regeln umsetzt",
+      "Komponente in allen Beschreibungs-Anzeigen verwenden (Prophezeiungen, Runden, etc.)",
+      "Tests für alle Formatierungsregeln schreiben"
+    ]
+  },
+  {
+    "category": "bugfix",
+    "description": "Connection Indicator wieder sichtbar machen",
+    "steps": [
+      "Analyse: Wo ist der Connection Indicator implementiert?",
+      "Analyse: Welche CSS-Änderungen haben die Sichtbarkeit beeinflusst?",
+      "Analyse: Z-Index, Opacity, Position prüfen",
+      "Fix implementieren um Sichtbarkeit wiederherzustellen",
+      "Sicherstellen dass der Indicator in allen Zuständen (connected, disconnected, reconnecting) sichtbar ist"
+    ]
   }
 ]

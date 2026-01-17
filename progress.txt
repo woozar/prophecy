@@ -42,3 +42,9 @@
 - Integrated FormattedText in prophecy description display (RoundDetailClient.tsx)
 - Created comprehensive test suite (39 tests) in FormattedText.test.tsx
 - All 1795 tests passing
+
+### 5. Prophezeiung Modal und Textarea vergrößern (ui)
+- Increased textarea rows from 4 to 8 in both create and edit prophecy modals (RoundDetailClient.tsx lines 559-566 and 641-648)
+- Changed modal size from "lg" to "xl" for both create and edit prophecy modals (lines 545 and 627)
+- Mobile-Ansicht proportionally adjusted via Mantine's responsive modal sizing
+- All 1795 tests passing

@@ -63,7 +63,8 @@
       "Textarea für Prophezeiung-Beschreibung höher machen (mehr Zeilen sichtbar)",
       "Modal bei Desktop-Auflösung breiter machen (responsive)",
       "Mobile-Ansicht unverändert lassen oder proportional anpassen"
-    ]
+    ],
+    "passes": true
   },
   {
     "category": "feature",

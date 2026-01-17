@@ -542,7 +542,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
           setTitleError(undefined);
         }}
         title="Neue Prophezeiung"
-        size="lg"
+        size="xl"
       >
         <div className="space-y-4">
           <TextInput
@@ -562,7 +562,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
             placeholder="Beschreibe deine Prophezeiung genauer..."
-            rows={4}
+            rows={8}
           />
           <p className="text-xs text-gray-400 mt-1">
             Formatierung: *fett*, _unterstrichen_, -durchgestrichen- · Zeilen mit * oder - am
@@ -628,7 +628,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
           setEditTitleError(undefined);
         }}
         title="Prophezeiung bearbeiten"
-        size="lg"
+        size="xl"
       >
         <div className="space-y-4">
           <TextInput
@@ -648,7 +648,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
             value={editDescription}
             onChange={(e) => setEditDescription(e.target.value)}
             placeholder="Beschreibe deine Prophezeiung genauer..."
-            rows={4}
+            rows={8}
           />
           <p className="text-xs text-gray-400 mt-1">
             Formatierung: *fett*, _unterstrichen_, -durchgestrichen- · Zeilen mit * oder - am

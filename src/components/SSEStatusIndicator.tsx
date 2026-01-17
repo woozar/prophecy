@@ -16,6 +16,7 @@ export const SSEStatusIndicator = memo(function SSEStatusIndicator() {
 
   const indicatorStyle = useMemo(
     () => ({
+      display: 'inline-block' as const,
       width: 8,
       height: 8,
       borderRadius: '50%',

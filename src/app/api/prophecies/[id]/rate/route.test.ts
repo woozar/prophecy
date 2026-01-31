@@ -113,6 +113,23 @@ describe('POST /api/prophecies/[id]/rate', () => {
     expect(data.error).toBe('Prophezeiung nicht gefunden');
   });
 
+  it('returns 400 when prophecy is resolved', async () => {
+    vi.mocked(getSession).mockResolvedValue(mockUser);
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(
+      createMockProphecy({ fulfilled: true })
+    );
+
+    const request = new NextRequest('http://localhost/api/prophecies/prophecy-1/rate', {
+      method: 'POST',
+      body: JSON.stringify({ value: 5 }),
+    });
+    const response = await POST(request, createRouteParams('prophecy-1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe('Aufgelöste Prophezeiungen können nicht mehr bewertet werden');
+  });
+
   it('returns 400 when rating own prophecy', async () => {
     vi.mocked(getSession).mockResolvedValue(mockUser);
     vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(

@@ -565,8 +565,8 @@ export const RoundDetailClient = memo(function RoundDetailClient({
             rows={8}
           />
           <p className="text-xs text-gray-400 mt-1">
-            Formatierung: *fett*, _unterstrichen_, -durchgestrichen- · Zeilen mit * oder - am
-            Anfang werden als Liste dargestellt
+            Formatierung: *fett*, _unterstrichen_, -durchgestrichen- · Zeilen mit * oder - am Anfang
+            werden als Liste dargestellt
           </p>
         </div>
 
@@ -651,8 +651,8 @@ export const RoundDetailClient = memo(function RoundDetailClient({
             rows={8}
           />
           <p className="text-xs text-gray-400 mt-1">
-            Formatierung: *fett*, _unterstrichen_, -durchgestrichen- · Zeilen mit * oder - am
-            Anfang werden als Liste dargestellt
+            Formatierung: *fett*, _unterstrichen_, -durchgestrichen- · Zeilen mit * oder - am Anfang
+            werden als Liste dargestellt
           </p>
         </div>
 
@@ -830,7 +830,7 @@ const ProphecyCard = memo(function ProphecyCard({
 
         {/* Actions */}
         <div className="flex flex-col gap-2 shrink-0">
-          {isOwn && isSubmissionOpen && (
+          {isOwn && isSubmissionOpen && prophecy.fulfilled === null && (
             <>
               <IconActionButton
                 variant="edit"
@@ -847,7 +847,7 @@ const ProphecyCard = memo(function ProphecyCard({
               />
             </>
           )}
-          {isAdmin && isRatingClosed && !resultsPublished && (
+          {isAdmin && !resultsPublished && (
             <div className="flex gap-1">
               <button
                 onClick={() => onResolve(prophecy.id, true)}
@@ -898,7 +898,7 @@ const ProphecyCard = memo(function ProphecyCard({
       )}
 
       {/* Rating Section */}
-      {(isSubmissionOpen || isRatingOpen) && !isOwn && (
+      {(isSubmissionOpen || isRatingOpen) && !isOwn && prophecy.fulfilled === null && (
         <div className="mt-4 pt-4 border-t border-[rgba(98,125,152,0.2)]">
           <RatingSlider
             value={displayedRating}

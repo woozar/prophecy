@@ -13,6 +13,8 @@ interface AccessCheckOptions {
   checkDeadline?: boolean;
   /** Custom error message when deadline passed */
   deadlineErrorMessage?: string;
+  /** Check if prophecy has been resolved (fulfilled !== null) */
+  checkResolved?: boolean;
 }
 
 /**
@@ -31,6 +33,7 @@ export async function getProphecyWithAccessCheck(
   const {
     requireOwner = true,
     checkDeadline = true,
+    checkResolved = false,
     deadlineErrorMessage = 'Einreichungsfrist ist abgelaufen',
   } = options;
 
@@ -45,6 +48,10 @@ export async function getProphecyWithAccessCheck(
 
   if (requireOwner && prophecy.creatorId !== userId) {
     throw Errors.forbidden();
+  }
+
+  if (checkResolved && prophecy.fulfilled !== null) {
+    throw Errors.badRequest('Aufgelöste Prophezeiungen können nicht mehr bearbeitet werden');
   }
 
   if (checkDeadline && new Date() > prophecy.round.submissionDeadline) {

@@ -135,6 +135,38 @@ describe('getProphecyWithAccessCheck', () => {
     }
   });
 
+  it('throws 400 when prophecy is resolved and checkResolved is true', async () => {
+    const resolvedProphecy = {
+      ...mockProphecy,
+      fulfilled: true,
+    };
+    mockFindUnique.mockResolvedValue(resolvedProphecy);
+
+    try {
+      await getProphecyWithAccessCheck(prophecyId, userId, {
+        checkResolved: true,
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiError);
+      expect((error as ApiError).status).toBe(400);
+      expect((error as ApiError).message).toBe(
+        'Aufgelöste Prophezeiungen können nicht mehr bearbeitet werden'
+      );
+    }
+  });
+
+  it('allows resolved prophecy when checkResolved is false (default)', async () => {
+    const resolvedProphecy = {
+      ...mockProphecy,
+      fulfilled: false,
+    };
+    mockFindUnique.mockResolvedValue(resolvedProphecy);
+
+    const result = await getProphecyWithAccessCheck(prophecyId, userId);
+
+    expect(result).toEqual(resolvedProphecy);
+  });
+
   it('skips deadline check when checkDeadline is false', async () => {
     const expiredProphecy = {
       ...mockProphecy,

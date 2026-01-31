@@ -26,6 +26,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Access check - validates ownership and deadline
     const oldProphecy = await getProphecyWithAccessCheck(id, session.userId, {
+      checkResolved: true,
       deadlineErrorMessage: 'Einreichungsfrist ist abgelaufen, Bearbeiten nicht mehr möglich',
     });
 
@@ -210,6 +211,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     const prophecy = await getProphecyWithAccessCheck(id, session.userId, {
+      checkResolved: true,
       deadlineErrorMessage: 'Einreichungsfrist ist abgelaufen, Löschen nicht mehr möglich',
     });
 

@@ -77,6 +77,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Prophezeiung nicht gefunden' }, { status: 404 });
     }
 
+    // Check if prophecy has been resolved
+    if (prophecy.fulfilled !== null) {
+      return NextResponse.json(
+        { error: 'Aufgelöste Prophezeiungen können nicht mehr bewertet werden' },
+        { status: 400 }
+      );
+    }
+
     // Check if user is trying to rate their own prophecy
     if (prophecy.creatorId === session.userId) {
       return NextResponse.json(

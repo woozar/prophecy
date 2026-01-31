@@ -84,13 +84,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Prophezeiung nicht gefunden' }, { status: 404 });
     }
 
-    if (new Date() <= prophecy.round.ratingDeadline) {
-      return NextResponse.json(
-        { error: 'Prophezeiungen können erst nach der Bewertungsphase aufgelöst werden' },
-        { status: 400 }
-      );
-    }
-
     const updatedProphecy = await prisma.prophecy.update({
       where: { id },
       data: { fulfilled, resolvedAt: new Date() },

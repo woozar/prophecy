@@ -116,21 +116,23 @@ describe('POST /api/prophecies/[id]/resolve', () => {
     expect(data.error).toBe('Prophezeiung nicht gefunden');
   });
 
-  it('returns 400 when rating deadline has not passed', async () => {
+  it('allows resolving before rating deadline has passed', async () => {
     vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
-    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(
-      createMockProphecy({ round: { ratingDeadline: futureDate } }) as never
-    );
+    const mockProphecy = createMockProphecy({ round: { ratingDeadline: futureDate } });
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(mockProphecy as never);
+    vi.mocked(prisma.prophecy.update).mockResolvedValue({
+      ...mockProphecy,
+      fulfilled: true,
+      resolvedAt: new Date(),
+    } as never);
 
     const request = new NextRequest('http://localhost/api/prophecies/1/resolve', {
       method: 'POST',
       body: JSON.stringify({ fulfilled: true }),
     });
     const response = await POST(request, createParams('1'));
-    const data = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(data.error).toBe('Prophezeiungen können erst nach der Bewertungsphase aufgelöst werden');
+    expect(response.status).toBe(200);
   });
 
   it('resolves prophecy as fulfilled successfully', async () => {

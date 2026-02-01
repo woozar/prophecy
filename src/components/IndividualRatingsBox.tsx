@@ -102,7 +102,7 @@ export const IndividualRatingsBox = memo(function IndividualRatingsBox({
     () => ({
       maxHeight: isExpanded ? '500px' : '0px',
       opacity: isExpanded ? 1 : 0,
-      overflow: 'hidden',
+      overflow: isExpanded ? 'auto' : 'hidden',
       transition: 'max-height 0.3s ease-in-out, opacity 0.2s ease-in-out',
     }),
     [isExpanded]

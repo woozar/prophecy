@@ -87,3 +87,13 @@
 - Entfernt unbenutzte `isAdmin` Variable
 - Alle 1820 Tests bestanden
 - npm run lint zeigt 0 Warnungen
+
+### 9. Badge-Gruppierung nach Seltenheit im Benutzerprofil (feature)
+- Badges im Profil werden nach Seltenheit gruppiert: Legendär > Gold > Silber > Bronze
+- Jede Seltenheits-Gruppe hat eine eigene Sektion mit Label-Überschrift
+- Sammelbadges (Tier Groups) werden wie bisher als höchste Badge der Serie angezeigt
+- Innerhalb jeder Seltenheits-Gruppe wird nach earnedAt-Datum sortiert (neueste zuerst)
+- Neue Hilfsfunktionen getRarityOrder() und getRarityLabel() in badge-styles.ts
+- 2 neue Tests in UserProfileModal.test.tsx für Rarity-Gruppierung und Sortierung
+- 2 neue Tests in badge-styles.test.ts für getRarityOrder und getRarityLabel
+- Alle 1751 Tests bestanden

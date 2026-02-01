@@ -3,6 +3,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 
 import { Tooltip } from '@mantine/core';
+import type { BadgeRarity } from '@prisma/client';
 import { IconMinus, IconPlus, IconX } from '@tabler/icons-react';
 
 import { BadgeIcon } from '@/components/BadgeIcon';
@@ -13,7 +14,7 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { UserStatsGrid } from '@/components/UserStatsGrid';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { apiClient } from '@/lib/api-client/client';
-import { getLegendaryBadgeClass } from '@/lib/badges/badge-styles';
+import { getLegendaryBadgeClass, getRarityLabel, getRarityOrder } from '@/lib/badges/badge-styles';
 import { type TierGroup, groupBadgesByTier, isTierGroupAscending } from '@/lib/badges/badge-tiers';
 import { formatDate } from '@/lib/formatting/date';
 import { showErrorToast, showSuccessToast } from '@/lib/toast/toast';
@@ -101,10 +102,11 @@ export const UserProfileModal = memo(function UserProfileModal({
     return groupBadgesByTier(userBadgesList, allBadgesList, knownBadgeKeys);
   }, [userBadgesList, badges, knownBadgeKeys]);
 
-  // Create display items: tier groups show highest badge, standalone badges show as-is
-  const displayItems = useMemo(() => {
-    const items: Array<{ type: 'tier'; group: TierGroup } | { type: 'standalone'; badge: Badge }> =
-      [];
+  type DisplayItem = { type: 'tier'; group: TierGroup } | { type: 'standalone'; badge: Badge };
+
+  // Create display items grouped by rarity, sorted by earnedAt within each group
+  const displayItemsByRarity = useMemo(() => {
+    const items: DisplayItem[] = [];
 
     // Add tier groups
     for (const group of groupedBadges.tierGroups) {
@@ -116,17 +118,41 @@ export const UserProfileModal = memo(function UserProfileModal({
       items.push({ type: 'standalone', badge });
     }
 
-    // Sort by most recently earned
+    const getBadge = (item: DisplayItem): Badge =>
+      item.type === 'tier' ? item.group.highestEarned : item.badge;
+
+    // Sort by rarity (highest first), then by earnedAt (newest first)
     items.sort((a, b) => {
-      const badgeA = a.type === 'tier' ? a.group.highestEarned : a.badge;
-      const badgeB = b.type === 'tier' ? b.group.highestEarned : b.badge;
+      const badgeA = getBadge(a);
+      const badgeB = getBadge(b);
+      const rarityDiff = getRarityOrder(badgeA.rarity) - getRarityOrder(badgeB.rarity);
+      if (rarityDiff !== 0) return rarityDiff;
       const dateA = userBadgesWithDates.get(badgeA.key) ?? '';
       const dateB = userBadgesWithDates.get(badgeB.key) ?? '';
       return new Date(dateB).getTime() - new Date(dateA).getTime();
     });
 
-    return items;
+    // Group into sections by rarity
+    const sections: Array<{ rarity: BadgeRarity; label: string; items: DisplayItem[] }> = [];
+    let currentRarity: BadgeRarity | null = null;
+
+    for (const item of items) {
+      const rarity = getBadge(item).rarity;
+      if (rarity !== currentRarity) {
+        currentRarity = rarity;
+        sections.push({ rarity, label: getRarityLabel(rarity), items: [] });
+      }
+      sections.at(-1)!.items.push(item);
+    }
+
+    return sections;
   }, [groupedBadges, userBadgesWithDates]);
+
+  // Flat list for counting
+  const displayItems = useMemo(
+    () => displayItemsByRarity.flatMap((s) => s.items),
+    [displayItemsByRarity]
+  );
 
   // Total unique badge count (tier groups count as 1)
   const badgeCount = displayItems.length;
@@ -215,72 +241,81 @@ export const UserProfileModal = memo(function UserProfileModal({
           {displayItems.length === 0 ? (
             <p className="text-sm text-(--text-muted)">Noch keine Auszeichnungen freigeschaltet.</p>
           ) : (
-            <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 overflow-y-auto pr-6 pl-6 -mx-6 pt-6 -mt-6 pb-2">
-              {displayItems.map((item) => {
-                const badge = item.type === 'tier' ? item.group.highestEarned : item.badge;
-                const earnedAt = userBadgesWithDates.get(badge.key) ?? '';
+            <div className="overflow-y-auto pr-6 pl-6 -mx-6 pt-6 -mt-6 pb-2 space-y-4">
+              {displayItemsByRarity.map((section) => (
+                <div key={section.rarity}>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-(--text-muted) mb-2">
+                    {section.label}
+                  </p>
+                  <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
+                    {section.items.map((item) => {
+                      const badge = item.type === 'tier' ? item.group.highestEarned : item.badge;
+                      const earnedAt = userBadgesWithDates.get(badge.key) ?? '';
 
-                // Build tier badges info for tooltip
-                const tierBadges =
-                  item.type === 'tier'
-                    ? [
-                        // Earned badges
-                        ...item.group.earnedBadges.map((b) => ({
-                          badge: b,
-                          isEarned: true,
-                          earnedAt: userBadgesWithDates.get(b.key),
-                        })),
-                        // Known unearned badges
-                        ...item.group.knownUnearnedBadges.map((b) => ({
-                          badge: b,
-                          isEarned: false,
-                        })),
-                      ].sort((a, b) => {
-                        // Sort best first: account for ascending groups (leaderboard position)
-                        const thresholdA = a.badge.threshold ?? 0;
-                        const thresholdB = b.badge.threshold ?? 0;
-                        const sortAsc = isTierGroupAscending(item.group.prefix);
-                        return sortAsc ? thresholdA - thresholdB : thresholdB - thresholdA;
-                      })
-                    : undefined;
+                      // Build tier badges info for tooltip
+                      const tierBadges =
+                        item.type === 'tier'
+                          ? [
+                              // Earned badges
+                              ...item.group.earnedBadges.map((b) => ({
+                                badge: b,
+                                isEarned: true,
+                                earnedAt: userBadgesWithDates.get(b.key),
+                              })),
+                              // Known unearned badges
+                              ...item.group.knownUnearnedBadges.map((b) => ({
+                                badge: b,
+                                isEarned: false,
+                              })),
+                            ].sort((a, b) => {
+                              // Sort best first: account for ascending groups (leaderboard position)
+                              const thresholdA = a.badge.threshold ?? 0;
+                              const thresholdB = b.badge.threshold ?? 0;
+                              const sortAsc = isTierGroupAscending(item.group.prefix);
+                              return sortAsc ? thresholdA - thresholdB : thresholdB - thresholdA;
+                            })
+                          : undefined;
 
-                const isLegendary = badge.rarity === 'LEGENDARY';
-                const legendaryClass = getLegendaryBadgeClass(isLegendary, reducedMotion);
+                      const isLegendary = badge.rarity === 'LEGENDARY';
+                      const legendaryClass = getLegendaryBadgeClass(isLegendary, reducedMotion);
 
-                return (
-                  <Tooltip
-                    key={badge.id}
-                    label={
-                      <BadgeTooltipContent
-                        badgeKey={badge.key}
-                        name={badge.name}
-                        description={badge.description}
-                        requirement={badge.requirement}
-                        earnedAt={earnedAt}
-                        tierBadges={tierBadges}
-                      />
-                    }
-                    multiline
-                    position="top"
-                    events={{ hover: true, focus: true, touch: true }}
-                    classNames={{
-                      tooltip: isLegendary
-                        ? 'achievement-tooltip-legendary'
-                        : 'achievement-tooltip',
-                    }}
-                  >
-                    <div
-                      className={`flex items-center gap-3 p-3 badge-card cursor-default ${legendaryClass}`}
-                    >
-                      <BadgeIcon badgeKey={badge.key} size="md" />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-violet-400 truncate">{badge.name}</p>
-                        <p className="text-xs text-white">{formatDate(earnedAt)}</p>
-                      </div>
-                    </div>
-                  </Tooltip>
-                );
-              })}
+                      return (
+                        <Tooltip
+                          key={badge.id}
+                          label={
+                            <BadgeTooltipContent
+                              badgeKey={badge.key}
+                              name={badge.name}
+                              description={badge.description}
+                              requirement={badge.requirement}
+                              earnedAt={earnedAt}
+                              tierBadges={tierBadges}
+                            />
+                          }
+                          multiline
+                          position="top"
+                          events={{ hover: true, focus: true, touch: true }}
+                          classNames={{
+                            tooltip: isLegendary
+                              ? 'achievement-tooltip-legendary'
+                              : 'achievement-tooltip',
+                          }}
+                        >
+                          <div
+                            className={`flex items-center gap-3 p-3 badge-card cursor-default ${legendaryClass}`}
+                          >
+                            <BadgeIcon badgeKey={badge.key} size="md" />
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-violet-400 truncate">{badge.name}</p>
+                              <p className="text-xs text-white">{formatDate(earnedAt)}</p>
+                            </div>
+                          </div>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

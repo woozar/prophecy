@@ -267,6 +267,174 @@ describe('UserProfileModal', () => {
     expect(screen.queryByText(/Mitglied seit/)).not.toBeInTheDocument();
   });
 
+  describe('Badge Rarity Grouping', () => {
+    it('groups badges by rarity with section headers, highest rarity first', () => {
+      const bronzeBadge: Badge = {
+        id: 'badge-bronze',
+        key: 'special_bronze_test',
+        name: 'Bronze Badge',
+        description: 'A bronze badge',
+        requirement: 'Test',
+        category: BadgeCategory.SPECIAL,
+        rarity: BadgeRarity.BRONZE,
+        createdAt: '2025-01-01T00:00:00.000Z',
+      };
+      const goldBadge: Badge = {
+        id: 'badge-gold',
+        key: 'special_gold_test',
+        name: 'Gold Badge',
+        description: 'A gold badge',
+        requirement: 'Test',
+        category: BadgeCategory.SPECIAL,
+        rarity: BadgeRarity.GOLD,
+        createdAt: '2025-01-01T00:00:00.000Z',
+      };
+      const legendaryBadge: Badge = {
+        id: 'badge-legendary',
+        key: 'special_legendary_test',
+        name: 'Legendary Badge',
+        description: 'A legendary badge',
+        requirement: 'Test',
+        category: BadgeCategory.SPECIAL,
+        rarity: BadgeRarity.LEGENDARY,
+        createdAt: '2025-01-01T00:00:00.000Z',
+      };
+
+      vi.mocked(useBadgeStore).mockImplementation((selector) =>
+        selector({
+          badges: {
+            'badge-bronze': bronzeBadge,
+            'badge-gold': goldBadge,
+            'badge-legendary': legendaryBadge,
+          },
+          allUserBadges: {
+            'user-1': {
+              'badge-bronze': {
+                userId: 'user-1',
+                badgeId: 'badge-bronze',
+                earnedAt: '2025-01-10T00:00:00.000Z',
+              },
+              'badge-gold': {
+                userId: 'user-1',
+                badgeId: 'badge-gold',
+                earnedAt: '2025-01-15T00:00:00.000Z',
+              },
+              'badge-legendary': {
+                userId: 'user-1',
+                badgeId: 'badge-legendary',
+                earnedAt: '2025-01-05T00:00:00.000Z',
+              },
+            },
+          },
+          myBadges: {},
+          awardedBadges: [],
+          isInitialized: true,
+          isLoading: false,
+          error: null,
+          setBadges: vi.fn(),
+          setMyBadges: vi.fn(),
+          addMyBadge: vi.fn(),
+          removeMyBadge: vi.fn(),
+          setAllUserBadges: vi.fn(),
+          addUserBadge: vi.fn(),
+          removeUserBadge: vi.fn(),
+          setAwardedBadges: vi.fn(),
+          setInitialized: vi.fn(),
+          setLoading: vi.fn(),
+          setError: vi.fn(),
+        })
+      );
+
+      renderWithMantine(<UserProfileModal user={mockUser} opened={true} onClose={mockOnClose} />);
+
+      // Rarity section headers should be present
+      expect(screen.getByText('Legendär')).toBeInTheDocument();
+      expect(screen.getByText('Gold')).toBeInTheDocument();
+      expect(screen.getByText('Bronze')).toBeInTheDocument();
+
+      // Verify order: Legendary before Gold before Bronze
+      const allText = document.body.textContent ?? '';
+      const legendaryPos = allText.indexOf('Legendär');
+      const goldPos = allText.indexOf('Gold');
+      const bronzePos = allText.indexOf('Bronze');
+      expect(legendaryPos).toBeLessThan(goldPos);
+      expect(goldPos).toBeLessThan(bronzePos);
+    });
+
+    it('sorts badges by earnedAt within the same rarity group', () => {
+      const olderBadge: Badge = {
+        id: 'badge-older',
+        key: 'special_older',
+        name: 'Older Badge',
+        description: 'Earned earlier',
+        requirement: 'Test',
+        category: BadgeCategory.SPECIAL,
+        rarity: BadgeRarity.SILVER,
+        createdAt: '2025-01-01T00:00:00.000Z',
+      };
+      const newerBadge: Badge = {
+        id: 'badge-newer',
+        key: 'special_newer',
+        name: 'Newer Badge',
+        description: 'Earned later',
+        requirement: 'Test',
+        category: BadgeCategory.SPECIAL,
+        rarity: BadgeRarity.SILVER,
+        createdAt: '2025-01-01T00:00:00.000Z',
+      };
+
+      vi.mocked(useBadgeStore).mockImplementation((selector) =>
+        selector({
+          badges: {
+            'badge-older': olderBadge,
+            'badge-newer': newerBadge,
+          },
+          allUserBadges: {
+            'user-1': {
+              'badge-older': {
+                userId: 'user-1',
+                badgeId: 'badge-older',
+                earnedAt: '2025-01-01T00:00:00.000Z',
+              },
+              'badge-newer': {
+                userId: 'user-1',
+                badgeId: 'badge-newer',
+                earnedAt: '2025-01-20T00:00:00.000Z',
+              },
+            },
+          },
+          myBadges: {},
+          awardedBadges: [],
+          isInitialized: true,
+          isLoading: false,
+          error: null,
+          setBadges: vi.fn(),
+          setMyBadges: vi.fn(),
+          addMyBadge: vi.fn(),
+          removeMyBadge: vi.fn(),
+          setAllUserBadges: vi.fn(),
+          addUserBadge: vi.fn(),
+          removeUserBadge: vi.fn(),
+          setAwardedBadges: vi.fn(),
+          setInitialized: vi.fn(),
+          setLoading: vi.fn(),
+          setError: vi.fn(),
+        })
+      );
+
+      renderWithMantine(<UserProfileModal user={mockUser} opened={true} onClose={mockOnClose} />);
+
+      // Both should be under "Silber" section
+      expect(screen.getByText('Silber')).toBeInTheDocument();
+
+      // Newer badge should appear before older badge within the section
+      const allText = document.body.textContent ?? '';
+      const newerPos = allText.indexOf('Newer Badge');
+      const olderPos = allText.indexOf('Older Badge');
+      expect(newerPos).toBeLessThan(olderPos);
+    });
+  });
+
   describe('Admin Badge Management', () => {
     it('does not show admin section for non-admin users', () => {
       setupDefaultMocks(false, true);

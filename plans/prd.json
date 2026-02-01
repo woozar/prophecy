@@ -96,5 +96,31 @@
       "Sicherstellen dass der Indicator in allen Zuständen (connected, disconnected, reconnecting) sichtbar ist"
     ],
     "passes": true
+  },
+  {
+    "category": "feature",
+    "description": "Badge-Gruppierung nach Seltenheit im Benutzerprofil",
+    "steps": [
+      "Badges im Profil nach Seltenheit (rarity) gruppieren",
+      "Sammelbadges (die höchste Badge einer Serie anzeigen) wie die höchste Badge behandeln",
+      "Als zweites Sortierkriterium das earnedAt-Datum verwenden (innerhalb jeder Seltenheits-Gruppe)",
+      "UI-Anpassung: Badges gruppiert anzeigen (z.B. mit Sections oder visuellen Trennern)",
+      "Tests für die neue Sortierlogik schreiben"
+    ],
+    "passes": true
+  },
+  {
+    "category": "feature",
+    "description": "Reset-Button für aufgelöste Prophezeiungen",
+    "steps": [
+      "API-Endpoint erstellen/erweitern um den Auflösungsstatus einer Prophezeiung zurückzusetzen (fulfilled/unfulfilled → offen)",
+      "Berechtigung prüfen: Nur der Admin (oder wer die Prophezeiung aufgelöst hat) darf zurücksetzen",
+      "Reset-Button in der Prophezeiung-Detailansicht anzeigen, wenn die Prophezeiung bereits aufgelöst wurde",
+      "Button visuell als sekundäre/destruktive Aktion gestalten (z.B. Bestätigungsdialog)",
+      "Beim Reset: Auflösungsstatus entfernen, zugehörige Daten (z.B. Bewertungen) berücksichtigen",
+      "SSE-Event senden damit andere Clients den Reset mitbekommen",
+      "Tests für API-Endpoint und Reset-Logik schreiben"
+    ],
+    "passes": false
   }
 ]

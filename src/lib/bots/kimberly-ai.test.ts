@@ -45,14 +45,14 @@ describe('generateKimberlyRating', () => {
     expect(result.reasoning).toBe('Historische Daten zeigen hohe Wahrscheinlichkeit.');
   });
 
-  it('returns 0 and null reasoning on error', async () => {
+  it('throws error on API failure so no false rating is stored', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(generateText).mockRejectedValue(new Error('API Error'));
 
-    const result = await generateKimberlyRating('Test Prophezeiung', null, new Date('2026-12-31'));
+    await expect(
+      generateKimberlyRating('Test Prophezeiung', null, new Date('2026-12-31'))
+    ).rejects.toThrow('API Error');
 
-    expect(result.rating).toBe(0);
-    expect(result.reasoning).toBeNull();
     consoleSpy.mockRestore();
   });
 

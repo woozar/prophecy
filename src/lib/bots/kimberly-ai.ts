@@ -89,6 +89,6 @@ export async function generateKimberlyRating(
     return { rating: result.rating, reasoning: result.reasoning };
   } catch (error) {
     console.error('[Kimberly] Fehler bei KI-Bewertung:', error);
-    return { rating: 0, reasoning: null };
+    throw error;
   }
 }

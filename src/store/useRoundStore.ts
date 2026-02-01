@@ -43,7 +43,6 @@ export const useRoundStore = create<RoundState>((set) => ({
 
   removeRound: (id) =>
     set((state) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [id]: _removed, ...rest } = state.rounds;
       return { rounds: rest };
     }),

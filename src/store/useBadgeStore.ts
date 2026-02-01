@@ -112,7 +112,6 @@ export const useBadgeStore = create<BadgeState>((set) => ({
 
   removeMyBadge: (badgeId) =>
     set((state) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [badgeId]: _, ...rest } = state.myBadges;
       return { myBadges: rest };
     }),
@@ -149,7 +148,7 @@ export const useBadgeStore = create<BadgeState>((set) => ({
     set((state) => {
       const existingUserBadges = state.allUserBadges[userId];
       if (!existingUserBadges) return state;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
       const { [badgeId]: _, ...rest } = existingUserBadges;
       return {
         allUserBadges: {

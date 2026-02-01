@@ -45,7 +45,6 @@ export const useProphecyStore = create<ProphecyState>((set) => ({
 
   removeProphecy: (id) =>
     set((state) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [id]: _removed, ...rest } = state.prophecies;
       return { prophecies: rest };
     }),

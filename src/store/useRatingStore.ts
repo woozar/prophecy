@@ -76,7 +76,6 @@ export const useRatingStore = create<RatingState>((set) => ({
       const rating = state.ratings[id];
       if (!rating) return state;
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [id]: _removed, ...rest } = state.ratings;
       // Update prophecy index
       const prophecyRatings = (state.ratingsByProphecy[rating.prophecyId] || []).filter(

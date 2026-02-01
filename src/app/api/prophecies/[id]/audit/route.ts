@@ -25,13 +25,13 @@ function maskRatingValues(
     const parsed = JSON.parse(value);
     // Remove the 'value' field but keep other fields like userId, count, ratings
     if ('value' in parsed) {
-      const { value: _, ...rest } = parsed;
+      const { value: _value, ...rest } = parsed;
       return JSON.stringify(rest);
     }
     // For bulk delete, mask the values in the ratings array
     if ('ratings' in parsed && Array.isArray(parsed.ratings)) {
       const maskedRatings = parsed.ratings.map(
-        ({ value: _, ...rest }: { value: number; [key: string]: unknown }) => rest
+        ({ value: _value, ...rest }: { value: number; [key: string]: unknown }) => rest
       );
       return JSON.stringify({ ...parsed, ratings: maskedRatings });
     }

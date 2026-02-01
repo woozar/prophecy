@@ -77,6 +77,7 @@ interface MockUser {
   avatarEffectColors: string[];
   status: 'PENDING' | 'APPROVED' | 'SUSPENDED';
   role: 'USER' | 'ADMIN';
+  animationsEnabled: boolean;
   isBot: boolean;
   createdAt: string;
   badgeIds?: string[];
@@ -91,6 +92,7 @@ describe('UsersManager', () => {
       avatarUrl: null,
       avatarEffect: null,
       avatarEffectColors: [],
+      animationsEnabled: true,
       status: 'PENDING',
       role: 'USER',
       isBot: false,
@@ -104,6 +106,7 @@ describe('UsersManager', () => {
       avatarUrl: null,
       avatarEffect: null,
       avatarEffectColors: [],
+      animationsEnabled: true,
       status: 'APPROVED',
       role: 'USER',
       isBot: false,
@@ -117,6 +120,7 @@ describe('UsersManager', () => {
       avatarUrl: null,
       avatarEffect: null,
       avatarEffectColors: [],
+      animationsEnabled: true,
       status: 'APPROVED',
       role: 'ADMIN',
       isBot: false,
@@ -130,6 +134,7 @@ describe('UsersManager', () => {
       avatarUrl: null,
       avatarEffect: null,
       avatarEffectColors: [],
+      animationsEnabled: true,
       status: 'SUSPENDED',
       role: 'USER',
       isBot: false,

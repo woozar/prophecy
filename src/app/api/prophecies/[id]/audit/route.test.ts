@@ -20,7 +20,8 @@ const createRouteParams = (id: string) => ({
 });
 
 // Create a mock prophecy with round info (ratingDeadline in the past by default)
-const createMockProphecy = (id: string, ratingDeadline = new Date('2020-01-01')) => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const createMockProphecy = (id: string, ratingDeadline = new Date('2020-01-01')): any => ({
   id,
   round: {
     ratingDeadline,

@@ -1139,7 +1139,7 @@ describe('RoundsManager', () => {
       };
 
       mockTriggerBotRatings.mockResolvedValue({
-        data: { message: '6 Bewertungen erstellt' },
+        data: { message: 'Bot-Bewertungen wurden gestartet' },
         error: undefined,
       });
 
@@ -1151,7 +1151,9 @@ describe('RoundsManager', () => {
       });
 
       await waitFor(() => {
-        expect(mockShowSuccessToast).toHaveBeenCalledWith('6 Bewertungen erstellt');
+        expect(mockShowSuccessToast).toHaveBeenCalledWith(
+          'Bot-Bewertungen wurden gestartet. Bewertungen erscheinen nach und nach.'
+        );
       });
     });
 

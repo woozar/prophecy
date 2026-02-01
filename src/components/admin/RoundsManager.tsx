@@ -176,11 +176,11 @@ export const RoundsManager = memo(function RoundsManager() {
   const handleTriggerBotRatings = useCallback(async (roundId: string) => {
     setTriggeringBotRatingsId(roundId);
     try {
-      const { data, error } = await apiClient.admin.rounds.triggerBotRatings(roundId);
+      const { error } = await apiClient.admin.rounds.triggerBotRatings(roundId);
       if (error) {
         throw new Error((error as { error?: string }).error || 'Fehler bei Bot-Bewertungen');
       }
-      showSuccessToast(data.message);
+      showSuccessToast('Bot-Bewertungen wurden gestartet. Bewertungen erscheinen nach und nach.');
     } catch (err) {
       showErrorToast(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {

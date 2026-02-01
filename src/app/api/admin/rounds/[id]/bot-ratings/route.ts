@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 
 import { validateAdminSession } from '@/lib/auth/admin-validation';
 import { runBotRatingsForRound } from '@/lib/bots/bot-rating-service';
@@ -10,21 +10,19 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
   const { id } = await params;
 
-  try {
-    const result = await runBotRatingsForRound(id);
+  after(async () => {
+    try {
+      const result = await runBotRatingsForRound(id);
+      console.log(
+        `[Bot-Ratings] Fertig: ${result.totalRatingsCreated} Bewertungen für Runde "${result.roundTitle}"`
+      );
+    } catch (error) {
+      console.error('[Bot-Ratings] Fehler:', error);
+    }
+  });
 
-    return NextResponse.json({
-      success: true,
-      message: `${result.totalRatingsCreated} Bot-Bewertungen erstellt`,
-      result,
-    });
-  } catch (error) {
-    console.error('Error running bot ratings:', error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Fehler bei Bot-Bewertungen',
-      },
-      { status: 400 }
-    );
-  }
+  return NextResponse.json({
+    success: true,
+    message: 'Bot-Bewertungen wurden gestartet',
+  });
 }

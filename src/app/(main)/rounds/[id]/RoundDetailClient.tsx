@@ -3,6 +3,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 
 import {
+  IconBan,
   IconChartBar,
   IconCheck,
   IconDownload,
@@ -12,7 +13,6 @@ import {
   IconLock,
   IconLockOpen,
   IconPlus,
-  IconRefresh,
   IconTrash,
   IconX,
 } from '@tabler/icons-react';
@@ -100,6 +100,11 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const [auditProphecyId, setAuditProphecyId] = useState<string | null>(null);
   const [confirmResetProphecy, setConfirmResetProphecy] = useState<Prophecy | null>(null);
   const [isResetting, setIsResetting] = useState(false);
+  const [confirmResolveProphecy, setConfirmResolveProphecy] = useState<{
+    prophecy: Prophecy;
+    fulfilled: boolean;
+  } | null>(null);
+  const [isResolving, setIsResolving] = useState(false);
 
   const now = useMemo(() => new Date(), []);
   const submissionDeadline = useMemo(
@@ -333,6 +338,39 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     [setProphecy]
   );
 
+  const handleRequestResolve = useCallback(
+    (prophecyId: string, fulfilled: boolean) => {
+      const prophecy = sortedProphecies.find((p) => p.id === prophecyId);
+      if (!prophecy) return;
+
+      // Already set to this value, no need to call API
+      if (prophecy.fulfilled === fulfilled) return;
+
+      if (prophecy.fulfilled !== null) {
+        setConfirmResolveProphecy({ prophecy, fulfilled });
+        return;
+      }
+
+      handleResolveProphecy(prophecyId, fulfilled);
+    },
+    [sortedProphecies, handleResolveProphecy]
+  );
+
+  const handleConfirmResolve = useCallback(async () => {
+    if (!confirmResolveProphecy) return;
+
+    setIsResolving(true);
+    try {
+      await handleResolveProphecy(
+        confirmResolveProphecy.prophecy.id,
+        confirmResolveProphecy.fulfilled
+      );
+      setConfirmResolveProphecy(null);
+    } finally {
+      setIsResolving(false);
+    }
+  }, [confirmResolveProphecy, handleResolveProphecy]);
+
   const handleConfirmResetResolution = useCallback(
     (prophecyId: string) => {
       const prophecy = sortedProphecies.find((p) => p.id === prophecyId);
@@ -438,71 +476,20 @@ export const RoundDetailClient = memo(function RoundDetailClient({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 self-end sm:self-auto">
-          {isSubmissionOpen && (
-            <Button onClick={() => setIsCreateModalOpen(true)}>
-              <div className="flex flex-row gap-2 items-center">
-                <IconPlus size={18} />
-                <span>Neue Prophezeiung</span>
-              </div>
-            </Button>
-          )}
-
-          {/* Results Link - visible when results are published or for admins as preview */}
-          {(round.resultsPublishedAt || (isAdmin && isRatingClosed)) && (
-            <Button
-              variant="outline"
-              onClick={() => (globalThis.location.href = `/rounds/${round.id}/results`)}
-            >
-              <div className="flex flex-row gap-2 items-center">
-                <IconChartBar size={18} />
-                <span>{round.resultsPublishedAt ? 'Ergebnisse' : 'Vorschau'}</span>
-              </div>
-            </Button>
-          )}
-
-          {/* Publish Button - Admin only, after rating deadline */}
-          {isAdmin && isRatingClosed && !round.resultsPublishedAt && (
-            <Button
-              onClick={handlePublishResults}
-              disabled={isPublishing || !allResolved}
-              title={allResolved ? undefined : 'Noch nicht alle Prophezeiungen ausgewertet'}
-            >
-              <div className="flex flex-row gap-2 items-center">
-                <IconLockOpen size={18} />
-                <span>{isPublishing ? 'Veröffentlichen...' : 'Ergebnisse freigeben'}</span>
-              </div>
-            </Button>
-          )}
-
-          {/* Unpublish Button - Admin only, when results are published */}
-          {isAdmin && round.resultsPublishedAt && (
-            <Button variant="outline" onClick={handleUnpublishResults} disabled={isUnpublishing}>
-              <div className="flex flex-row gap-2 items-center">
-                <IconLock size={18} />
-                <span>{isUnpublishing ? 'Wird zurückgezogen...' : 'Freigabe aufheben'}</span>
-              </div>
-            </Button>
-          )}
-
-          {/* Export Button - Admin only */}
-          {isAdmin && (
-            <Button variant="outline" onClick={() => exportRound(round.id)} disabled={isExporting}>
-              <div className="flex flex-row gap-2 items-center">
-                <IconDownload size={18} />
-                <span>
-                  {isExporting ? (
-                    'Exportieren...'
-                  ) : (
-                    <>
-                      <span lang="en">Excel</span> Export
-                    </>
-                  )}
-                </span>
-              </div>
-            </Button>
-          )}
-        </div>
+        <RoundActionButtons
+          round={round}
+          isSubmissionOpen={isSubmissionOpen}
+          isRatingClosed={isRatingClosed}
+          isAdmin={isAdmin}
+          allResolved={allResolved}
+          isPublishing={isPublishing}
+          isUnpublishing={isUnpublishing}
+          isExporting={isExporting}
+          onCreateProphecy={() => setIsCreateModalOpen(true)}
+          onPublishResults={handlePublishResults}
+          onUnpublishResults={handleUnpublishResults}
+          onExportRound={() => exportRound(round.id)}
+        />
       </div>
 
       {/* Deadlines Info */}
@@ -560,7 +547,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
               onEdit={handleStartEdit}
               onDelete={handleConfirmDelete}
               onRate={handleRateProphecy}
-              onResolve={handleResolveProphecy}
+              onResolve={handleRequestResolve}
               onResetResolution={handleConfirmResetResolution}
               onShowAudit={handleShowAudit}
               isDeleting={deletingId === prophecy.id}
@@ -673,6 +660,35 @@ export const RoundDetailClient = memo(function RoundDetailClient({
         <p className="text-sm">Die Prophezeiung wird wieder als offen markiert.</p>
       </ConfirmModal>
 
+      {/* Change Resolution Confirmation Modal */}
+      <ConfirmModal
+        opened={!!confirmResolveProphecy}
+        onClose={() => setConfirmResolveProphecy(null)}
+        onConfirm={handleConfirmResolve}
+        title="Auflösung ändern?"
+        confirmText={
+          confirmResolveProphecy?.fulfilled
+            ? 'Als erfüllt markieren'
+            : 'Als nicht erfüllt markieren'
+        }
+        confirmingText="Wird geändert..."
+        isSubmitting={isResolving}
+        variant="warning"
+      >
+        <p className="mb-2">
+          Diese Prophezeiung ist bereits als{' '}
+          <strong>{confirmResolveProphecy?.fulfilled ? 'nicht erfüllt' : 'erfüllt'}</strong>{' '}
+          markiert. Möchtest du sie stattdessen als{' '}
+          <strong>{confirmResolveProphecy?.fulfilled ? 'erfüllt' : 'nicht erfüllt'}</strong>{' '}
+          markieren?
+        </p>
+        {confirmResolveProphecy && (
+          <p className="text-white font-medium mb-4">
+            &quot;{confirmResolveProphecy.prophecy.title}&quot;
+          </p>
+        )}
+      </ConfirmModal>
+
       {/* Edit Modal */}
       <Modal
         opened={!!editingProphecy}
@@ -736,6 +752,104 @@ export const RoundDetailClient = memo(function RoundDetailClient({
         }
         onClose={handleCloseAudit}
       />
+    </div>
+  );
+});
+
+interface RoundActionButtonsProps {
+  round: Round;
+  isSubmissionOpen: boolean;
+  isRatingClosed: boolean;
+  isAdmin: boolean;
+  allResolved: boolean;
+  isPublishing: boolean;
+  isUnpublishing: boolean;
+  isExporting: boolean;
+  onCreateProphecy: () => void;
+  onPublishResults: () => void;
+  onUnpublishResults: () => void;
+  onExportRound: () => void;
+}
+
+const RoundActionButtons = memo(function RoundActionButtons({
+  round,
+  isSubmissionOpen,
+  isRatingClosed,
+  isAdmin,
+  allResolved,
+  isPublishing,
+  isUnpublishing,
+  isExporting,
+  onCreateProphecy,
+  onPublishResults,
+  onUnpublishResults,
+  onExportRound,
+}: Readonly<RoundActionButtonsProps>) {
+  return (
+    <div className="flex flex-wrap gap-2 self-end sm:self-auto">
+      {isSubmissionOpen && (
+        <Button onClick={onCreateProphecy}>
+          <div className="flex flex-row gap-2 items-center">
+            <IconPlus size={18} />
+            <span>Neue Prophezeiung</span>
+          </div>
+        </Button>
+      )}
+
+      {/* Results Link - visible when results are published or for admins as preview */}
+      {(round.resultsPublishedAt || (isAdmin && isRatingClosed)) && (
+        <Button
+          variant="outline"
+          onClick={() => (globalThis.location.href = `/rounds/${round.id}/results`)}
+        >
+          <div className="flex flex-row gap-2 items-center">
+            <IconChartBar size={18} />
+            <span>{round.resultsPublishedAt ? 'Ergebnisse' : 'Vorschau'}</span>
+          </div>
+        </Button>
+      )}
+
+      {/* Publish Button - Admin only, after rating deadline */}
+      {isAdmin && isRatingClosed && !round.resultsPublishedAt && (
+        <Button
+          onClick={onPublishResults}
+          disabled={isPublishing || !allResolved}
+          title={allResolved ? undefined : 'Noch nicht alle Prophezeiungen ausgewertet'}
+        >
+          <div className="flex flex-row gap-2 items-center">
+            <IconLockOpen size={18} />
+            <span>{isPublishing ? 'Veröffentlichen...' : 'Ergebnisse freigeben'}</span>
+          </div>
+        </Button>
+      )}
+
+      {/* Unpublish Button - Admin only, when results are published */}
+      {isAdmin && round.resultsPublishedAt && (
+        <Button variant="outline" onClick={onUnpublishResults} disabled={isUnpublishing}>
+          <div className="flex flex-row gap-2 items-center">
+            <IconLock size={18} />
+            <span>{isUnpublishing ? 'Wird zurückgezogen...' : 'Freigabe aufheben'}</span>
+          </div>
+        </Button>
+      )}
+
+      {/* Export Button - Admin only */}
+      {isAdmin && (
+        <Button variant="outline" onClick={onExportRound} disabled={isExporting}>
+          <div className="flex flex-row gap-2 items-center">
+            <IconDownload size={18} />
+            <span>
+              {isExporting ? (
+                'Exportieren...'
+              ) : (
+                <>
+                  <span lang="en">Excel</span> Export
+                </>
+              )}
+            </span>
+          </div>
+        </Button>
+      )}
     </div>
   );
 });
@@ -903,7 +1017,7 @@ const ProphecyCard = memo(function ProphecyCard({
             </>
           )}
           {isAdmin && !resultsPublished && (
-            <div className="flex gap-1">
+            <div className="flex gap-2">
               <button
                 onClick={() => onResolve(prophecy.id, true)}
                 className={`p-2 rounded-md transition-all ${
@@ -915,6 +1029,15 @@ const ProphecyCard = memo(function ProphecyCard({
               >
                 <IconCheck size={18} />
               </button>
+              {prophecy.fulfilled !== null && (
+                <button
+                  onClick={() => onResetResolution(prophecy.id)}
+                  className="p-2 rounded-md transition-all bg-white/5 text-(--text-muted) hover:bg-amber-500/20 hover:text-amber-400"
+                  title="Auflösung zurücksetzen"
+                >
+                  <IconX size={18} />
+                </button>
+              )}
               <button
                 onClick={() => onResolve(prophecy.id, false)}
                 className={`p-2 rounded-md transition-all ${
@@ -924,17 +1047,8 @@ const ProphecyCard = memo(function ProphecyCard({
                 }`}
                 title="Als nicht erfüllt markieren"
               >
-                <IconX size={18} />
+                <IconBan size={18} />
               </button>
-              {prophecy.fulfilled !== null && (
-                <button
-                  onClick={() => onResetResolution(prophecy.id)}
-                  className="p-2 rounded-md transition-all bg-white/5 text-(--text-muted) hover:bg-amber-500/20 hover:text-amber-400"
-                  title="Auflösung zurücksetzen"
-                >
-                  <IconRefresh size={18} />
-                </button>
-              )}
             </div>
           )}
           <IconActionButton

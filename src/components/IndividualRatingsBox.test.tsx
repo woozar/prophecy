@@ -96,7 +96,7 @@ describe('IndividualRatingsBox', () => {
     fireEvent.click(screen.getByRole('button'));
 
     expect(
-      screen.getByText('Bot-Bewertungen werden im Durchschnitt nicht berücksichtigt')
+      screen.getByText('Bot-Bewertungen werden im Scoring nicht berücksichtigt')
     ).toBeInTheDocument();
   });
 
@@ -106,7 +106,7 @@ describe('IndividualRatingsBox', () => {
     fireEvent.click(screen.getByRole('button'));
 
     expect(
-      screen.queryByText('Bot-Bewertungen werden im Durchschnitt nicht berücksichtigt')
+      screen.queryByText('Bot-Bewertungen werden im Scoring nicht berücksichtigt')
     ).not.toBeInTheDocument();
   });
 

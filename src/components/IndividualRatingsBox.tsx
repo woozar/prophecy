@@ -137,7 +137,7 @@ export const IndividualRatingsBox = memo(function IndividualRatingsBox({
         {hasBotsInList && (
           <p className="mt-2 text-xs text-(--text-muted) flex items-center gap-1">
             <IconRobot size={12} className="text-violet-400" />
-            <span>Bot-Bewertungen werden im Durchschnitt nicht berücksichtigt</span>
+            <span>Bot-Bewertungen werden im Scoring nicht berücksichtigt</span>
           </p>
         )}
       </div>

@@ -61,6 +61,9 @@
               "type": "string"
             }
           },
+          "animationsEnabled": {
+            "type": "boolean"
+          },
           "role": {
             "$ref": "#/components/schemas/Role"
           },
@@ -79,6 +82,7 @@
           "avatarUrl",
           "avatarEffect",
           "avatarEffectColors",
+          "animationsEnabled",
           "role",
           "status",
           "createdAt"
@@ -2688,6 +2692,73 @@
           },
           "400": {
             "description": "Rating phase not ended yet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (not admin)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Prophecy not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Prophecies"],
+        "summary": "Reset prophecy resolution (Admin only)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Prophecy ID"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resolution reset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProphecyDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Prophecy is not resolved",
             "content": {
               "application/json": {
                 "schema": {

@@ -97,3 +97,16 @@
 - 2 neue Tests in UserProfileModal.test.tsx für Rarity-Gruppierung und Sortierung
 - 2 neue Tests in badge-styles.test.ts für getRarityOrder und getRarityLabel
 - Alle 1751 Tests bestanden
+
+### 10. Reset-Button für aufgelöste Prophezeiungen (feature)
+- Neuer DELETE /api/prophecies/[id]/resolve Endpoint (Admin only)
+  - Setzt fulfilled auf null und resolvedAt auf null
+  - Gibt 400 zurück wenn Prophezeiung nicht aufgelöst ist
+  - Sendet prophecy:updated SSE-Event
+- OpenAPI-Spezifikation um DELETE-Route erweitert und Typen regeneriert
+- apiClient um resetResolution()-Methode erweitert
+- UI: Reset-Button (IconRefresh) erscheint neben den Auflösungsbuttons wenn Prophezeiung aufgelöst ist
+- Bestätigungsdialog vor dem Zurücksetzen
+- 6 neue Tests für den DELETE-Endpoint (Auth, 404, 400, Success fulfilled, Success unfulfilled, DB Error)
+- Alle 1757 Tests bestanden
+- npm run lint zeigt 0 Fehler

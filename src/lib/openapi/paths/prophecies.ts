@@ -288,6 +288,44 @@ registry.registerPath({
 });
 
 // ============================================================================
+// Reset Prophecy Resolution
+// ============================================================================
+
+registry.registerPath({
+  method: 'delete',
+  path: '/api/prophecies/{id}/resolve',
+  tags: ['Prophecies'],
+  summary: 'Reset prophecy resolution (Admin only)',
+  request: {
+    params: z.object({
+      id: z.string().openapi({ description: 'Prophecy ID' }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Resolution reset',
+      content: { 'application/json': { schema: prophecyDetailResponseSchema } },
+    },
+    400: {
+      description: 'Prophecy is not resolved',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    401: {
+      description: 'Unauthorized',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    403: {
+      description: 'Forbidden (not admin)',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    404: {
+      description: 'Prophecy not found',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+  },
+});
+
+// ============================================================================
 // Get Audit Logs
 // ============================================================================
 

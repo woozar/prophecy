@@ -6,7 +6,7 @@ import { validateAdminSession } from '@/lib/auth/admin-validation';
 import { prisma } from '@/lib/db/prisma';
 import { sseEmitter } from '@/lib/sse/event-emitter';
 
-import { POST } from './route';
+import { DELETE, POST } from './route';
 
 vi.mock('@/lib/auth/admin-validation', () => ({
   validateAdminSession: vi.fn(),
@@ -403,5 +403,123 @@ describe('POST /api/prophecies/[id]/resolve', () => {
         }),
       });
     });
+  });
+});
+
+describe('DELETE /api/prophecies/[id]/resolve', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns admin validation error when not authorized', async () => {
+    const mockError = new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    vi.mocked(validateAdminSession).mockResolvedValue({ error: mockError as never });
+
+    const request = new NextRequest('http://localhost/api/prophecies/1/resolve', {
+      method: 'DELETE',
+    });
+    const response = await DELETE(request, createParams('1'));
+
+    expect(response.status).toBe(401);
+  });
+
+  it('returns 404 when prophecy not found', async () => {
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(null);
+
+    const request = new NextRequest('http://localhost/api/prophecies/1/resolve', {
+      method: 'DELETE',
+    });
+    const response = await DELETE(request, createParams('1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(data.error).toBe('Prophezeiung nicht gefunden');
+  });
+
+  it('returns 400 when prophecy is not resolved', async () => {
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(
+      createMockProphecy({ fulfilled: null }) as never
+    );
+
+    const request = new NextRequest('http://localhost/api/prophecies/1/resolve', {
+      method: 'DELETE',
+    });
+    const response = await DELETE(request, createParams('prophecy-1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe('Prophezeiung ist nicht aufgelöst');
+  });
+
+  it('resets resolved prophecy successfully', async () => {
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(
+      createMockProphecy({ fulfilled: true, resolvedAt: new Date() }) as never
+    );
+
+    const resetProphecy = {
+      ...createMockProphecy(),
+      fulfilled: null,
+      resolvedAt: null,
+    };
+    vi.mocked(prisma.prophecy.update).mockResolvedValue(resetProphecy as never);
+
+    const request = new NextRequest('http://localhost/api/prophecies/1/resolve', {
+      method: 'DELETE',
+    });
+    const response = await DELETE(request, createParams('prophecy-1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.prophecy.fulfilled).toBeNull();
+    expect(prisma.prophecy.update).toHaveBeenCalledWith({
+      where: { id: 'prophecy-1' },
+      data: { fulfilled: null, resolvedAt: null },
+    });
+    expect(sseEmitter.broadcast).toHaveBeenCalledWith({
+      type: 'prophecy:updated',
+      data: expect.objectContaining({ id: 'prophecy-1', fulfilled: null }),
+    });
+  });
+
+  it('resets unfulfilled prophecy successfully', async () => {
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
+    vi.mocked(prisma.prophecy.findUnique).mockResolvedValue(
+      createMockProphecy({ fulfilled: false, resolvedAt: new Date() }) as never
+    );
+
+    const resetProphecy = {
+      ...createMockProphecy(),
+      fulfilled: null,
+      resolvedAt: null,
+    };
+    vi.mocked(prisma.prophecy.update).mockResolvedValue(resetProphecy as never);
+
+    const request = new NextRequest('http://localhost/api/prophecies/1/resolve', {
+      method: 'DELETE',
+    });
+    const response = await DELETE(request, createParams('prophecy-1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.prophecy.fulfilled).toBeNull();
+  });
+
+  it('returns 500 on database error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(validateAdminSession).mockResolvedValue({ session: mockSession });
+    vi.mocked(prisma.prophecy.findUnique).mockRejectedValue(new Error('DB Error'));
+
+    const request = new NextRequest('http://localhost/api/prophecies/1/resolve', {
+      method: 'DELETE',
+    });
+    const response = await DELETE(request, createParams('1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(data.error).toBe('Fehler beim Zurücksetzen der Auflösung');
+    consoleSpy.mockRestore();
   });
 });

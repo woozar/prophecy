@@ -12,6 +12,7 @@ import {
   IconLock,
   IconLockOpen,
   IconPlus,
+  IconRefresh,
   IconTrash,
   IconX,
 } from '@tabler/icons-react';
@@ -97,6 +98,8 @@ export const RoundDetailClient = memo(function RoundDetailClient({
   const [editTitleError, setEditTitleError] = useState<string | undefined>(undefined);
   const [confirmEditProphecy, setConfirmEditProphecy] = useState<Prophecy | null>(null);
   const [auditProphecyId, setAuditProphecyId] = useState<string | null>(null);
+  const [confirmResetProphecy, setConfirmResetProphecy] = useState<Prophecy | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
 
   const now = useMemo(() => new Date(), []);
   const submissionDeadline = useMemo(
@@ -330,6 +333,37 @@ export const RoundDetailClient = memo(function RoundDetailClient({
     [setProphecy]
   );
 
+  const handleConfirmResetResolution = useCallback(
+    (prophecyId: string) => {
+      const prophecy = sortedProphecies.find((p) => p.id === prophecyId);
+      if (prophecy) setConfirmResetProphecy(prophecy);
+    },
+    [sortedProphecies]
+  );
+
+  const handleResetResolution = useCallback(async () => {
+    if (!confirmResetProphecy) return;
+
+    setIsResetting(true);
+    try {
+      const { data, error } = await apiClient.prophecies.resetResolution(confirmResetProphecy.id);
+
+      if (error) {
+        throw new Error((error as { error?: string }).error || 'Fehler beim Zurücksetzen');
+      }
+
+      if (data.prophecy) {
+        setProphecy(data.prophecy);
+      }
+      showSuccessToast('Auflösung zurückgesetzt');
+      setConfirmResetProphecy(null);
+    } catch (error) {
+      showErrorToast(error instanceof Error ? error.message : 'Unbekannter Fehler');
+    } finally {
+      setIsResetting(false);
+    }
+  }, [confirmResetProphecy, setProphecy]);
+
   const handlePublishResults = useCallback(async () => {
     setIsPublishing(true);
     try {
@@ -527,6 +561,7 @@ export const RoundDetailClient = memo(function RoundDetailClient({
               onDelete={handleConfirmDelete}
               onRate={handleRateProphecy}
               onResolve={handleResolveProphecy}
+              onResetResolution={handleConfirmResetResolution}
               onShowAudit={handleShowAudit}
               isDeleting={deletingId === prophecy.id}
             />
@@ -620,6 +655,24 @@ export const RoundDetailClient = memo(function RoundDetailClient({
         <p className="text-sm">Beim Speichern werden alle Bewertungen gelöscht.</p>
       </ConfirmModal>
 
+      {/* Reset Resolution Confirmation Modal */}
+      <ConfirmModal
+        opened={!!confirmResetProphecy}
+        onClose={() => setConfirmResetProphecy(null)}
+        onConfirm={handleResetResolution}
+        title="Auflösung zurücksetzen?"
+        confirmText="Zurücksetzen"
+        confirmingText="Wird zurückgesetzt..."
+        isSubmitting={isResetting}
+        variant="danger"
+      >
+        <p className="mb-2">Möchtest du die Auflösung dieser Prophezeiung wirklich zurücksetzen?</p>
+        {confirmResetProphecy && (
+          <p className="text-white font-medium mb-4">&quot;{confirmResetProphecy.title}&quot;</p>
+        )}
+        <p className="text-sm">Die Prophezeiung wird wieder als offen markiert.</p>
+      </ConfirmModal>
+
       {/* Edit Modal */}
       <Modal
         opened={!!editingProphecy}
@@ -699,6 +752,7 @@ interface ProphecyCardProps {
   onDelete: (id: string) => void;
   onRate: (id: string, value: number) => void;
   onResolve: (id: string, fulfilled: boolean) => void;
+  onResetResolution: (id: string) => void;
   onShowAudit: (id: string) => void;
   isDeleting: boolean;
 }
@@ -715,6 +769,7 @@ const ProphecyCard = memo(function ProphecyCard({
   onDelete,
   onRate,
   onResolve,
+  onResetResolution,
   onShowAudit,
   isDeleting,
 }: Readonly<ProphecyCardProps>) {
@@ -829,7 +884,7 @@ const ProphecyCard = memo(function ProphecyCard({
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col gap-2 shrink-0">
+        <div className="flex flex-col gap-2 shrink-0 items-end">
           {isOwn && isSubmissionOpen && prophecy.fulfilled === null && (
             <>
               <IconActionButton
@@ -851,7 +906,7 @@ const ProphecyCard = memo(function ProphecyCard({
             <div className="flex gap-1">
               <button
                 onClick={() => onResolve(prophecy.id, true)}
-                className={`p-1.5 rounded-md transition-all ${
+                className={`p-2 rounded-md transition-all ${
                   prophecy.fulfilled === true
                     ? 'bg-cyan-500/30 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.3)]'
                     : 'bg-white/5 text-(--text-muted) hover:bg-cyan-500/20 hover:text-cyan-400'
@@ -862,7 +917,7 @@ const ProphecyCard = memo(function ProphecyCard({
               </button>
               <button
                 onClick={() => onResolve(prophecy.id, false)}
-                className={`p-1.5 rounded-md transition-all ${
+                className={`p-2 rounded-md transition-all ${
                   prophecy.fulfilled === false
                     ? 'bg-red-500/30 text-red-400 shadow-[0_0_10px_rgba(239,68,68,0.3)]'
                     : 'bg-white/5 text-(--text-muted) hover:bg-red-500/20 hover:text-red-400'
@@ -871,6 +926,15 @@ const ProphecyCard = memo(function ProphecyCard({
               >
                 <IconX size={18} />
               </button>
+              {prophecy.fulfilled !== null && (
+                <button
+                  onClick={() => onResetResolution(prophecy.id)}
+                  className="p-2 rounded-md transition-all bg-white/5 text-(--text-muted) hover:bg-amber-500/20 hover:text-amber-400"
+                  title="Auflösung zurücksetzen"
+                >
+                  <IconRefresh size={18} />
+                </button>
+              )}
             </div>
           )}
           <IconActionButton

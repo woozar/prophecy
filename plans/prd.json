@@ -121,6 +121,6 @@
       "SSE-Event senden damit andere Clients den Reset mitbekommen",
       "Tests für API-Endpoint und Reset-Logik schreiben"
     ],
-    "passes": false
+    "passes": true
   }
 ]

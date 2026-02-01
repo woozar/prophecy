@@ -14,6 +14,7 @@ const mockPropheciesUpdate = vi.fn();
 const mockPropheciesDelete = vi.fn();
 const mockPropheciesRate = vi.fn();
 const mockPropheciesResolve = vi.fn();
+const mockPropheciesResetResolution = vi.fn();
 const mockRoundsPublishResults = vi.fn();
 const mockRoundsUnpublishResults = vi.fn();
 const mockRoundsExport = vi.fn();
@@ -26,6 +27,7 @@ vi.mock('@/lib/api-client', () => ({
       delete: (...args: unknown[]) => mockPropheciesDelete(...args),
       rate: (...args: unknown[]) => mockPropheciesRate(...args),
       resolve: (...args: unknown[]) => mockPropheciesResolve(...args),
+      resetResolution: (...args: unknown[]) => mockPropheciesResetResolution(...args),
     },
     rounds: {
       publishResults: (...args: unknown[]) => mockRoundsPublishResults(...args),
@@ -2823,6 +2825,128 @@ describe('RoundDetailClient', () => {
 
         await waitFor(() => {
           expect(showErrorToast).toHaveBeenCalledWith('Resolve fehlgeschlagen');
+        });
+      });
+    });
+
+    describe('handleResetResolution', () => {
+      it('shows reset button for admin when prophecy is resolved', async () => {
+        const prophecies = [
+          {
+            id: 'p1',
+            roundId: 'round-awaiting',
+            title: 'Resolved Prophecy',
+            description: 'Already resolved',
+            createdAt: new Date().toISOString(),
+            creatorId: 'user1',
+            averageRating: 5.5,
+            ratingCount: 4,
+            fulfilled: true,
+            resolvedAt: new Date().toISOString(),
+          },
+        ];
+
+        await setupAdminStores(prophecies);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        expect(screen.getByTitle('Auflösung zurücksetzen')).toBeInTheDocument();
+      });
+
+      it('does not show reset button when prophecy is not resolved', async () => {
+        const prophecies = [
+          {
+            id: 'p1',
+            roundId: 'round-awaiting',
+            title: 'Unresolved Prophecy',
+            description: 'Still unresolved',
+            createdAt: new Date().toISOString(),
+            creatorId: 'user1',
+            averageRating: 5.5,
+            ratingCount: 4,
+            fulfilled: null,
+            resolvedAt: null,
+          },
+        ];
+
+        await setupAdminStores(prophecies);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        expect(screen.queryByTitle('Auflösung zurücksetzen')).not.toBeInTheDocument();
+      });
+
+      it('shows confirmation dialog and calls reset API on confirm', async () => {
+        const prophecies = [
+          {
+            id: 'p1',
+            roundId: 'round-awaiting',
+            title: 'Resolved Prophecy',
+            description: 'Already resolved',
+            createdAt: new Date().toISOString(),
+            creatorId: 'user1',
+            averageRating: 5.5,
+            ratingCount: 4,
+            fulfilled: true,
+            resolvedAt: new Date().toISOString(),
+          },
+        ];
+
+        mockPropheciesResetResolution.mockResolvedValue({
+          data: { prophecy: { ...prophecies[0], fulfilled: null, resolvedAt: null } },
+          error: null,
+        });
+
+        await setupAdminStores(prophecies);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        fireEvent.click(screen.getByTitle('Auflösung zurücksetzen'));
+
+        await waitFor(() => {
+          expect(screen.getByText('Auflösung zurücksetzen?')).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByText('Zurücksetzen'));
+
+        await waitFor(() => {
+          expect(mockPropheciesResetResolution).toHaveBeenCalledWith('p1');
+        });
+      });
+
+      it('shows error toast on reset failure', async () => {
+        const prophecies = [
+          {
+            id: 'p1',
+            roundId: 'round-awaiting',
+            title: 'Resolved Prophecy',
+            description: 'Already resolved',
+            createdAt: new Date().toISOString(),
+            creatorId: 'user1',
+            averageRating: 5.5,
+            ratingCount: 4,
+            fulfilled: true,
+            resolvedAt: new Date().toISOString(),
+          },
+        ];
+
+        mockPropheciesResetResolution.mockResolvedValue({
+          data: null,
+          error: { error: 'Reset fehlgeschlagen' },
+        });
+
+        const { showErrorToast } = await import('@/lib/toast/toast');
+
+        await setupAdminStores(prophecies);
+        await renderWithMantine(<RoundDetailClient round={mockRoundAwaitingResolution} />);
+
+        fireEvent.click(screen.getByTitle('Auflösung zurücksetzen'));
+
+        await waitFor(() => {
+          expect(screen.getByText('Auflösung zurücksetzen?')).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByText('Zurücksetzen'));
+
+        await waitFor(() => {
+          expect(showErrorToast).toHaveBeenCalledWith('Reset fehlgeschlagen');
         });
       });
     });

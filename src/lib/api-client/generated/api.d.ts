@@ -1352,7 +1352,65 @@ export interface paths {
         };
       };
     };
-    delete?: never;
+    /** Reset prophecy resolution (Admin only) */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Resolution reset */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ProphecyDetailResponse'];
+          };
+        };
+        /** @description Prophecy is not resolved */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Forbidden (not admin) */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+        /** @description Prophecy not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ErrorResponse'];
+          };
+        };
+      };
+    };
     options?: never;
     head?: never;
     patch?: never;
@@ -2357,6 +2415,7 @@ export interface components {
       avatarUrl: string | null;
       avatarEffect: string | null;
       avatarEffectColors: string[];
+      animationsEnabled: boolean;
       role: components['schemas']['Role'];
       status: components['schemas']['UserStatus'];
       /** Format: date-time */

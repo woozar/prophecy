@@ -131,6 +131,9 @@ export const apiClient = {
     resolve: (id: string, fulfilled: boolean) =>
       api.POST('/api/prophecies/{id}/resolve', { params: { path: { id } }, body: { fulfilled } }),
 
+    resetResolution: (id: string) =>
+      api.DELETE('/api/prophecies/{id}/resolve', { params: { path: { id } } }),
+
     getAuditLogs: (id: string) =>
       api.GET('/api/prophecies/{id}/audit', { params: { path: { id } } }),
   },

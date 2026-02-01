@@ -63,6 +63,41 @@ function broadcastNewBadges(newBadges: AwardedUserBadge[]): void {
   }
 }
 
+// DELETE /api/prophecies/[id]/resolve - Reset prophecy resolution (Admin only)
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  const adminValidation = await validateAdminSession();
+  if (adminValidation.error) return adminValidation.error;
+
+  const { id } = await params;
+
+  try {
+    const prophecy = await prisma.prophecy.findUnique({
+      where: { id },
+    });
+
+    if (!prophecy) {
+      return NextResponse.json({ error: 'Prophezeiung nicht gefunden' }, { status: 404 });
+    }
+
+    if (prophecy.fulfilled === null) {
+      return NextResponse.json({ error: 'Prophezeiung ist nicht aufgelöst' }, { status: 400 });
+    }
+
+    const updatedProphecy = await prisma.prophecy.update({
+      where: { id },
+      data: { fulfilled: null, resolvedAt: null },
+    });
+
+    const prophecyData = transformProphecyToResponse(updatedProphecy);
+    sseEmitter.broadcast({ type: 'prophecy:updated', data: prophecyData });
+
+    return NextResponse.json({ prophecy: prophecyData });
+  } catch (error) {
+    console.error('Error resetting prophecy resolution:', error);
+    return NextResponse.json({ error: 'Fehler beim Zurücksetzen der Auflösung' }, { status: 500 });
+  }
+}
+
 // POST /api/prophecies/[id]/resolve - Mark a prophecy as fulfilled or not fulfilled (Admin only)
 export async function POST(request: NextRequest, { params }: RouteParams) {
   const adminValidation = await validateAdminSession();
